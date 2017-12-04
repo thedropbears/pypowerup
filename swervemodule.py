@@ -5,7 +5,7 @@ import math
 SwerveModuleConfig = namedtuple("SwerveModuleConfig",
         ['steer_talon_id', 'drive_talon_id', 'steer_enc_offset',
          'reverse_steer_direction', 'reverse_steer_encoder',
-         'reverse_drive_direction', 'reverse_drive_encoder'
+         'reverse_drive_direction', 'reverse_drive_encoder',
          'drive_enc_gear_reduction', 'wheel_diameter_meters',
          'drive_motor_free_speed'])
 
@@ -17,8 +17,12 @@ class SwerveModule:
 
     def __init__(self):
         self.absolute_rotation = False
+        self.vx = 0
+        self.vy = 0
+        self.steer_motor = None
+        self.drive_motor = None
 
-    def createObjects(self):
+    def setup(self):
         self.steer_motor = CANTalon(self.cfg.steer_talon_id)
         self.steer_motor.setControlMode(CANTalon.ControlMode.Position)
         self.steer_motor.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute)
