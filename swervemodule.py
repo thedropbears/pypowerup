@@ -16,7 +16,7 @@ class SwerveModule:
     CIMCODER_COUNTS_PER_REV = 80
 
     def __init__(self):
-        pass
+        self.absolute_rotation = False
 
     def createObjects(self):
         self.steer_motor = CANTalon(self.cfg.steer_talon_id)
@@ -48,6 +48,14 @@ class SwerveModule:
         # 0.1 is because SRX velocities are measured in ticks/100ms
         self.drive_velocity_to_native_units = self.drive_counts_per_meter*0.1
 
+    def set_rotation_mode(self, rotation_mode):
+        """Set whether we want the modules to rotate to the nearest possible
+        direction to get to the required angle (and sometimes face backwards),
+        or to rotate fully forwards to the correct angle.
+        :param rotation_mode: False to rotate to nearest possible, True to
+        rotate forwards to the required angle."""
+        self.absolute_rotation = rotation_mode
+
     def set_velocity(self, vx, vy):
         """Set the x and y components of the desired module velocity, relative
         to the robot.
@@ -63,8 +71,11 @@ class SwerveModule:
         velocity = math.sqrt(self.vx**2 + self.vy**2)
         direction = constrain_angle(math.atan2(self.vy, self.vx))
 
-        # figure out the most efficient way to get the module to the desired direction
-        delta = self.min_angular_displacement(self.direction, direction)
+        if self.absolute_rotation:
+            delta = constrain_angle(direction - self.direction)
+        else:
+            # figure out the most efficient way to get the module to the desired direction
+            delta = self.min_angular_displacement(self.direction, direction)
         # convert the direction to encoder counts to set as the closed-loop setpoint
         direction_to_set = ((direction+delta) * self.steer_counts_per_radian
                 + self.cfg.steer_enc_offset)
@@ -74,12 +85,11 @@ class SwerveModule:
         if abs(direction_error) < math.pi / 6.0:
             # if we are nearing the correct angle with the module forwards
             self.drive_motor.set(velocity*self.drive_velocity_to_native_units)
-        elif abs(direction_error) > math.pi - math.pi / 6.0:
+        elif abs(direction_error) > math.pi - math.pi / 6.0 and not self.absolute_rotation:
             # if we are nearing the correct angle with the module backwards
             self.drive_motor.set(-velocity*self.drive_velocity_to_native_units)
         else:
             self.drive_motor.set(0)
-
 
     @property
     def direction(self):
