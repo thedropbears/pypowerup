@@ -27,7 +27,7 @@ class SwerveChassis:
     def execute(self):
         for module in self.modules:
             module_dist = math.sqrt(module.cfg.x_pos**2+module.cfg.y_pos**2)
-            module_angle = math.atan2(module.cfg.x_pos, module.cfg.y_pos)
+            module_angle = math.atan2(module.cfg.y_pos, module.cfg.x_pos)
             vz_x = -module_dist*self.vz*math.sin(module_angle)
             vz_y = module_dist*self.vz*math.cos(module_angle)
             # if self.field_oriented:

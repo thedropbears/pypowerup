@@ -32,6 +32,7 @@ class SwerveModule:
         # changes direction of motor encoder
         self.steer_motor.reverseSensor(self.cfg.reverse_steer_encoder)
         self.steer_motor.setPID(1.0, 0.0, 0.0)
+        self.steer_motor.set(self.steer_motor.getPosition())
 
         self.steer_counts_per_radian = 1.0 / (2.0 * math.pi)
 
@@ -76,6 +77,9 @@ class SwerveModule:
         velocity = math.sqrt(self.vx**2 + self.vy**2)
         direction = constrain_angle(math.atan2(self.vy, self.vx))
         print("Direction: %s, vx %s, vy %s" % (direction, self.vx, self.vy))
+
+        if velocity < 0.01:
+            return
 
         current_heading = constrain_angle(self.direction)
 
