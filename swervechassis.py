@@ -22,19 +22,26 @@ class SwerveChassis:
 
     def setup(self):
         self.modules = [self.module_a, self.module_b, self.module_c, self.module_d]
-        # self.modules = [self.module_b]
 
     def execute(self):
         for module in self.modules:
             module_dist = math.sqrt(module.cfg.x_pos**2+module.cfg.y_pos**2)
             module_angle = math.atan2(module.cfg.y_pos, module.cfg.x_pos)
+            # Calculate the additional vx and vy components for this module
+            # required to achieve our desired angular velocity
             vz_x = -module_dist*self.vz*math.sin(module_angle)
             vz_y = module_dist*self.vz*math.cos(module_angle)
+            # TODO: re enable this and test field-oriented mode
             # if self.field_oriented:
             #     vx, vy = self.field_orient(self.vx, self.vy, self.bno055.getAngle())
             module.set_velocity(self.vx+vz_x, self.vy+vz_y)
 
     def set_inputs(self, vx, vy, vz):
+        """Set chassis vx, vy, and vz components of inputs.
+        :param vx: The vx (forward) component of the robot's desired velocity. In m/s.
+        :param vy: The vy (leftward) component of the robot's desired velocity. In m/s.
+        :param vz: The vz (counter-clockwise rotation) component of the robot's
+        desired [angular] velocity. In radians/s."""
         self.vx = vx
         self.vy = vy
         self.vz = vz
