@@ -57,7 +57,7 @@ class SwerveModule:
 
         # factor by which to scale velocities in m/s to give to our drive talon.
         # 0.1 is because SRX velocities are measured in ticks/100ms
-        self.drive_velocity_to_native_units = self.drive_counts_per_meter/0.1
+        self.drive_velocity_to_native_units = self.drive_counts_per_meter*0.1
 
     def set_rotation_mode(self, rotation_mode):
         """Set whether we want the modules to rotate to the nearest possible
