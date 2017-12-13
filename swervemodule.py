@@ -12,7 +12,7 @@ SwerveModuleConfig = namedtuple("SwerveModuleConfig",
 
 
 class SwerveModule:
-    cfg = SwerveModuleConfig
+    cfg: SwerveModuleConfig
 
     CIMCODER_COUNTS_PER_REV = 80
 

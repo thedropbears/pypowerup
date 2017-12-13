@@ -4,12 +4,11 @@ import math
 
 class SwerveChassis:
 
-    module_a = SwerveModule
-    module_b = SwerveModule
-    module_c = SwerveModule
-    module_d = SwerveModule
-
-    bno055 = BNO055
+    bno055: BNO055
+    module_a: SwerveModule
+    module_b: SwerveModule
+    module_c: SwerveModule
+    module_d: SwerveModule
 
     # multiply both by vz and the number that you need to multiply the vz
     # components by to get them in the appropriate directions
