@@ -24,8 +24,8 @@ class SwerveChassis:
 
     def execute(self):
         for module in self.modules:
-            module_dist = math.sqrt(module.cfg.x_pos**2+module.cfg.y_pos**2)
-            module_angle = math.atan2(module.cfg.y_pos, module.cfg.x_pos)
+            module_dist = math.hypot(module.x_pos, module.y_pos)
+            module_angle = math.atan2(module.y_pos, module.x_pos)
             # Calculate the additional vx and vy components for this module
             # required to achieve our desired angular velocity
             vz_x = -module_dist*self.vz*math.sin(module_angle)

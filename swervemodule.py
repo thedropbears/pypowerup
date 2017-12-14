@@ -1,59 +1,63 @@
 from ctre import CANTalon
-from collections import namedtuple
 import math
-
-SwerveModuleConfig = namedtuple("SwerveModuleConfig",
-        ['steer_talon_id', 'drive_talon_id', 'steer_enc_offset',
-         'reverse_steer_direction', 'reverse_steer_encoder',
-         'reverse_drive_direction', 'reverse_drive_encoder',
-         'drive_enc_gear_reduction', 'wheel_diameter_meters',
-         'drive_motor_free_speed',
-         'x_pos', 'y_pos'])
 
 
 class SwerveModule:
-    cfg: SwerveModuleConfig
 
-    CIMCODER_COUNTS_PER_REV = 80
+    CIMCODER_COUNTS_PER_REV: int = 80
+    WHEEL_DIAMETER: float = 0.0254 * 3
+    DRIVE_ENCODER_GEAR_REDUCTION: float = 5.43956
+    # The VEX Integrated encoders have 1 count per revolution, and there
+    # is a 1:1 corrospondence to the angular position of the module.
+    STEER_COUNTS_PER_RADIAN = 1.0 / math.tau
 
-    def __init__(self):
+    def __init__(self, steer_talon: CANTalon, drive_talon: CANTalon,
+            steer_enc_offset: float, x_pos: float, y_pos: float,
+            drive_free_speed: float,
+            reverse_steer_direction: bool=True,
+            reverse_steer_encoder: bool=True,
+            reverse_drive_direction: bool=False,
+            reverse_drive_encoder: bool=False):
+
+        self.steer_motor = steer_talon
+        self.drive_motor = drive_talon
+        self.x_pos = x_pos
+        self.y_pos = y_pos
+        self.steer_enc_offset = steer_enc_offset
+        self.reverse_steer_direction = reverse_steer_direction
+        self.reverse_steer_encoder = reverse_steer_encoder
+        self.reverse_drive_direction = reverse_drive_direction
+        self.reverse_drive_encoder = reverse_drive_encoder
+        self.drive_free_speed = drive_free_speed
+
         self.absolute_rotation = True
         self.vx = 0
         self.vy = 0
-        self.steer_motor = None
-        self.drive_motor = None
 
-    def setup(self):
-        self.steer_motor = CANTalon(self.cfg.steer_talon_id)
         self.steer_motor.setControlMode(CANTalon.ControlMode.Position)
         self.steer_motor.setFeedbackDevice(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute)
         # changes sign of motor throttle vilues
-        self.steer_motor.reverseOutput(self.cfg.reverse_steer_direction)
+        self.steer_motor.reverseOutput(self.reverse_steer_direction)
         # changes direction of motor encoder
-        self.steer_motor.reverseSensor(self.cfg.reverse_steer_encoder)
+        self.steer_motor.reverseSensor(self.reverse_steer_encoder)
         self.steer_motor.setPID(1.0, 0.0, 0.0)
         # Initialise the motor setpoint to its current position. This is to
         # prevent the module unwinding (e.g. if it is wound up to an encoder
         # position of 50, we set the initial setpoint to 50)
         self.steer_motor.set(self.steer_motor.getPosition())
 
-        # The VEX Integrated encoders have 1 count per revolution, and there
-        # is a 1:1 corrospondence to the angular position of the module.
-        self.steer_counts_per_radian = 1.0 / (2.0 * math.pi)
-
-        self.drive_motor = CANTalon(self.cfg.drive_talon_id)
         self.drive_motor.setControlMode(CANTalon.ControlMode.Speed)
         self.drive_motor.setFeedbackDevice(CANTalon.FeedbackDevice.QuadEncoder)
         # changes sign of motor throttle values
-        self.drive_motor.reverseOutput(self.cfg.reverse_drive_direction)
+        self.drive_motor.reverseOutput(self.reverse_drive_direction)
         # changes direction of motor encoder
-        self.drive_motor.reverseSensor(self.cfg.reverse_drive_encoder)
-        self.drive_motor.setPID(1.0, 0.0, 1024.0/self.cfg.drive_motor_free_speed)
+        self.drive_motor.reverseSensor(self.reverse_drive_encoder)
+        self.drive_motor.setPID(1.0, 0.0, 1024.0/self.drive_free_speed)
 
         self.drive_counts_per_rev = \
-            SwerveModule.CIMCODER_COUNTS_PER_REV*self.cfg.drive_enc_gear_reduction
+            SwerveModule.CIMCODER_COUNTS_PER_REV*self.DRIVE_ENCODER_GEAR_REDUCTION
         self.drive_counts_per_meter = \
-            self.drive_counts_per_rev / (math.pi * self.cfg.wheel_diameter_meters)
+            self.drive_counts_per_rev / (math.pi * self.WHEEL_DIAMETER)
 
         # factor by which to scale velocities in m/s to give to our drive talon.
         # 0.1 is because SRX velocities are measured in ticks/100ms
@@ -76,10 +80,8 @@ class SwerveModule:
         self.vx = vx
         self.vy = vy
 
-    def execute(self):
-
         # calculate straight line velocity and angle of motion
-        velocity = math.sqrt(self.vx**2 + self.vy**2)
+        velocity = math.hypot(self.vx, self.vy)
         direction = constrain_angle(math.atan2(self.vy, self.vx))
 
         # if we have a really low velocity, don't do anything. This is to
@@ -104,10 +106,9 @@ class SwerveModule:
         # will unwind
         direction_to_set_radians = (self.module_sp_radians+delta)
         # convert the direction to encoder counts to set as the closed-loop setpoint
-        direction_to_set = (direction_to_set_radians * self.steer_counts_per_radian
-                + self.cfg.steer_enc_offset)
+        direction_to_set = (direction_to_set_radians * self.STEER_COUNTS_PER_RADIAN
+                + self.steer_enc_offset)
         self.steer_motor.set(direction_to_set)
-
 
         if not self.absolute_rotation:
             # logic to only move the modules when we are close to the corret angle
@@ -129,7 +130,7 @@ class SwerveModule:
         """Read the current direction from the controller setpoint, and convert
         to radians"""
         setpoint = self.steer_motor.getSetpoint()
-        return float(setpoint - self.cfg.steer_enc_offset) / self.steer_counts_per_radian
+        return float(setpoint - self.steer_enc_offset) / self.STEER_COUNTS_PER_RADIAN
 
     @staticmethod
     def min_angular_displacement(current, target):
