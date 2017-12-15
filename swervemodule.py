@@ -41,10 +41,7 @@ class SwerveModule:
         # changes direction of motor encoder
         self.steer_motor.reverseSensor(self.reverse_steer_encoder)
         self.steer_motor.setPID(1.0, 0.0, 0.0)
-        # Initialise the motor setpoint to its current position. This is to
-        # prevent the module unwinding (e.g. if it is wound up to an encoder
-        # position of 50, we set the initial setpoint to 50)
-        self.steer_motor.set(self.steer_motor.getPosition())
+        self.reset_steer_setpoint()
 
         self.drive_motor.setControlMode(CANTalon.ControlMode.Speed)
         self.drive_motor.setFeedbackDevice(CANTalon.FeedbackDevice.QuadEncoder)
@@ -70,6 +67,13 @@ class SwerveModule:
         :param rotation_mode: False to rotate to nearest possible, True to
         rotate forwards to the required angle."""
         self.absolute_rotation = rotation_mode
+
+    def reset_steer_setpoint(self):
+        """Reset the setpoint of the steer motor to its current position.
+
+        This prevents the module unwinding on start.
+        """
+        self.steer_motor.set(self.steer_motor.getPosition())
 
     def set_velocity(self, vx, vy):
         """Set the x and y components of the desired module velocity, relative

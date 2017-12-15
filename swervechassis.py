@@ -24,6 +24,10 @@ class SwerveChassis:
     def setup(self):
         self.modules = [self.module_a, self.module_b, self.module_c, self.module_d]
 
+    def on_enable(self):
+        for module in self.modules:
+            module.reset_steer_setpoint()
+
     def execute(self):
         for module in self.modules:
             module_dist = math.hypot(module.x_pos, module.y_pos)
