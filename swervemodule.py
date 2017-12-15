@@ -87,7 +87,7 @@ class SwerveModule:
         # if we have a really low velocity, don't do anything. This is to
         # prevent stuff like joystick whipping back and changing the module
         # direction
-        if velocity < 0.01:
+        if velocity < 0.05:
             return
 
         if self.absolute_rotation:
