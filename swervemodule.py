@@ -40,7 +40,7 @@ class SwerveModule:
         self.steer_motor.reverseOutput(self.reverse_steer_direction)
         # changes direction of motor encoder
         self.steer_motor.reverseSensor(self.reverse_steer_encoder)
-        self.steer_motor.setPID(1.0, 0.0, 0.0)
+        self.steer_motor.setPID(1.0, 0.0002, 0.0)
         self.reset_steer_setpoint()
 
         self.drive_motor.setControlMode(CANTalon.ControlMode.Speed)
