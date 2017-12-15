@@ -3,7 +3,6 @@ from utilities.bno055 import BNO055
 import math
 
 import hal
-from hal_impl.data import hal_data
 
 class SwerveChassis:
 
@@ -36,6 +35,7 @@ class SwerveChassis:
             # TODO: re enable this and test field-oriented mode
             if self.field_oriented:
                 if hal.isSimulation():
+                    from hal_impl.data import hal_data
                     angle = math.radians(-hal_data['robot']['bno055'])
                 else:
                     angle = self.bno055.getAngle()
