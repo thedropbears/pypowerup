@@ -40,6 +40,8 @@ class SwerveChassis:
                 else:
                     angle = self.bno055.getAngle()
                 vx, vy = self.field_orient(self.vx, self.vy, angle)
+            else:
+                vx, vy = self.vx, self.vy
             module.set_velocity(vx+vz_x, vy+vz_y)
 
     def set_inputs(self, vx, vy, vz):
