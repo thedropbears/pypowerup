@@ -2,6 +2,9 @@ from pyswervedrive.swervemodule import SwerveModule
 from utilities.bno055 import BNO055
 import math
 
+import hal
+from hal_impl.data import hal_data
+
 class SwerveChassis:
 
     bno055: BNO055
@@ -17,7 +20,7 @@ class SwerveChassis:
         self.vx = 0
         self.vy = 0
         self.vz = 0
-        self.field_oriented = True
+        self.field_oriented = False
 
     def setup(self):
         self.modules = [self.module_a, self.module_b, self.module_c, self.module_d]
@@ -31,9 +34,13 @@ class SwerveChassis:
             vz_x = -module_dist*self.vz*math.sin(module_angle)
             vz_y = module_dist*self.vz*math.cos(module_angle)
             # TODO: re enable this and test field-oriented mode
-            # if self.field_oriented:
-            #     vx, vy = self.field_orient(self.vx, self.vy, self.bno055.getAngle())
-            module.set_velocity(self.vx+vz_x, self.vy+vz_y)
+            if self.field_oriented:
+                if hal.isSimulation():
+                    angle = math.radians(-hal_data['robot']['bno055'])
+                else:
+                    angle = self.bno055.getAngle()
+                vx, vy = self.field_orient(self.vx, self.vy, angle)
+            module.set_velocity(vx+vz_x, vy+vz_y)
 
     def set_inputs(self, vx, vy, vz):
         """Set chassis vx, vy, and vz components of inputs.
