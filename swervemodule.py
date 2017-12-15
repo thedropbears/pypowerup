@@ -30,7 +30,7 @@ class SwerveModule:
         self.reverse_drive_encoder = reverse_drive_encoder
         self.drive_free_speed = drive_free_speed
 
-        self.absolute_rotation = True
+        self.absolute_rotation = False
         self.vx = 0
         self.vy = 0
 
@@ -100,8 +100,6 @@ class SwerveModule:
             # desired angle
             delta = constrain_angle(direction - self.module_sp_radians)
         else:
-            # TODO: Test this code path on the actual robot (we have only tested absolute mode)
-
             # figure out the most efficient way to get the module to the desired direction
             current_heading = constrain_angle(self.module_sp_radians)
             delta = self.min_angular_displacement(current_heading, direction)
@@ -116,12 +114,11 @@ class SwerveModule:
 
         if not self.absolute_rotation:
             # logic to only move the modules when we are close to the corret angle
-            # TODO: Test this code path on the actual robot (we have only tested absolute mode)
             direction_error = constrain_angle(self.module_sp_radians - direction)
             if abs(direction_error) < math.pi / 6.0:
                 # if we are nearing the correct angle with the module forwards
                 self.drive_motor.set(velocity*self.drive_velocity_to_native_units)
-            elif abs(direction_error) > math.pi - math.pi / 6.0 and not self.absolute_rotation:
+            elif abs(direction_error) > math.pi - math.pi / 6.0:
                 # if we are nearing the correct angle with the module backwards
                 self.drive_motor.set(-velocity*self.drive_velocity_to_native_units)
             else:
