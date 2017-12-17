@@ -86,7 +86,7 @@ class SwerveModule:
 
         # calculate straight line velocity and angle of motion
         velocity = math.hypot(self.vx, self.vy)
-        desired_azimuth = constrain_angle(math.atan2(self.vy, self.vx))
+        desired_azimuth = math.atan2(self.vy, self.vx)
 
         # if we have a really low velocity, don't do anything. This is to
         # prevent stuff like joystick whipping back and changing the module
