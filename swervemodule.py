@@ -49,7 +49,7 @@ class SwerveModule:
         self.drive_motor.reverseOutput(self.reverse_drive_direction)
         # changes direction of motor encoder
         self.drive_motor.reverseSensor(self.reverse_drive_encoder)
-        self.drive_motor.setPID(1.0, 0.0, 1024.0/self.drive_free_speed)
+        self.drive_motor.setPID(1.0, 0.0, 0.0, 1024.0/self.drive_free_speed)
 
         self.drive_counts_per_rev = \
             SwerveModule.CIMCODER_COUNTS_PER_REV*self.DRIVE_ENCODER_GEAR_REDUCTION
@@ -86,7 +86,7 @@ class SwerveModule:
 
         # calculate straight line velocity and angle of motion
         velocity = math.hypot(self.vx, self.vy)
-        desired_azimuth = constrain_angle(math.atan2(self.vy, self.vx))
+        desired_azimuth = math.atan2(self.vy, self.vx)
 
         # if we have a really low velocity, don't do anything. This is to
         # prevent stuff like joystick whipping back and changing the module
