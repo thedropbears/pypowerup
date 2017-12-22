@@ -11,13 +11,21 @@ class SwerveModule:
     # is a 1:1 corrospondence to the angular position of the module.
     STEER_COUNTS_PER_RADIAN = 1.0 / math.tau
 
+    drive_counts_per_rev = CIMCODER_COUNTS_PER_REV*DRIVE_ENCODER_GEAR_REDUCTION
+    drive_counts_per_radian = drive_counts_per_rev / math.tau
+    drive_counts_per_meter = drive_counts_per_rev / (math.pi * WHEEL_DIAMETER)
+
+    # factor by which to scale velocities in m/s to give to our drive talon.
+    # 0.1 is because SRX velocities are measured in ticks/100ms
+    drive_velocity_to_native_units = drive_counts_per_meter*0.1
+
     def __init__(self, steer_talon: CANTalon, drive_talon: CANTalon,
-            steer_enc_offset: float, x_pos: float, y_pos: float,
-            drive_free_speed: float,
-            reverse_steer_direction: bool=True,
-            reverse_steer_encoder: bool=True,
-            reverse_drive_direction: bool=False,
-            reverse_drive_encoder: bool=False):
+                 steer_enc_offset: float, x_pos: float, y_pos: float,
+                 drive_free_speed: float,
+                 reverse_steer_direction: bool=True,
+                 reverse_steer_encoder: bool=True,
+                 reverse_drive_direction: bool=False,
+                 reverse_drive_encoder: bool=False):
 
         self.steer_motor = steer_talon
         self.drive_motor = drive_talon
@@ -51,14 +59,7 @@ class SwerveModule:
         self.drive_motor.reverseSensor(self.reverse_drive_encoder)
         self.drive_motor.setPID(1.0, 0.0, 0.0, 1024.0/self.drive_free_speed)
 
-        self.drive_counts_per_rev = \
-            SwerveModule.CIMCODER_COUNTS_PER_REV*self.DRIVE_ENCODER_GEAR_REDUCTION
-        self.drive_counts_per_meter = \
-            self.drive_counts_per_rev / (math.pi * self.WHEEL_DIAMETER)
-
-        # factor by which to scale velocities in m/s to give to our drive talon.
-        # 0.1 is because SRX velocities are measured in ticks/100ms
-        self.drive_velocity_to_native_units = self.drive_counts_per_meter*0.1
+        self.reset_encoder_delta()
 
     def set_rotation_mode(self, rotation_mode):
         """Set whether we want the modules to rotate to the nearest possible
@@ -75,12 +76,24 @@ class SwerveModule:
         """
         self.steer_motor.set(self.steer_motor.getPosition())
 
+    def reset_encoder_delta(self):
+        self.last_steer_pos = self.current_azimuth
+        self.last_drive_pos = (self.drive_motor.getPosition()
+                               / self.drive_counts_per_radian)
+
+    def get_enc_delta(self):
+        steer_delta = self.current_azimuth - self.last_steer_pos
+        drive_delta = self.last_drive_pos - (self.drive_motor.getPosition()
+                                             / self.drive_counts_per_meter)
+        return steer_delta, drive_delta
+
     def set_velocity(self, vx, vy):
         """Set the x and y components of the desired module velocity, relative
         to the robot.
         :param vx: desired x velocity, m/s (x is forward on the robot)
         :param vy: desired y velocity, m/s (y is left on the robot)
         """
+
         self.vx = vx
         self.vy = vy
 
@@ -109,7 +122,7 @@ class SwerveModule:
         azimuth_to_set = (self.current_azimuth+delta)
         # convert the direction to encoder counts to set as the closed-loop setpoint
         setpoint = (azimuth_to_set * self.STEER_COUNTS_PER_RADIAN
-                + self.steer_enc_offset)
+                    + self.steer_enc_offset)
         self.steer_motor.set(setpoint)
 
         if not self.absolute_rotation:
@@ -145,6 +158,7 @@ class SwerveModule:
         if abs(diff) < abs(opp_diff):
             return diff
         return opp_diff
+
 
 def constrain_angle(angle):
     """Wrap :param angle: to between +pi and -pi"""
