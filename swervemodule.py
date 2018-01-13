@@ -92,10 +92,27 @@ class SwerveModule:
         This is intended to be called by the SwerveChassis in order to track
         odometry.
         """
-        steer_delta = self.zero_azimuth - self.last_steer_pos
+        azimuth_delta = self.zero_azimuth - self.zero_azimuth
         drive_delta = self.zero_drive_pos - (self.drive_motor.getPosition()
                                              / self.drive_counts_per_metre)
-        return steer_delta, drive_delta
+        return azimuth_delta, drive_delta
+
+    def get_cartesian_delta(self):
+        """Return the [x, y] position deltas for this module since the last
+        time reset_encoder_delta was called.
+        This is intended to be called by the SwerveChassis in order to track
+        odometry.
+        """
+        azimuth_delta, drive_delta = self.get_encoder_delta()
+
+        current_azimuth = (self.drive_motor.getPosition()
+                           / self.drive_counts_per_metre)
+        avg_azimuth = current_azimuth - (azimuth_delta / 2)
+
+        drive_x_delta = drive_delta * math.cos(avg_azimuth)
+        drive_y_delta = drive_delta * math.sin(avg_azimuth)
+
+        return (drive_x_delta, drive_y_delta)
 
     def set_velocity(self, vx, vy):
         """Set the x and y components of the desired module velocity, relative
