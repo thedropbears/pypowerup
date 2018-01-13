@@ -13,11 +13,11 @@ class SwerveModule:
 
     drive_counts_per_rev = CIMCODER_COUNTS_PER_REV*DRIVE_ENCODER_GEAR_REDUCTION
     drive_counts_per_radian = drive_counts_per_rev / math.tau
-    drive_counts_per_meter = drive_counts_per_rev / (math.pi * WHEEL_DIAMETER)
+    drive_counts_per_metre = drive_counts_per_rev / (math.pi * WHEEL_DIAMETER)
 
     # factor by which to scale velocities in m/s to give to our drive talon.
     # 0.1 is because SRX velocities are measured in ticks/100ms
-    drive_velocity_to_native_units = drive_counts_per_meter*0.1
+    drive_velocity_to_native_units = drive_counts_per_metre*0.1
 
     def __init__(self, steer_talon: CANTalon, drive_talon: CANTalon,
                  steer_enc_offset: float, x_pos: float, y_pos: float,
@@ -77,14 +77,24 @@ class SwerveModule:
         self.steer_motor.set(self.steer_motor.getPosition())
 
     def reset_encoder_delta(self):
-        self.last_steer_pos = self.current_azimuth
-        self.last_drive_pos = (self.drive_motor.getPosition()
-                               / self.drive_counts_per_radian)
+        """Re-zero the encoder deltas as returned from
+        get_encoder_delta.
+        This is intended to be called by the SwerveChassis in order to track
+        odometry.
+        """
+        self.zero_azimuth = self.current_azimuth
+        self.zero_drive_pos = (self.drive_motor.getPosition()
+                               / self.drive_counts_per_metre)
 
-    def get_enc_delta(self):
-        steer_delta = self.current_azimuth - self.last_steer_pos
-        drive_delta = self.last_drive_pos - (self.drive_motor.getPosition()
-                                             / self.drive_counts_per_meter)
+    def get_encoder_delta(self):
+        """Return the difference between the modules' current position and
+        their position at the last time reset_encoder_delta was called.
+        This is intended to be called by the SwerveChassis in order to track
+        odometry.
+        """
+        steer_delta = self.zero_azimuth - self.last_steer_pos
+        drive_delta = self.zero_drive_pos - (self.drive_motor.getPosition()
+                                             / self.drive_counts_per_metre)
         return steer_delta, drive_delta
 
     def set_velocity(self, vx, vy):
