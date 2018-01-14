@@ -1,0 +1,4 @@
+pyfrc >= 2018.0.3, < 2019.0.0
+robotpy-ctre >= 2018.0.0
+numpy >= 1.13.1
+coverage
