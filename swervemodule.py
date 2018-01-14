@@ -105,7 +105,7 @@ class SwerveModule:
         """
         azimuth_delta, drive_delta = self.get_encoder_delta()
 
-        current_azimuth = (self.drive_motor.getPosition()
+        current_azimuth = (self.drive_motor.getSelectedSensorPosition()
                            / self.drive_counts_per_metre)
         avg_azimuth = current_azimuth - (azimuth_delta / 2)
 
@@ -182,13 +182,15 @@ class SwerveModule:
 
     @property
     def current_measured_azimuth(self):
-        pos = self.steer_motor.getPosition()
-        return float(pos - self.steer_enc_offset) / self.STEER_COUNTS_PER_RADIAN
+        """Return the azimuth of the wheel as measured by the encoder."""
+        pos = self.steer_motor.getSelectedSensorPosition()
+        return constrain_angle(float(pos - self.steer_enc_offset)
+                               / self.STEER_COUNTS_PER_RADIAN)
 
     @property
     def current_speed(self):
         """Return the current speed of the module's wheel"""
-        wheel_vel = self.drive_motor.getSpeed()
+        wheel_vel = self.drive_motor.getSelectedSensorVelocity()
         return wheel_vel / self.drive_velocity_to_native_units
 
     @staticmethod
