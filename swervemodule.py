@@ -114,6 +114,14 @@ class SwerveModule:
 
         return (drive_x_delta, drive_y_delta)
 
+    def get_cartesian_vel(self):
+        azimuth = self.current_measured_azimuth
+        drive_speed = self.current_speed
+
+        drive_x_vel = drive_speed * math.cos(azimuth)
+        drive_y_vel = drive_speed * math.sin(azimuth)
+        return drive_x_vel, drive_y_vel
+
     def set_velocity(self, vx, vy):
         """Set the x and y components of the desired module velocity, relative
         to the robot.
@@ -171,6 +179,17 @@ class SwerveModule:
         """Return the current azimuth from the controller setpoint in radians."""
         setpoint = self.steer_motor.getSetpoint()
         return float(setpoint - self.steer_enc_offset) / self.STEER_COUNTS_PER_RADIAN
+
+    @property
+    def current_measured_azimuth(self):
+        pos = self.steer_motor.getPosition()
+        return float(pos - self.steer_enc_offset) / self.STEER_COUNTS_PER_RADIAN
+
+    @property
+    def current_speed(self):
+        """Return the current speed of the module's wheel"""
+        wheel_vel = self.drive_motor.getSpeed()
+        return wheel_vel / self.drive_velocity_to_native_units
 
     @staticmethod
     def min_angular_displacement(current, target):
