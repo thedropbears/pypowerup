@@ -1,10 +1,9 @@
 from pyswervedrive.swervemodule import SwerveModule
 from utilities.bno055 import BNO055
+import numpy as np
 import math
 
 import hal
-
-import numpy as np
 
 
 class SwerveChassis:
@@ -82,11 +81,10 @@ class SwerveChassis:
         for i, module in enumerate(self.modules):
             odometry_x, odometry_y = module.get_cartesian_delta()
             velocity_x, velocity_y = module.get_cartesian_vel()
-            odometry_outputs[i*2] = odometry_x
-            odometry_outputs[i*2+1] = odometry_y
-            velocity_outputs[i*2] = velocity_x
-            velocity_outputs[i*2+1] = velocity_y
-
+            odometry_outputs[i*2, 0] = odometry_x
+            odometry_outputs[i*2+1, 0] = odometry_y
+            velocity_outputs[i*2, 0] = velocity_x
+            velocity_outputs[i*2+1, 0] = velocity_y
             module.reset_encoder_delta()
 
         delta_x, delta_y, delta_theta = self.robot_movement_from_odometry(
@@ -102,8 +100,8 @@ class SwerveChassis:
 
     def robot_movement_from_odometry(self, odometry_outputs):
         lstsq_ret = np.linalg.lstsq(self.A_matrix, odometry_outputs,
-                                    rcond=None)
-        x, y, theta = lstsq_ret[0]
+                                    rcond=-1)
+        x, y, theta = lstsq_ret[0].reshape(3)
         angle = self.bno055.getAngle()
         x_field, y_field = self.field_orient(x, y, angle)
         return x_field, y_field, theta
