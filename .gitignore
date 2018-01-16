@@ -100,3 +100,27 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+### macOS ###
+*.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+### Vim ###
+# swap
+.sw[a-p]
+.*.sw[a-p]
+# session
+Session.vim
+# temporary
+*~
+# auto-generated tag files
+tags
+
+### JetBrains (IntelliJ IDEA, PyCharm) ###
+.idea/
+# file-based project format
+*.iws
