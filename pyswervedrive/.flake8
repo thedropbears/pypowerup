@@ -1,0 +1,14 @@
+[flake8]
+max-line-length = 100
+ignore =
+	# defaults
+	E121,E123,E126,E226,E24,E704,W503,
+	# allow sphinx-style comments (E265: block comments start with "# ")
+	E265,
+	# we don't agree on line length yet
+	E501
+exclude =
+	.git,
+	__pycache__,
+	# Tests are sacred.
+	tests
