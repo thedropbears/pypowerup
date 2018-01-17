@@ -4,55 +4,56 @@ from pyswervedrive.swervechassis import SwerveChassis
 
 
 
-class DriveSquareAutonoumous(AutonomousStateMachine):
-    """A simple autonomuos routine designed to drive around in a square."""
+class OverallBase(AutonomousStateMachine):
+    """A basic statemachine that is subclassed to all required autonomous routines."""
 
-    chassis = SwerveChassis
-
+    FMS_scale: 0  #L or R
+    FMS_switch: 0  #L or R
+    chassis: SwerveChassis
     def __init__(self):
         super().__init__()
 
-    @state(first=True, must_finish=True)
-    def driving_forwards(self):
-        """Gives the swerve modules a positive input on the x-axis i.e.
-        forwards."""
-        self.chassis.set_inputs(1, 0, 0)
-        if self.chassis.odometry >= 5:
-            # checks if the robot has moved 5 meters yet
-            self.next_state('driving_left')
-            # moves the statemachine to the next state
+    @state
+    def go_to_scale(self):
+        pass
+        self.next_state("deposit_cube")
 
-    @state(must_finish=True)
-    def driving_left(self):
-        """Gives the swerve modules a positive input on the y-axis i.e.
-        left"""
-        self.chassis.set_inputs(0, 1, 0)
-        if self.chassis.odometry >= 5:
-            self.next_state('driving_back')
+    @state
+    def deposit_cube(self):
+        pass
+        self.next_state("intake_cube")
 
-    @state(must_finish=True)
-    def driving_back(self):
-        """Gives the swerve modules a negative input on the x-axis i.e.
-        backwards"""
-        self.chassis.set_inputs(-1, 0, 0)
-        if self.chassis.odometry >= 5:
-            self.next_state('driving_right')
+    @state
+    def intake_cube(self):
+        pass
+        if:"""switch needs a cube, only happens once and if subclassed"""
+            self.next_state("go_to_switch")
+        elif: """pickup successful"""
+            self.next_state("go_to_scale")
 
-    @state(must_finish=True)
-    def driving_right(self):
-        """Gives the swerve modules a negative input on the y-axis i.e.
-        right"""
-        self.chassis.set_inputs(0, -1, 0)
-        if self.chassis.odometry >= 5:
-            self.next_state('spin_counter_clock')
 
-    @timedstate(duration=10, must_finish=True)
-    def spin_counter_clock(self):
-        """makes the robot spin WIP"""
-        self.chassis.set_inputs(0, 0, 1)
-        self.next_state('stop')
+class DoubleScaleBase(OverallBase):
 
-    @state(must_finish=True)
-    def stop(self):
-        """Stops the robot from moving at the end of the routine"""
-        self.chassis.set_inputs(0, 0, 0)
+    def __init__(self):
+        super().__init__()
+        scale_first: True
+        
+    @state(first=True)
+    def go_to_scale(self):
+        pass
+        self.next_state("deposit_cube")
+
+class SwitchAndScale(OverallBase):
+    
+    def __init__(self):
+        super().__init__()
+
+    @state(first=True)
+    def go_to_switch(self):
+        """Goes to the switch, when subclassed will go to the correct side regardless of start."""
+        if FMS_switch is "L"
+            #go to left switch
+        if FMS_switch is "R"
+            #go to right switch
+        pass
+        self.next_state("deposit_cube")
