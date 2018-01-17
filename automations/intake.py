@@ -1,10 +1,12 @@
 from magicbot import StateMachine, state
+
 from components.intake import Intake
 
 
-class IntakeStateMachine(StateMachine):
+class IntakeAutomation(StateMachine):
+    intake: Intake
 
     @state(first=True)
-    def init(self):
-        """Init the state machine.
-        """
+    def starting(self):
+        """Start the intake."""
+        ...

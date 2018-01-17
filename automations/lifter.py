@@ -1,10 +1,12 @@
 from magicbot import StateMachine, state
+
 from components.lifter import Lifter
 
 
-class LifterStateMachine(StateMachine):
+class LifterAutomation(StateMachine):
+    lifter: Lifter
 
     @state(first=True)
-    def init(self):
-        """Init the state machine.
-        """
+    def starting(self):
+        """Start the lifter."""
+        ...

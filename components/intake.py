@@ -1,26 +1,17 @@
 class Intake:
 
-        def __init__(self):
-            super().__init__(self)
+    def setup(self):
+        """This is called after variables are injected by magicbot."""
+        pass
 
-        def setup(self):
-            """Run just after createObjects.
-            Useful if you want to run something after just once after the
-            robot code is started, that depends on injected variables.
-            """
-            pass
+    def on_enable(self):
+        """This is called whenever the robot transitions to being enabled."""
+        pass
 
-        def on_enable(self):
-            """Run every time the robot transitions to being enabled.
-            """
-            pass
+    def on_disable(self):
+        """This is called whenever the robot transitions to disabled mode."""
+        pass
 
-        def on_disable(self):
-            """Run every time the robot transitions to being disabled.
-            """
-            pass
-
-        def execute(self):
-            """Run at the end of every control loop iteration.
-            """
-            pass
+    def execute(self):
+        """Run at the end of every control loop iteration."""
+        pass
