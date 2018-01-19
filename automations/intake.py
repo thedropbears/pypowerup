@@ -7,26 +7,27 @@ class IntakeAutomation(StateMachine):
     intake: Intake
 
     @state(first=True, must_finish=True)
-    def starting(self):
+    def intake_cube(self):
         """Start the intake."""
         if self.cube_inside():
-            self.next_state("")
             self.intake_rotate(0.0)
+            self.next_state("placing_cube")
         else:
             self.intake_rotate(0.3)
 
     @state(must_finish=True)
-    def placing_cube(self):
-        """Placing the cube"""
-        if self.cube_outside():
-            self.next_state("")
-            self.intake_rotate(0.0)
-        else:
-            self.intake_rotate(-0.3)
+    def hold(self):
+        """Waits for next state, lifter to reach position
+        then runs placing_cube state"""
 
     @state(must_finish=True)
-    def hold(self):
-        """Waits for next state"""
+    def place_cube(self):
+        """Placing the cube"""
+        if self.cube_outside():
+            self.intake_rotate(0.0)
+            self.next_state("intake_cube")
+        else:
+            self.intake_rotate(-0.3)
 
     @state(must_finish=True)
     def stopping(self):
