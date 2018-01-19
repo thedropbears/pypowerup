@@ -5,6 +5,10 @@ class Lifter:
         self.switch_height = None
         self.scale_height = None
         self.exchange_height = None
+        self.motor = Talon
+        motor.config_kP(0)
+        motor.config_kI(0)
+        motor.config_kD(0)
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
@@ -39,12 +43,19 @@ class Lifter:
         Args:
             setpos (int): Encoder position to move lift to.
         """
-        pass
-
+        mode = ControlMode.Position
+        self.motor.set(mode=mode, value=setpos)
+        
     def get_pos(self):
         """Returns encoder position on lift
-
-        Returns:
+    
+       Returns:
             int: The location of the lift
         """
-        pass
+        return self.motor.getSelectedSensorPosition(0)
+        
+        
+            
+        
+
+
