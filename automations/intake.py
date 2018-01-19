@@ -6,7 +6,12 @@ from components.intake import Intake
 class IntakeAutomation(StateMachine):
     intake: Intake
 
-    @state(first=True)
+    @state(first=True, must_finish=True)
     def starting(self):
         """Start the intake."""
-        ...
+        self.intake_enable(0.3)
+
+    @state(must_finish=True)
+    def stopping(self):
+        """Stop the intake"""
+        
