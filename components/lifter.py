@@ -5,6 +5,7 @@ class Lifter:
         self.switch_height = None
         self.scale_height = None
         self.exchange_height = None
+        self.ground_height = 0
         self.motor = Talon
         motor.config_kP(0)
         motor.config_kI(0)
@@ -53,9 +54,7 @@ class Lifter:
             int: The location of the lift
         """
         return self.motor.getSelectedSensorPosition(0)
-        
-        
-            
-        
 
-
+    def reset_pos(self)
+        """Move to ground height"""
+        self.setpos(self.ground_height)
