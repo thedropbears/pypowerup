@@ -1,16 +1,19 @@
-from ctre import CANTalon
-from wpilib import DigitalInput
+from ctre import WPI_TalonSRX
 
 
 class Intake:
 
-    intake_motor = CANTalon("Channel")
-    switch = DigitalInput("Channel")
+    limit_switch = WPI_TalonSRX("Channel")
+    intake_motor1 = WPI_TalonSRX("Channel")
+    """This controls the front section of the intake mechanism,
+    This controls two motors."""
+    intake_motor2 = WPI_TalonSRX("Channel")
+    """This controls the back section of the intake mechanism,
+    this controls two motors."""
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
-        self.PWMTalonSRX("PWM Channel")
-        self.PWMTalonSRX("PWM Channel")
+        pass
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
@@ -33,9 +36,10 @@ class Intake:
         self.intake_motor.set(0.0)
 
     def cube_inside(self):
-        """Run when the micro switch is pressed and when the current
+        """Run when the limit switch is pressed and when the current
         output is above a threshold, which stops the motors."""
-        if self.intake_motor.getOutputCurrent() > 5 and self.switch.get() == 1:
+        if (self.intake_motor.getOutputCurrent() > 3 and
+                self.limit_switch.getLimitSwitchState() == "something"):
             return True
         else:
             return False
@@ -43,7 +47,8 @@ class Intake:
     def cube_outside(self):
         """Run when a button is pushed on the joystick. Makes the
         wheels back drive."""
-        if self.intake_motor.getOutputCurrent() < 5 and self.switch.get() == 0:
+        if (self.intake_motor.getOutputCurrent() < 3 and
+                self.limit_switch.getLimitSwitchState() == "something"):
             return True
         else:
             return False
