@@ -35,15 +35,15 @@ class Intake:
     def cube_inside(self):
         """Run when the micro switch is pressed and when the current
         output is above a threshold, which stops the motors."""
-        if self.intake_motor.getOutputCurrent() > 3 and self.switch.get() == 1:
+        if self.intake_motor.getOutputCurrent() > 5 and self.switch.get() == 1:
             return True
         else:
             return False
 
     def cube_outside(self):
-        """Run when a button is pushed on the joystick.Makes the
+        """Run when a button is pushed on the joystick. Makes the
         wheels back drive."""
-        if self.intake_motor.getOutputCurrent() < 3 and self.switch.get() == 0:
+        if self.intake_motor.getOutputCurrent() < 5 and self.switch.get() == 0:
             return True
         else:
             return False
