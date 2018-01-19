@@ -16,5 +16,4 @@ class IntakeAutomation(StateMachine):
     @state(must_finish=True)
     def stopping(self):
         """Stop the intake"""
-        self.intake_enable(0)
-        
+        self.intake_enable(0.0)
