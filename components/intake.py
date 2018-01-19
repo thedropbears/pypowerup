@@ -24,21 +24,26 @@ class Intake:
         """Run at the end of every control loop iteration."""
         pass
 
-    def intake_enable(self, value):
+    def intake_rotate(self, value):
         """Turns intake mechanism on."""
         self.intake_motor.set(value)
 
     def intake_disable(self):
         """Turns intake mechanism off."""
-        pass
+        self.intake_motor.set(0.0)
 
     def cube_inside(self):
         """Run when the micro switch is pressed and when the current
         output is above a threshold, which stops the motors."""
         if self.intake_motor.getOutputCurrent() > 3 and self.switch.get() == 1:
             return True
+        else:
+            return False
 
     def cube_outside(self):
         """Run when a button is pushed on the joystick.Makes the
         wheels back drive."""
-        pass
+        if self.intake_motor.getOutputCurrent() < 3 and self.switch.get() == 0:
+            return True
+        else:
+            return False
