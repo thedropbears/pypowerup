@@ -6,9 +6,9 @@ from components.intake import Intake
 
 from automations.intake import Intake
 
+
 class LifterAutomation(StateMachine):
     lifter: Lifter
-
 
     @state(must_finish=True, Finish=True)
     def cube_detection(self):
@@ -30,12 +30,10 @@ class LifterAutomation(StateMachine):
     def move_complete(self):
         """Move to Switch height."""
         if self.lifter.get_pos() == self.setpos:
-           self.next_state("unload")
+            self.next_state("unload")
 
     @state(must_finish=True)
-    """Unload Cube."""
     def unload(self):
         if unloadButton:
             place_cube()
-            self.done    
-    
+            self.done
