@@ -10,8 +10,11 @@ class IntakeAutomation(StateMachine):
     def starting(self):
         """Start the intake."""
         self.intake_enable(0.3)
+        if self.cube_inside():
+            self.next_state("stopping")
 
     @state(must_finish=True)
     def stopping(self):
         """Stop the intake"""
+        self.intake_enable(0)
         

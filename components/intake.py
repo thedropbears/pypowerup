@@ -1,8 +1,11 @@
 from ctre import CANTalon
+from wpilib import DigitalInput
+
 
 class Intake:
 
-    intake_motor = CANTalon
+    intake_motor = CANTalon("Channel")
+    switch = DigitalInput("Channel")
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
@@ -31,9 +34,9 @@ class Intake:
 
     def cube_inside(self):
         """Run when the micro switch is pressed and when the current output is above a threshold, which stops the motors."""
-        if 
-        return self.intake_motor.getOutputCurrent() > 3
-
+        if self.intake_motor.getOutputCurrent() > 3 and self.switch.get() == 1:
+            return True
+        
     def cube_outside(self):
         """Run when a button is pushed on the joystick. Makes the wheels back drive."""
         pass
