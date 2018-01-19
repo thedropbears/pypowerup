@@ -4,6 +4,10 @@ import ctre
 import magicbot
 import wpilib
 
+from automations.intake import IntakeAutomation
+from automations.lifter import LifterAutomation
+from components.intake import Intake
+from components.lifter import Lifter
 from pyswervedrive.swervechassis import SwerveChassis
 from pyswervedrive.swervemodule import SwerveModule
 from utilities.bno055 import BNO055
@@ -12,8 +16,17 @@ from utilities.functions import rescale_js
 
 class Robot(magicbot.MagicRobot):
     # Add magicbot components here using variable annotations.
+    # Any components that directly actuate motors should be declared after
+    # any higher-level components (automations) that depend on them.
 
+    # Automations
+    intake_automation: IntakeAutomation
+    lifter_automation: LifterAutomation
+
+    # Actuators
     chassis: SwerveChassis
+    intake: Intake
+    lifter: Lifter
 
     module_drive_free_speed: float = 700.
 
@@ -51,8 +64,11 @@ class Robot(magicbot.MagicRobot):
         self.bno055.resetHeading()
 
     def teleopPeriodic(self):
-        """This is run each iteration of the control loop before magicbot components are executed."""
+        """
+        Process inputs from the driver station here.
 
+        This is run each iteration of the control loop before magicbot components are executed.
+        """
         # this is where the joystick inputs get converted to numbers that are sent
         # to the chassis component. we rescale them using the rescale_js function,
         # in order to make their response exponential, and to set a dead zone -

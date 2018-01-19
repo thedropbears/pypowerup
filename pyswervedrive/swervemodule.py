@@ -7,8 +7,6 @@ class SwerveModule:
     CIMCODER_COUNTS_PER_REV: int = 80
     WHEEL_DIAMETER: float = 0.0254 * 3
     DRIVE_ENCODER_GEAR_REDUCTION: float = 5.43956
-    # The VEX Integrated encoders have 1 count per revolution, and there
-    # is a 1:1 corrospondence to the angular position of the module.
     STEER_COUNTS_PER_RADIAN = 4096 / math.tau
 
     drive_counts_per_rev = CIMCODER_COUNTS_PER_REV*DRIVE_ENCODER_GEAR_REDUCTION
@@ -46,11 +44,11 @@ class SwerveModule:
         self.vy = 0
 
         self.steer_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.CTRE_MagEncoder_Absolute, 0, 10)
-        # changes sign of motor throttle vilues
-        self.steer_motor.setSensorPhase(self.reverse_steer_encoder)
         # changes direction of motor encoder
+        self.steer_motor.setSensorPhase(self.reverse_steer_encoder)
+        # changes sign of motor throttle vilues
         self.steer_motor.setInverted(self.reverse_steer_direction)
-        sp = self.steer_motor.getSelectedSensorPosition(0)[1]
+        sp = self.steer_motor.getSelectedSensorPosition(0)
         self.current_azimuth_sp = float(sp - self.steer_enc_offset) / self.STEER_COUNTS_PER_RADIAN
         self.steer_motor.config_kP(0, 0.0001, 10)
         self.steer_motor.config_kI(0, 0.0, 10)
@@ -62,9 +60,9 @@ class SwerveModule:
         self.steer_motor.setNeutralMode(True)
 
         self.drive_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, 10)
-        # changes sign of motor throttle values
-        self.drive_motor.setSensorPhase(self.reverse_drive_encoder)
         # changes direction of motor encoder
+        self.drive_motor.setSensorPhase(self.reverse_drive_encoder)
+        # changes sign of motor throttle values
         self.drive_motor.setInverted(self.reverse_drive_direction)
         self.drive_motor.config_kP(0, 1.0, 10)
         self.drive_motor.config_kI(0, 0.0, 10)
@@ -91,7 +89,7 @@ class SwerveModule:
 
         This prevents the module unwinding on start.
         """
-        sp = self.steer_motor.getSelectedSensorPosition(0)[1]
+        sp = self.steer_motor.getSelectedSensorPosition(0)
         self.current_azimuth_sp = float(sp - self.steer_enc_offset) / self.STEER_COUNTS_PER_RADIAN
         self.steer_motor.set(ctre.ControlMode.Position, sp)
 
@@ -102,7 +100,7 @@ class SwerveModule:
         odometry.
         """
         self.zero_azimuth = self.current_measured_azimuth
-        self.zero_drive_pos = (self.drive_motor.getSelectedSensorPosition(0)[1]
+        self.zero_drive_pos = (self.drive_motor.getSelectedSensorPosition(0)
                                / self.drive_counts_per_metre)
 
     def get_encoder_delta(self):
@@ -112,7 +110,7 @@ class SwerveModule:
         odometry.
         """
         steer_delta = self.current_measured_azimuth - self.zero_azimuth
-        drive_delta = (self.drive_motor.getSelectedSensorPosition(0)[1]
+        drive_delta = (self.drive_motor.getSelectedSensorPosition(0)
                        / self.drive_counts_per_metre) - self.zero_drive_pos
         return steer_delta, drive_delta
 
@@ -214,14 +212,14 @@ class SwerveModule:
     @property
     def current_measured_azimuth(self):
         """Return the azimuth of the wheel as measured by the encoder."""
-        pos = self.steer_motor.getSelectedSensorPosition(0)[1]
+        pos = self.steer_motor.getSelectedSensorPosition(0)
         return constrain_angle(float(pos - self.steer_enc_offset)
                                / self.STEER_COUNTS_PER_RADIAN)
 
     @property
     def current_speed(self):
         """Return the current speed of the module's wheel"""
-        wheel_vel = self.drive_motor.getSelectedSensorVelocity(0)[1]
+        wheel_vel = self.drive_motor.getSelectedSensorVelocity(0)
         return wheel_vel / self.drive_velocity_to_native_units
 
     @staticmethod
