@@ -12,7 +12,12 @@ class OverallBase(AutonomousStateMachine):
     FMS_scale: 0  # L or R
     FMS_switch: 0  # L or R
     chassis: SwerveChassis
-    vision_angle = []
+    vision_angle = [tuple()]
+    target_cube = vision_angle[0][0]
+    fails = 0
+    # the 0th attribute of the tuple at index 0.
+    # should be the closest cube
+    # cubes will be listed in size order along with thier rough size and angle
 
     @state(first=True)
     def go_to_scale(self):
@@ -28,6 +33,7 @@ class OverallBase(AutonomousStateMachine):
     @state
     def deposit_cube(self):
         """The robot releases its cube into either the scale or switch"""
+        # Release cube
         self.next_state("go_to_cube")
 
     @state
@@ -41,13 +47,15 @@ class OverallBase(AutonomousStateMachine):
         """The robot attemppts to find a cube within the frame of the camera"""
         if self.vision_angle != None:  # cube found
             self.next_state("turn_and_go_to_cube")
-        if 2 == 2:  # multiple failures
+        elif self.fails >= 5:  # multiple failures
             self.next_state("dead_reckon")
+        else:
+            self.fails += 1
 
     @state
     def turn_and_go_to_cube(self):
         """The robot rotates in the direction specified by the vision
-        system and moves towards the cube"""
+        system while moving towards the cube"""
         angle = self.bno055.getAngle()
         absolute_cube_direction = angle + self.vision_angle
         self.chassis.set_inputs(math.cos(absolute_cube_direction),
@@ -87,12 +95,14 @@ class SwitchAndScale(OverallBase):
 
     @state
     def intake_cube(self):
-        """The robot drives towards where the next cube should be and then hands
-        over to vision for fine tuning"""
-        if self.been_to_switch is False:  # switch needs a cube and pickup was successful
-            self.next_state("go_to_switch")
-        elif self.been_to_switch:  # The switch has a cube and pickup was successful
+        """Attempts to intake the cube"""
+        # Run intake
+        if self.been_to_switch:  # cube inside intake system (current spikes)
             self.next_state("go_to_scale")
+        elif self.been_to_switch is False: # switch needs a cube and pickup was successful
+            self.next_state("go_to_switch")
+        if 1 == 1:  # After completing the intake cycle there is no cube
+            self.next_state("search_for_cube")
 
 class LeftSwitchAndScale(SwitchAndScale):
     """The switch and scale strategy when we start on the left"""
