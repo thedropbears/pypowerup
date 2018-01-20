@@ -1,4 +1,5 @@
 from ctre import WPI_TalonSRX
+import wpilib
 
 
 class Intake:
@@ -10,6 +11,9 @@ class Intake:
     intake_motor2 = WPI_TalonSRX("Channel")
     """This controls the back section of the intake mechanism,
     this controls two motors."""
+    arm = wpilib.solenoid(0)
+
+    shoot = wpilib.solenoid(1)
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
@@ -52,3 +56,11 @@ class Intake:
             return True
         else:
             return False
+
+    def intake_arm(self, value):
+        """Turns intake arm on or off"""
+        self.arm.set(value)
+
+    def intake_push(self, value):
+        """Turns the pushing pneumatic on or off"""
+        self.shoot.set(value)
