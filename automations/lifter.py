@@ -1,9 +1,6 @@
 from magicbot import StateMachine, state
-
 from components.lifter import Lifter
-
 from components.intake import Intake
-
 from automations.intake import Intake
 
 
@@ -20,20 +17,20 @@ class LifterAutomation(StateMachine):
     def move(self):
         """Move to Scale height."""
         if scaleButton:
-            self.setpos = self.lifter.scale_height
             self.lifter.move_scale()
+            self.next_state("move_complete")
         elif switchButton:
-            self.setpos = self.lifter.switch_height
             self.lifter.move_switch()
+            self.next_state("move_complete")
 
     @state(must_finish=True)
     def move_complete(self):
         """Move to Switch height."""
-        if self.lifter.get_pos() == self.setpos:
-            self.next_state("unload")
+        if self.lifter.at_pos():
+            self.next_state("unload")   
 
     @state(must_finish=True)
     def unload(self):
         if unloadButton:
             place_cube()
-            self.done
+            self.done()
