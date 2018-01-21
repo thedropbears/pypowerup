@@ -5,6 +5,7 @@ import magicbot
 import wpilib
 
 from automations.intake import IntakeAutomation
+from automations.test_intake import TestAutomation
 from automations.lifter import LifterAutomation
 from components.intake import Intake
 from components.lifter import Lifter
@@ -22,6 +23,7 @@ class Robot(magicbot.MagicRobot):
     # Automations
     intake_automation: IntakeAutomation
     lifter_automation: LifterAutomation
+    test_automation: TestAutomation
 
     # Actuators
     chassis: SwerveChassis
@@ -29,6 +31,8 @@ class Robot(magicbot.MagicRobot):
     lifter: Lifter
 
     module_drive_free_speed: float = 700.
+
+    xbox = wpilib.XboxController(0)
 
     def createObjects(self):
         """Create non-components here."""
@@ -73,11 +77,16 @@ class Robot(magicbot.MagicRobot):
         # to the chassis component. we rescale them using the rescale_js function,
         # in order to make their response exponential, and to set a dead zone -
         # which just means if it is under a certain value a 0 will be sent
-        # TODO: Tune these constants forvwhatever robot they are on
+        # TODO: Tune these constants for whatever robot they are on
         vx = -rescale_js(self.joystick.getY(), deadzone=0.05, exponential=1.2, rate=4)
         vy = -rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2, rate=4)
         vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=15.0, rate=self.spin_rate)
         self.chassis.set_inputs(vx, vy, vz)
+
+        if self.xbox.getAButton():
+            self.test_automation()
+        else:
+            pass
 
 
 if __name__ == '__main__':

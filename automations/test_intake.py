@@ -2,7 +2,7 @@ from magicbot import StateMachine, state, timed_state
 from components.intake import Intake
 
 
-class IntakeAutomation(StateMachine):
+class TestAutomation(StateMachine):
     intake: Intake
 
     @timed_state(first=True, duration=2, must_finish=True)
