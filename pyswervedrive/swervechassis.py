@@ -1,5 +1,7 @@
 from pyswervedrive.swervemodule import SwerveModule
 from utilities.bno055 import BNO055
+from wpilib import PIDController
+from wpilib.interfaces import PIDOutput
 import numpy as np
 import math
 
@@ -19,11 +21,30 @@ class SwerveChassis:
         self.vy = 0
         self.vz = 0
         self.field_oriented = False
+        self.hold_heading = True
 
     def setup(self):
+        # Heading PID controller
+        self.heading_pid_out = ChassisPIDOutput()
+        self.heading_pid = PIDController(Kp=0.1, Ki=0.0, Kd=0.0,
+                                         source=self.bno055.getAngle,
+                                         output=self.heading_pid_out,
+                                         period=1/50)
+        self.heading_pid.setInputRange(-math.pi, math.pi)
+        self.heading_pid.setOutputRange(-2, 2)
+        self.heading_pid.setContinuous()
         self.modules = [self.module_a, self.module_b, self.module_c, self.module_d]
 
+    def set_heading_sp_current(self):
+        self.set_heading_sp(self.bno055.getAngle())
+
+    def set_heading_sp(self, setpoint):
+        self.heading_pid.setSetpoint(setpoint)
+
     def on_enable(self):
+        self.heading_pid.reset()
+        self.set_heading_sp_current()
+
         # matrix which translates column vector of [x, y, z] in robot frame of
         # reference to module [x, y] movement
         self.A_matrix = np.array([
@@ -57,13 +78,20 @@ class SwerveChassis:
             module.reset_steer_setpoint()
 
     def execute(self):
+
+        pid_z = 0
+        if self.hold_heading:
+            pid_z = self.heading_pid.get()
+
+        vz = self.vz + pid_z
+
         for module in self.modules:
             module_dist = math.hypot(module.x_pos, module.y_pos)
             module_angle = math.atan2(module.y_pos, module.x_pos)
             # Calculate the additional vx and vy components for this module
             # required to achieve our desired angular velocity
-            vz_x = -module_dist*self.vz*math.sin(module_angle)
-            vz_y = module_dist*self.vz*math.cos(module_angle)
+            vz_x = -module_dist*vz*math.sin(module_angle)
+            vz_y = module_dist*vz*math.cos(module_angle)
             # TODO: re enable this and test field-oriented mode
             if self.field_oriented:
                 if hal.isSimulation():
@@ -124,3 +152,8 @@ class SwerveChassis:
         oriented_vx = vx * math.cos(heading) + vy * math.sin(heading)
         oriented_vy = -vx * math.sin(heading) + vy * math.cos(heading)
         return oriented_vx, oriented_vy
+
+
+class ChassisPIDOutput(PIDOutput):
+    def pidWrite(self, output):
+        self.output = output
