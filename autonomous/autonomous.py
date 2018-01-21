@@ -1,23 +1,29 @@
 """The autonomous controls for the robot. Vision code is not yet included"""
 import math
+import wpilib
 from magicbot.state_machine import AutonomousStateMachine, state
 from pyswervedrive.swervechassis import SwerveChassis
 from utilities.bno055 import BNO055
 
 
 class OverallBase(AutonomousStateMachine):
-    """A basic statemachine that is subclassed to all required autonomous routines."""
+    """statemachine that is subclassed to all deal with all possible autonomous requirements."""
 
+    closest_cube = []  # Will contain L or R and the co-ordinates of the cube,
+    # can only be set to one of the end cubes.
+    # This is the  cube that the robot will try to pickup
+    # after the first one is deposited
+    GameData = wpilib.DriverStation.getInstance()
     bno055: BNO055
-    FMS_scale: 0  # L or R
-    FMS_switch: 0  # L or R
+    FMS_scale = GameData[1]  # L or R
+    FMS_switch = GameData[0]  # L or R
     chassis: SwerveChassis
     vision_angle = [tuple()]
     target_cube = vision_angle[0][0]
-    fails = 0
-    # the 0th attribute of the tuple at index 0.
+    # the 0th element of the tuple at index 0.
     # should be the closest cube
     # cubes will be listed in size order along with thier rough size and angle
+    fails = 0
 
     @state(first=True)
     def go_to_scale(self):
@@ -37,15 +43,16 @@ class OverallBase(AutonomousStateMachine):
         self.next_state("go_to_cube")
 
     @state
-    def go_to_cube(self):
+    def go_to_cube(self):  # this will need to be overridden in the subclasses
         """The robot drives towards where the next cube should be"""
-        if 1 == 1:  # Gets to cube position
+        # go to closest_cube
+        if 1 == 1:  # Gets to cube position (odometry)
             self.next_state("search_for_cube")
 
     @state
     def search_for_cube(self):
         """The robot attemppts to find a cube within the frame of the camera"""
-        if self.vision_angle != None:  # cube found
+        if self.vision_angle is not None:  # cube found
             self.next_state("turn_and_go_to_cube")
         elif self.fails >= 5:  # multiple failures
             self.next_state("dead_reckon")
@@ -76,10 +83,15 @@ class OverallBase(AutonomousStateMachine):
     def dead_reckon(self):
         """The robot tries to find the cube without the assistance of vision.
         likely to fail used as a last resort if vision has failed multiple times."""
+        # go to cube and run intake
+
 
 class SwitchAndScale(OverallBase):
     """A less general routine for the switch and scale strategy. Still requires subclassing"""
-    been_to_switch: False
+
+    def __init__(self):
+        self.been_to_switch = False
+        super().__init__()
 
     @state
     def go_to_switch(self):
@@ -99,15 +111,16 @@ class SwitchAndScale(OverallBase):
         # Run intake
         if self.been_to_switch:  # cube inside intake system (current spikes)
             self.next_state("go_to_scale")
-        elif self.been_to_switch is False: # switch needs a cube and pickup was successful
+        elif self.been_to_switch is False:  # switch needs a cube and pickup was successful
             self.next_state("go_to_switch")
         if 1 == 1:  # After completing the intake cycle there is no cube
             self.next_state("search_for_cube")
 
+
 class LeftSwitchAndScale(SwitchAndScale):
     """The switch and scale strategy when we start on the left"""
     MODE_NAME: 'Switch and scale - left start'
-    start_position: 0  # change to left start position
+    start_position = 3  # change to left start position
 
     @state(first=True)
     def go_to_scale(self):
@@ -121,10 +134,11 @@ class LeftSwitchAndScale(SwitchAndScale):
             pass
         self.next_state("deposit_cube")
 
+
 class RightSwitchAndScale(SwitchAndScale):
     """The switch and scale strategy when we start on the right"""
     MODE_NAME: 'Switch and scale - right start'
-    start_position: 0  # change to right start position
+    start_position = -3  # change to right start position
 
     @state(first=True)
     def go_to_scale(self):
@@ -138,14 +152,36 @@ class RightSwitchAndScale(SwitchAndScale):
             pass
         self.next_state("deposit_cube")
 
+
 class LeftDoubleScale(OverallBase):
     """The double switch strategy when we start on the left"""
     MODE_NAME: 'Double scale - left start'
-    start_position: 0 # change to left start position
+    start_position: 3  # change to left start position
     # I think i need more here but am not sure
+
+    @state(first=True)
+    def go_to_scale(self):
+        if self.FMS_scale == 'R':
+            # go to right scale
+            self.closest_cube = ['R', ('co-ordinates')]
+        elif self.FMS_scale == 'L':
+            # go to left scale
+            self.closest_cube = ['L', ('co-ordinates')]
+        self.next_state("deposit_cube")
+
 
 class RightDoubleScale(OverallBase):
     """The double switch strategy when we start on the right"""
     MODE_NAME: 'Double scale - right start'
-    start_position: 0 # change to right start position
+    start_position = -3  # change to right start position
     # I think i need more here but am not sure
+
+    @state(first=True)
+    def go_to_scale(self):
+        if self.FMS_scale == 'R':
+            # go to right scale
+            self.closest_cube = ['R', ('co-ordinates')]
+        elif self.FMS_scale == 'L':
+            # go to left scale
+            self.closest_cube = ['L', ('co-ordinates')]
+        self.next_state("deposit_cube")
