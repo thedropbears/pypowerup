@@ -71,13 +71,16 @@ class Robot(magicbot.MagicRobot):
         """
         Process inputs from the driver station here.
 
-        This is run each iteration of the control loop before magicbot components are executed.
+        This is run each iteration of the control loop before magicbot
+        components are executed.
         """
-        # this is where the joystick inputs get converted to numbers that are sent
-        # to the chassis component. we rescale them using the rescale_js function,
-        # in order to make their response exponential, and to set a dead zone -
-        # which just means if it is under a certain value a 0 will be sent
+        # this is where the joystick inputs get converted to numbers that
+        # are sent to the chassis component. we rescale them using the
+        # rescale_js function, in order to make their response exponential,
+        # and to set a dead zone which just means if it is under a certain
+        # value a 0 will be sent
         # TODO: Tune these constants for whatever robot they are on
+
         vx = -rescale_js(self.joystick.getY(), deadzone=0.05, exponential=1.2, rate=4)
         vy = -rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2, rate=4)
         vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=15.0, rate=self.spin_rate)
