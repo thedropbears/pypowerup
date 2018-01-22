@@ -33,8 +33,7 @@ class OverallBase(AutonomousStateMachine):
             pass
         if self.FMS_scale == 'R':
             # go to right scale
-            pass
-        self.next_state("deposit_cube")
+
 
     @state
     def deposit_cube(self):
@@ -47,11 +46,11 @@ class OverallBase(AutonomousStateMachine):
         """The robot drives towards where the next cube should be"""
         # go to closest_cube
         if 1 == 1:  # Gets to cube position (odometry)
-            self.next_state("search_for_cube")
 
     @state
     def search_for_cube(self):
         """The robot attemppts to find a cube within the frame of the camera"""
+
         if self.vision_angle is not None:  # cube found
             self.next_state("turn_and_go_to_cube")
         elif self.fails >= 5:  # multiple failures
@@ -85,9 +84,9 @@ class OverallBase(AutonomousStateMachine):
         likely to fail used as a last resort if vision has failed multiple times."""
         # go to cube and run intake
 
-
 class SwitchAndScale(OverallBase):
     """A less general routine for the switch and scale strategy. Still requires subclassing"""
+
 
     def __init__(self):
         self.been_to_switch = False
@@ -96,6 +95,7 @@ class SwitchAndScale(OverallBase):
     @state
     def go_to_switch(self):
         """Goes to the switch, when subclassed will go to the correct side regardless of start."""
+
         self.been_to_switch: True
         if self.FMS_switch == 'L':
             # go to left switch
