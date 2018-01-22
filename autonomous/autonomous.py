@@ -1,7 +1,6 @@
 """The autonomous controls for the robot. Vision code is not yet included"""
 import math
 import wpilib
-import vision
 import numpy as np
 from magicbot.state_machine import AutonomousStateMachine, state
 from automations.motion import ChassisMotion
@@ -57,7 +56,7 @@ class OverallBase(AutonomousStateMachine):
         if self.vision_angle is not None:  # cube found
             self.next_state("turn_and_go_to_cube")
         elif self.fails >= 5:  # multiple failures
-            self.next_state("dead_reckon") 
+            self.next_state("dead_reckon")
         else:
             self.fails += 1
 
@@ -169,7 +168,7 @@ class LeftDoubleScale(OverallBase):
             pass
             # go to right scale
         elif self.FMS_scale == 'L':
-            self.waypoints.set_waypoints = np.array(self.coordinates[0])            
+            self.waypoints.set_waypoints = np.array(self.coordinates[0])
             # go to left scale
         self.next_state("deposit_cube")
 
