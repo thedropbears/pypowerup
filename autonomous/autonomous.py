@@ -2,6 +2,7 @@
 import math
 import wpilib
 from magicbot.state_machine import AutonomousStateMachine, state
+from automations.motion import ChassisMotion
 from pyswervedrive.swervechassis import SwerveChassis
 from utilities.bno055 import BNO055
 
@@ -17,6 +18,7 @@ class OverallBase(AutonomousStateMachine):
     bno055: BNO055
     FMS_scale = GameData[1]  # L or R
     FMS_switch = GameData[0]  # L or R
+    waypoints: ChassisMotion
     chassis: SwerveChassis
     vision_angle = [tuple()]
     target_cube = vision_angle[0][0]
