@@ -20,9 +20,7 @@ class VectorPursuit:
         """
         self.waypoints = waypoints
         self.segment = self.waypoints[1] - self.waypoints[0]
-        self.segment_start = self.waypoints[0]
-        self.segment_end = self.waypoints[1]
-        self.waypoint_idx = 0
+        self.segment_idx = 0
 
     def get_output(self, position: np.ndarray, orientation: int, speed: int):
         """Compute the angle to move the robot in to converge with waypoints.
@@ -36,15 +34,31 @@ class VectorPursuit:
         """
 
         # check if at edge of segment
-        displacement = position - self.segment_start
+        displacement = position - self.waypoints[self.segment_idx]
         scale = displacement.dot(self.segment) / self.segment.dot(self.segment)
 
         # calculate projected point
-        projected_point = self.segment_start + scale * self.segment
+        projected_point = (self.waypoints[self.segment_idx]
+                           + scale * self.segment)
         # print(projected_point)
 
         # define look ahead distance
-        look_ahead_distance = 1 + 0.3 * speed
+        look_ahead_distance = 0.5 + 0.3 * speed
+
+        look_ahead_point = projected_point
+        look_ahead_remaining = look_ahead_distance
+        look_ahead_waypoint = self.segment_idx
+        while look_ahead_remaining > 0:
+            segment_start = self.waypoints[look_ahead_waypoint]
+            segment_end = self.waypoints[look_ahead_waypoint+1]
+            segment = segment_end - segment_start
+            segment_normalised = segment / np.linalg.norm(segment)
+            look_ahead_point = (projected_point + look_ahead_remaining
+                                * segment_normalised)
+            if look_ahead_waypoint == len(self.waypoints)-2:
+                break
+            projected_point = segment_end
+            look_ahead_waypoint += 1
 
         segment_normalised = self.segment / np.linalg.norm(self.segment)
         look_ahead_point = (projected_point
@@ -54,15 +68,16 @@ class VectorPursuit:
 
         # calculate angle of look ahead from oreintation
         new_x, new_y = look_ahead_point - position
+
         theta = math.atan2(new_y, new_x)
-        angle = theta - orientation
 
-        if scale > 1 and self.waypoint_idx < len(self.waypoints)-2:
-            self.waypoint_idx += 1
-            self.segment_end = self.waypoints[self.waypoint_idx+1]
-            self.segment_start = self.waypoints[self.waypoint_idx]
-            self.segment = self.segment_end - self.segment_start
+        if scale > 1 and self.segment_idx < len(self.waypoints)-2:
+            self.segment_idx += 1
+            self.segment = (self.waypoints[self.segment_idx+1]
+                            - self.waypoints[self.segment_idx])
 
-        return angle
+        over = False
+        if np.linalg.norm(position - self.waypoints[-1]) < 0.1:
+            over = True
 
-        # return vx, vy
+        return theta, over

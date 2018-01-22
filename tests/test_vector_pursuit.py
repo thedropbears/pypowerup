@@ -27,10 +27,12 @@ def test_single_waypoint_converge():
     pursuit.set_waypoints(waypoints)
 
     for i in range(200):
-        theta = pursuit.get_output(np.array([robot_x, robot_y]), orientation,
-                                   speed)
+        theta, over = pursuit.get_output(np.array([robot_x, robot_y]), orientation,
+                                         speed)
         robot_x, robot_y = position_delta_x_y(theta, speed,
                                               robot_x, robot_y, orientation)
+        if over:
+            break
 
     assert robot_x > 2
     assert abs(robot_y) < 0.1
@@ -48,10 +50,12 @@ def test_multi_waypoint_converge():
     pursuit.set_waypoints(waypoints)
 
     for i in range(200):
-        theta = pursuit.get_output(np.array([robot_x, robot_y]), orientation,
-                                   speed)
+        theta, over = pursuit.get_output(np.array([robot_x, robot_y]), orientation,
+                                         speed)
         robot_x, robot_y = position_delta_x_y(theta, speed,
                                               robot_x, robot_y, orientation)
+        if over:
+            break
 
     assert abs(robot_x-1) < 0.1
     assert robot_y > 2

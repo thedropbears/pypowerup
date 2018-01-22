@@ -45,8 +45,8 @@ class SwerveChassis:
         self.heading_pid.enable()
 
     def heading_hold_on(self):
+        self.set_heading_sp_current()
         self.heading_pid.reset()
-        self.heading_pid.enable()
         self.hold_heading = True
 
     def heading_hold_off(self):
@@ -54,8 +54,8 @@ class SwerveChassis:
         self.hold_heading = False
 
     def on_enable(self):
-        self.heading_pid.reset()
-        self.set_heading_sp_current()
+        self.bno055.resetHeading()
+        self.heading_hold_on()
 
         # matrix which translates column vector of [x, y, z] in robot frame of
         # reference to module [x, y] movement
@@ -104,8 +104,10 @@ class SwerveChassis:
                 pid_z = self.heading_pid.get()
             else:
                 self.set_heading_sp_current()
-
-        vz = self.vz + pid_z
+        input_vz = 0
+        if self.vz is not None:
+            input_vz = self.vz
+        vz = input_vz + pid_z
 
         for module in self.modules:
             module_dist = math.hypot(module.x_pos, module.y_pos)

@@ -39,15 +39,14 @@ class ChassisMotion:
 
     def execute(self):
         if self.enabled:
-            self.chassis.set_heading_sp(self.waypoints[self.waypoint_idx][2])
-            self.chassis.field_oriented = False
+            self.chassis.field_oriented = True
 
             odom_pos = np.array([self.chassis.odometry_x, self.chassis.odometry_y])
             odom_vel = np.array([self.chassis.odometry_x, self.chassis.odometry_y])
 
             speed = np.linalg.norm(odom_vel)
 
-            direction_of_motion = self.pursuit.get_output(odom_pos, self.bno055.getAngle(), speed)
+            direction_of_motion, over = self.pursuit.get_output(odom_pos, self.bno055.getAngle(), speed)
 
             # TODO: control this later
             speed_sp = self.waypoints[self.waypoint_idx][3]
@@ -55,8 +54,12 @@ class ChassisMotion:
             vx = speed_sp * math.cos(direction_of_motion)
             vy = speed_sp * math.sin(direction_of_motion)
 
-            self.chassis.set_inputs(vx, vy, 0.0)
+            # self.chassis.set_inputs(vx, vy, 0.0)
+            self.chassis.set_velocity_heading(vx, vy, self.waypoints[self.waypoint_idx][2])
+
+            if over:
+                self.enabled = False
 
     @property
     def waypoint_idx(self):
-        return self.pursuit.waypoint_idx
+        return self.pursuit.segment_idx

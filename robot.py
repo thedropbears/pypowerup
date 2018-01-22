@@ -64,7 +64,6 @@ class Robot(magicbot.MagicRobot):
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
-        self.bno055.resetHeading()
 
     def teleopPeriodic(self):
         """
