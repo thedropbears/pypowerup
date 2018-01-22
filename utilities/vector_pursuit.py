@@ -57,14 +57,12 @@ class VectorPursuit:
         theta = math.atan2(new_y, new_x)
         angle = theta - orientation
 
-        # output vector of angle and speed
-        vx = speed * math.cos(angle)
-        vy = speed * math.sin(angle)
-
         if scale > 1 and self.waypoint_idx < len(self.waypoints)-2:
             self.waypoint_idx += 1
             self.segment_end = self.waypoints[self.waypoint_idx+1]
             self.segment_start = self.waypoints[self.waypoint_idx]
             self.segment = self.segment_end - self.segment_start
 
-        return vx, vy
+        return angle
+
+        # return vx, vy

@@ -4,7 +4,9 @@ import math
 from magicbot import MagicRobot
 
 
-def position_delta_x_y(vx, vy, robot_x, robot_y, orientation):
+def position_delta_x_y(theta, speed, robot_x, robot_y, orientation):
+    vx = speed * math.cos(theta)
+    vy = speed * math.sin(theta)
     oriented_vx = vx * math.cos(orientation) + vy * math.sin(orientation)
     oriented_vy = -vx * math.sin(orientation) + vy * math.cos(orientation)
 
@@ -25,11 +27,9 @@ def test_single_waypoint_converge():
     pursuit.set_waypoints(waypoints)
 
     for i in range(200):
-        vx, vy = pursuit.get_output(np.array([robot_x, robot_y]), orientation,
-                                    speed)
-        print("Pursuit sim robot: x %s, y %s, Pursuit Output: x %s, y %s"
-              % (robot_x, robot_y, vx, vy))
-        robot_x, robot_y = position_delta_x_y(vx, vy,
+        theta = pursuit.get_output(np.array([robot_x, robot_y]), orientation,
+                                   speed)
+        robot_x, robot_y = position_delta_x_y(theta, speed,
                                               robot_x, robot_y, orientation)
 
     assert robot_x > 2
@@ -48,11 +48,9 @@ def test_multi_waypoint_converge():
     pursuit.set_waypoints(waypoints)
 
     for i in range(200):
-        vx, vy = pursuit.get_output(np.array([robot_x, robot_y]), orientation,
-                                    speed)
-        print("Pursuit sim robot: x %s, y %s, Pursuit Output: x %s, y %s"
-              % (robot_x, robot_y, vx, vy))
-        robot_x, robot_y = position_delta_x_y(vx, vy,
+        theta = pursuit.get_output(np.array([robot_x, robot_y]), orientation,
+                                   speed)
+        robot_x, robot_y = position_delta_x_y(theta, speed,
                                               robot_x, robot_y, orientation)
 
     assert abs(robot_x-1) < 0.1

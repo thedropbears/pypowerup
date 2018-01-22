@@ -20,8 +20,8 @@ class SwerveChassis:
         self.vx = 0
         self.vy = 0
         self.vz = 0
-        self.field_oriented = False
-        self.hold_heading = True
+        self.field_oriented = True
+        self.hold_heading = False
 
     def setup(self):
         # Heading PID controller
@@ -125,6 +125,7 @@ class SwerveChassis:
         self.odometry_x_vel = v_x
         self.odometry_y_vel = v_y
         self.odometry_z_vel = v_z
+        print("odometry x %s, y %s" % (self.odometry_x, self.odometry_y))
 
     def robot_movement_from_odometry(self, odometry_outputs):
         lstsq_ret = np.linalg.lstsq(self.A_matrix, odometry_outputs,
