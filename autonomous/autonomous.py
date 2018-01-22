@@ -1,6 +1,8 @@
 """The autonomous controls for the robot. Vision code is not yet included"""
 import math
 import wpilib
+import vision
+import numpy as np
 from magicbot.state_machine import AutonomousStateMachine, state
 from automations.motion import ChassisMotion
 from pyswervedrive.swervechassis import SwerveChassis
@@ -10,17 +12,15 @@ from utilities.bno055 import BNO055
 class OverallBase(AutonomousStateMachine):
     """statemachine that is subclassed to all deal with all possible autonomous requirements."""
 
-    closest_cube = []  # Will contain L or R and the co-ordinates of the cube,
-    # can only be set to one of the end cubes.
-    # This is the  cube that the robot will try to pickup
-    # after the first one is deposited
     GameData = wpilib.DriverStation.getInstance()
+    GameDataMessage = GameData.getGameSpecificMessage()
+    # Takes the sides of the scale from the field management system
     bno055: BNO055
-    FMS_scale = GameData[1]  # L or R
-    FMS_switch = GameData[0]  # L or R
+    FMS_scale = GameDataMessage[1]  # L or R
+    FMS_switch = GameDataMessage[0]  # L or R
     waypoints: ChassisMotion
     chassis: SwerveChassis
-    vision_angle = [tuple()]
+    vision_angle = [tuple(1)]
     target_cube = vision_angle[0][0]
     # the 0th element of the tuple at index 0.
     # should be the closest cube
@@ -57,7 +57,7 @@ class OverallBase(AutonomousStateMachine):
         if self.vision_angle is not None:  # cube found
             self.next_state("turn_and_go_to_cube")
         elif self.fails >= 5:  # multiple failures
-            self.next_state("dead_reckon")
+            self.next_state("dead_reckon") 
         else:
             self.fails += 1
 
@@ -158,32 +158,35 @@ class RightSwitchAndScale(SwitchAndScale):
 class LeftDoubleScale(OverallBase):
     """The double switch strategy when we start on the left"""
     MODE_NAME: 'Double scale - left start'
-    start_position: 3  # change to left start position
-    # I think i need more here but am not sure
+    coordinates = [[8, 2.25, 1.5708, 1],
+                   [6.10, 2.50, 2.35619, 1],
+                   [5.25, 1.80, 2.35619, 1],
+                   [7.50, 2, 0, 1]]
 
     @state(first=True)
     def go_to_scale(self):
         if self.FMS_scale == 'R':
+            pass
             # go to right scale
-            self.closest_cube = ['R', ('co-ordinates')]
         elif self.FMS_scale == 'L':
+            self.waypoints.set_waypoints = np.array(self.coordinates[0])            
             # go to left scale
-            self.closest_cube = ['L', ('co-ordinates')]
         self.next_state("deposit_cube")
 
 
 class RightDoubleScale(OverallBase):
     """The double switch strategy when we start on the right"""
     MODE_NAME: 'Double scale - right start'
-    start_position = -3  # change to right start position
-    # I think i need more here but am not sure
-
+    coordinates = [[8, -2.25, 1.5708, 1],
+                   [6.10, -2.50, 2.35619, 1],
+                   [5.25, -1.80, 2.35619, 1],
+                   [7.50, -2, 0, 1]]
     @state(first=True)
     def go_to_scale(self):
         if self.FMS_scale == 'R':
+            self.waypoints.set_waypoints = np.array(self.coordinates[0])
             # go to right scale
-            self.closest_cube = ['R', ('co-ordinates')]
         elif self.FMS_scale == 'L':
             # go to left scale
-            self.closest_cube = ['L', ('co-ordinates')]
+            pass
         self.next_state("deposit_cube")
