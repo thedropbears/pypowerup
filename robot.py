@@ -1,18 +1,11 @@
 #!/usr/bin/env python3
 
-import ctre
 import magicbot
 import wpilib
 
-from automations.intake import IntakeAutomation
 from automations.test_intake import TestAutomation
-from automations.lifter import LifterAutomation
 from components.intake import Intake
-from components.lifter import Lifter
-from pyswervedrive.swervechassis import SwerveChassis
-from pyswervedrive.swervemodule import SwerveModule
-from utilities.bno055 import BNO055
-from utilities.functions import rescale_js
+from ctre import WPI_TalonSRX
 
 
 class Robot(magicbot.MagicRobot):
@@ -21,51 +14,29 @@ class Robot(magicbot.MagicRobot):
     # any higher-level components (automations) that depend on them.
 
     # Automations
-    intake_automation: IntakeAutomation
-    lifter_automation: LifterAutomation
     test_automation: TestAutomation
 
     # Actuators
-    chassis: SwerveChassis
     intake: Intake
-    lifter: Lifter
-
-    module_drive_free_speed: float = 700.
-
-    xbox = wpilib.XboxController(0)
 
     def createObjects(self):
         """Create non-components here."""
-
-        self.module_a = SwerveModule(  # top left module
-            steer_talon=ctre.WPI_TalonSRX(4), drive_talon=ctre.WPI_TalonSRX(13),
-            steer_enc_offset=-3893, x_pos=0.3, y_pos=0.3,
-            drive_free_speed=Robot.module_drive_free_speed,
-            reverse_drive_direction=True, reverse_drive_encoder=True)
-        self.module_b = SwerveModule(  # bottom left modulet
-            steer_talon=ctre.WPI_TalonSRX(2), drive_talon=ctre.WPI_TalonSRX(9),
-            steer_enc_offset=-3543, x_pos=-0.3, y_pos=0.3,
-            drive_free_speed=Robot.module_drive_free_speed)
-        self.module_c = SwerveModule(  # bottom right modulet
-            steer_talon=ctre.WPI_TalonSRX(8), drive_talon=ctre.WPI_TalonSRX(14),
-            steer_enc_offset=-1832, x_pos=-0.3, y_pos=-0.3,
-            drive_free_speed=Robot.module_drive_free_speed)
-        self.module_d = SwerveModule(  # top right modulet
-            steer_talon=ctre.WPI_TalonSRX(11), drive_talon=ctre.WPI_TalonSRX(6),
-            steer_enc_offset=-1541, x_pos=0.3, y_pos=-0.3,
-            drive_free_speed=Robot.module_drive_free_speed)
-
-        # create the imu object
-        self.bno055 = BNO055()
-
-        # boilerplate setup for the joystick
-        self.joystick = wpilib.Joystick(0)
-
-        self.spin_rate = 5
+        self.xbox = wpilib.XboxController(0)
+        """This is to state what channel our xbox controller is on"""
+        self.intake_motor1 = WPI_TalonSRX(1)
+        """This controls the front section of the intake mechanism, This controls two motors."""
+        self.intake_motor2 = WPI_TalonSRX(2)
+        """This controls the back section of the intake mechanism, this controls two motors."""
+        self.clamp_arm_left = wpilib.Solenoid(0)
+        self.clamp_arm_right = wpilib.Solenoid(1)
+        """This controls the arm in the back section of the intake mechanism"""
+        self.intake_kicker = wpilib.Solenoid(2)
+        """This controls the kicker in the back section of the intake mechanism"""
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
-        self.bno055.resetHeading()
+        self.intake.intake_clamp(False)
+        self.intake.intake_push(False)
 
     def teleopPeriodic(self):
         """
@@ -80,16 +51,10 @@ class Robot(magicbot.MagicRobot):
         # and to set a dead zone which just means if it is under a certain
         # value a 0 will be sent
         # TODO: Tune these constants for whatever robot they are on
+        # self.intake.intake_arm(self.xbox.getBButton())
 
-        vx = -rescale_js(self.joystick.getY(), deadzone=0.05, exponential=1.2, rate=4)
-        vy = -rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2, rate=4)
-        vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=15.0, rate=self.spin_rate)
-        self.chassis.set_inputs(vx, vy, vz)
-
-        if self.xbox.getAButton():
-            self.test_automation()
-        else:
-            pass
+        if self.xbox.getAButtonReleased():
+            self.test_automation.engage()
 
 
 if __name__ == '__main__':

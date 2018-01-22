@@ -1,4 +1,4 @@
-from ctre import CANTalon
+from ctre import WPI_TalonSRX
 
 
 class Lifter:
@@ -9,7 +9,7 @@ class Lifter:
         self.scale_height = None
         self.exchange_height = None
         self.ground_height = 0
-        self.motor = CANTalon
+        self.motor = WPI_TalonSRX(0)
         self.motor.config_kP(0)
         self.motor.config_kI(0)
         self.motor.config_kD(0)

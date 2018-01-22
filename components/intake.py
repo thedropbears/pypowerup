@@ -3,17 +3,11 @@ import wpilib
 
 
 class Intake:
-
-    limit_switch = WPI_TalonSRX("Channel")
-    intake_motor1 = WPI_TalonSRX("Channel")
-    """This controls the front section of the intake mechanism,
-    This controls two motors."""
-    intake_motor2 = WPI_TalonSRX("Channel")
-    """This controls the back section of the intake mechanism,
-    this controls two motors."""
-    arm = wpilib.solenoid(0)
-
-    shoot = wpilib.solenoid(1)
+    intake_motor1: WPI_TalonSRX
+    intake_motor2: WPI_TalonSRX
+    clamp_arm_left: wpilib.Solenoid
+    clamp_arm_right: wpilib.Solenoid
+    intake_kicker: wpilib.Solenoid
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
@@ -43,24 +37,21 @@ class Intake:
         """Run when the limit switch is pressed and when the current
         output is above a threshold, which stops the motors."""
         if (self.intake_motor.getOutputCurrent() > 3 and
-                self.limit_switch.getLimitSwitchState() == "something"):
+                self.limit_switch.getLimitSwitchState()):
             return True
-        else:
-            return False
 
     def cube_outside(self):
         """Run when a button is pushed on the joystick. Makes the
         wheels back drive."""
         if (self.intake_motor.getOutputCurrent() < 3 and
-                self.limit_switch.getLimitSwitchState() == "something"):
+                self.limit_switch.getLimitSwitchState()):
             return True
-        else:
-            return False
 
-    def intake_arm(self, value):
+    def intake_clamp(self, value):
         """Turns intake arm on or off"""
-        self.arm.set(value)
+        self.clamp_arm_left.set(value)
+        self.clamp_arm_right.set(value)
 
     def intake_push(self, value):
         """Turns the pushing pneumatic on or off"""
-        self.shoot.set(value)
+        self.intake_kicker.set(value)
