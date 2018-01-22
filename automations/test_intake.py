@@ -9,7 +9,7 @@ class TestAutomation(StateMachine):
     def clamp(self):
         self.intake.intake_clamp(True)
 
-    @timed_state(duration=1, next_state="reset", must_finish=True)
+    @timed_state(duration=0.5, next_state="reset", must_finish=True)
     def kick(self):
         self.intake.intake_clamp(False)
         self.intake.intake_push(True)

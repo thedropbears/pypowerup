@@ -1,4 +1,4 @@
-from ctre import WPI_TalonSRX
+from ctre import WPI_TalonSRX, CANifier
 import wpilib
 
 
@@ -8,6 +8,7 @@ class Intake:
     clamp_arm_left: wpilib.Solenoid
     clamp_arm_right: wpilib.Solenoid
     intake_kicker: wpilib.Solenoid
+    limit_switch: CANifier
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
@@ -55,3 +56,6 @@ class Intake:
     def intake_push(self, value):
         """Turns the pushing pneumatic on or off"""
         self.intake_kicker.set(value)
+
+    def switch(self):
+        print(self.limit_switch.getPWMInput(4))

@@ -5,7 +5,7 @@ import wpilib
 
 from automations.test_intake import TestAutomation
 from components.intake import Intake
-from ctre import WPI_TalonSRX
+from ctre import WPI_TalonSRX, CANifier
 
 
 class Robot(magicbot.MagicRobot):
@@ -32,6 +32,7 @@ class Robot(magicbot.MagicRobot):
         """This controls the arm in the back section of the intake mechanism"""
         self.intake_kicker = wpilib.Solenoid(2)
         """This controls the kicker in the back section of the intake mechanism"""
+        self.limit_switch = CANifier(4)
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
