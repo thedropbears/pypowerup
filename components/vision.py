@@ -8,7 +8,6 @@ class Vision:
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
-        self.sd.getAutoUpdateValue("/vision", [None])
         self.sd.addListener(self.new_value)
 
         self.vision = []
@@ -27,7 +26,7 @@ class Vision:
 
     def new_value(self, entry, key, value, param):
         start_time = time.time()
-        if key == "/vision":
+        if key == "vision/info":
             self.unpack_info(value, start_time)
     
     def format_list(self, lst, n):
