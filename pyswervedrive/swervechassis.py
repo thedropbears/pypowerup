@@ -21,18 +21,20 @@ class SwerveChassis:
         self.vy = 0
         self.vz = 0
         self.field_oriented = True
-        self.hold_heading = False
+        self.hold_heading = True
+        self.momentum = False
 
     def setup(self):
         # Heading PID controller
         self.heading_pid_out = ChassisPIDOutput()
-        self.heading_pid = PIDController(Kp=0.1, Ki=0.0, Kd=0.0,
+        self.heading_pid = PIDController(Kp=1.0, Ki=0.0, Kd=0.0,
                                          source=self.bno055.getAngle,
                                          output=self.heading_pid_out,
                                          period=1/50)
         self.heading_pid.setInputRange(-math.pi, math.pi)
         self.heading_pid.setOutputRange(-2, 2)
         self.heading_pid.setContinuous()
+        self.heading_pid.enable()
         self.modules = [self.module_a, self.module_b, self.module_c, self.module_d]
 
     def set_heading_sp_current(self):
@@ -40,6 +42,16 @@ class SwerveChassis:
 
     def set_heading_sp(self, setpoint):
         self.heading_pid.setSetpoint(setpoint)
+        self.heading_pid.enable()
+
+    def heading_hold_on(self):
+        self.heading_pid.reset()
+        self.heading_pid.enable()
+        self.hold_heading = True
+
+    def heading_hold_off(self):
+        self.heading_pid.disable()
+        self.hold_heading = False
 
     def on_enable(self):
         self.heading_pid.reset()
@@ -81,7 +93,17 @@ class SwerveChassis:
 
         pid_z = 0
         if self.hold_heading:
-            pid_z = self.heading_pid.get()
+            if self.momentum and abs(self.bno055.getHeadingRate()) < 0.005:
+                self.momentum = False
+            if self.vz not in [0.0, None]:
+                self.momentum = True
+            if self.vz is None:
+                self.momentum = False
+
+            if not self.momentum:
+                pid_z = self.heading_pid.get()
+            else:
+                self.set_heading_sp_current()
 
         vz = self.vz + pid_z
 
@@ -135,12 +157,27 @@ class SwerveChassis:
         x_field, y_field = self.field_orient(x, y, angle)
         return x_field, y_field, theta
 
+    def set_velocity_heading(self, vx, vy, heading):
+        """Set a translational velocity and a rotational orientation to achieve.
+
+        Args:
+            vx: (forward) component of the robot's desired velocity. In m/s.
+            vy: (leftward) component of the robot's desired velocity. In m/s.
+            heading: the heading the robot is to face.
+        """
+        self.vx = vx
+        self.vy = vy
+        self.vz = None
+        self.set_heading_sp(heading)
+
     def set_inputs(self, vx, vy, vz):
         """Set chassis vx, vy, and vz components of inputs.
-        :param vx: The vx (forward) component of the robot's desired velocity. In m/s.
-        :param vy: The vy (leftward) component of the robot's desired velocity. In m/s.
-        :param vz: The vz (counter-clockwise rotation) component of the robot's
-        desired [angular] velocity. In radians/s."""
+        Args:
+            vx: (forward) component of the robot's desired velocity. In m/s.
+            vy: (leftward) component of the robot's desired velocity. In m/s.
+            vz: The vz (counter-clockwise rotation) component of the robot's
+                desired [angular] velocity. In radians/s.
+        """
         self.vx = vx
         self.vy = vy
         self.vz = vz

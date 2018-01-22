@@ -29,6 +29,7 @@ class ChassisMotion:
         waypoints_xy = np.array([[waypoint[0], waypoint[1]] for waypoint in waypoints])
         self.pursuit.set_waypoints(waypoints_xy)
         self.enabled = True
+        self.chassis.heading_hold_on()
 
     def disable(self):
         self.enabled = False
