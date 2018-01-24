@@ -17,25 +17,10 @@ class IntakeAutomation(StateMachine):
             self.intake_rotate(0.3)
 
     @state(must_finish=True)
-    def hold(self):
-        """Waits for lifter to reach position
-        then runs placing_cube state"""
-
-    @state(must_finish=True)
-    def place_cube(self):
-        """Placing the cube"""
-        if self.cube_outside():
-            self.intake_rotate(0.0)
-            self.next_state("intake_cube")
-        else:
-            self.intake_rotate(-0.3)
-
-    @state(must_finish=True)
-    def stopping(self):
-        """Stop the intake"""
-        self.intake_disable()
-
-    @state(must_finish=True)
-    def reset_lift(self):
-        """Resets the lift to floor level"""
-        self.reset_pos()
+    def clamp(self):
+        self.intake.intake_clamp(True)
+        self.intake.intake_push(False)
+        if self.intake.intake_clamp():
+            self.LifterAutomation.engage()
+            self.done()
+        """Run lifter state machine"""

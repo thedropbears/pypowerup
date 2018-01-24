@@ -3,10 +3,10 @@
 import magicbot
 import wpilib
 
-from automations.containment import Containment
+from automations.intake import IntakeAutomation
 from components.intake import Intake
 from ctre import WPI_TalonSRX, CANifier
-from automations.lifter import LifterAutomation
+
 
 class Robot(magicbot.MagicRobot):
     # Add magicbot components here using variable annotations.
@@ -14,8 +14,7 @@ class Robot(magicbot.MagicRobot):
     # any higher-level components (automations) that depend on them.
 
     # Automations
-    containment: Containment
-    lifter_automation: LifterAutomation
+    intake_automation: IntakeAutomation
 
     # Actuators
     intake: Intake
@@ -56,7 +55,7 @@ class Robot(magicbot.MagicRobot):
         # self.intake.intake_arm(self.xbox.getBButton())
 
         if self.xbox.getAButtonReleased():
-            self.test_automation.engage()
+            self.intake_automation.engage()
 
 
 if __name__ == '__main__':
