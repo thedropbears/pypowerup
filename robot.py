@@ -6,7 +6,7 @@ import wpilib
 from automations.containment import Containment
 from components.intake import Intake
 from ctre import WPI_TalonSRX, CANifier
-
+from automations.lifter import LifterAutomation
 
 class Robot(magicbot.MagicRobot):
     # Add magicbot components here using variable annotations.
@@ -15,6 +15,7 @@ class Robot(magicbot.MagicRobot):
 
     # Automations
     containment: Containment
+    lifter_automation: LifterAutomation
 
     # Actuators
     intake: Intake

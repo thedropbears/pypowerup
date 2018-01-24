@@ -19,7 +19,7 @@ class LifterAutomation(StateMachine):
     @state(must_finish=True)
     def move(self):
         """Move to Scale height."""
-        if scaleButton:
+        if self.scaleButton:
             self.setpos = self.lifter.scale_height
             self.lifter.move_scale()
         elif switchButton:
