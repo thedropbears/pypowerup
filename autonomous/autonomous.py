@@ -27,7 +27,7 @@ class OverallBase(AutonomousStateMachine):
         self.fms_scale = self.game_data_message[1]  # L or R
         self.fms_switch = self.game_data_message[0]  # L or R
 
-    @state  # (first=True)
+    @state(first=True)
     def go_to_scale(self):
         """The robot travels to the scale"""
         if self.fms_scale == 'L':
@@ -61,7 +61,7 @@ class OverallBase(AutonomousStateMachine):
         else:
             self.fails += 1
 
-    @state(first=True)
+    @state
     def turn_and_go_to_cube(self):
         """The robot rotates in the direction specified by the vision
         system while moving towards the cube. Combines two angles to find the absolute
@@ -72,7 +72,7 @@ class OverallBase(AutonomousStateMachine):
         self.chassis.set_velocity_heading(math.cos(math.radians(absolute_cube_direction)),
                                           math.sin(math.radians(absolute_cube_direction)),
                                           (math.radians(self.vision_angle)))
-        # self.next_state("intake_cube")
+        self.next_state("intake_cube")
 
     @state
     def intake_cube(self):
@@ -94,6 +94,19 @@ class VisionTest(OverallBase):
     """To test the vision system"""
     DEFAULT = True
     MODE_NAME = 'Vision Test'
+
+    @state(first=True)
+    def turn_and_go_to_cube(self):
+        """The robot rotates in the direction specified by the vision
+        system while moving towards the cube. Combines two angles to find the absolute
+        angle towards the cube"""
+        angle = self.bno055.getAngle()
+        absolute_cube_direction = angle + self.vision_angle
+        self.chassis.field_oriented = True
+        self.chassis.set_velocity_heading(math.cos(math.radians(absolute_cube_direction)),
+                                          math.sin(math.radians(absolute_cube_direction)),
+                                          (math.radians(self.vision_angle)))
+        # self.next_state("intake_cube")
 
 
 class SwitchAndScale(OverallBase):
@@ -149,6 +162,23 @@ class RightSwitchAndScale(SwitchAndScale):
     """The switch and scale strategy when we start on the right"""
     MODE_NAME: 'Switch and scale - right start'
     start_position = -3  # change to right start position
+    coordinates = [[[4.24, -2.0, 1.60, 1],
+                    [5.5, -2.75, 2, 1],
+                    [5.25, -1.91, 2, 1],
+                    [7.5, -1.87, 0, 1]],  # SameSwitchSameScale
+                   [[4.29, -1.91, 1.45, 1],
+                    [5.5, -2.5, 1.8, 1],
+                    [5.08, 1.90, 0, 1],
+                    [7.07, 1.90, 0, 1]],  # SameSwitchCrossScale
+                   [[7.5, -1.87, 0, 1],
+                    [5.5, -2, 2, 1],
+                    [6, 2.1, 4.71239, 1],
+                    [4.2, 2.1, 4.71239, 1]],  # CrossSwitchSameScale
+                   [[5, -3, 0, 1],
+                    [6, 2, 0, 1],
+                    [7.5, 1.8, 0, 1],
+                    [5.5, 2, 3.92699, 1],
+                    [5.25, 1.5, 3.14159, 1]]]  # CrossSwitchCrossScale
 
     @state(first=True)
     def go_to_scale(self):
@@ -166,17 +196,26 @@ class RightSwitchAndScale(SwitchAndScale):
 class LeftDoubleScale(OverallBase):
     """The double switch strategy when we start on the left"""
     MODE_NAME: 'Double scale - left start'
-    coordinates = [[8, 2.25, 1.5708, 1],
-                   [6.10, 2.50, 2.35619, 1],
-                   [5.25, 1.80, 2.35619, 1],
-                   [7.50, 2, 0, 1]]
+    coordinates = [[[8, 2.25, 1.5708, 1],
+                    [6.10, 2.50, 2.35619, 1],
+                    [5.25, 1.80, 2.35619, 1],
+                    [7.50, 2, 0, 1]],  # coordinates for same scale
+                   [[5, 3, 0, 1],
+                    [6, -2, 0, 1],
+                    [7.5, -1.8, 0, 1],
+                    [5.5, -2, 3.92699, 1],
+                    [7.5, -2, 0, 1]]]  # coordinates for cross scale
 
     @state(first=True)
     def go_to_scale(self):
         if self.fms_scale == 'R':
-            pass
+            self.coordinates = self.coordinates[1]
+            self.motion.set_waypoints = np.array(self.coordinates[0])
+            self.motion.set_waypoints = np.array(self.coordinates[1])
+            self.motion.set_waypoints = np.array(self.coordinates[2])
             # go to right scale
         elif self.fms_scale == 'L':
+            self.coordinates = self.coordinates[0]
             self.motion.set_waypoints = np.array(self.coordinates[0])
             # go to left scale
         self.next_state("deposit_cube")
@@ -185,17 +224,26 @@ class LeftDoubleScale(OverallBase):
 class RightDoubleScale(OverallBase):
     """The double switch strategy when we start on the right"""
     MODE_NAME: 'Double scale - right start'
-    coordinates = [[8, -2.25, 1.5708, 1],
-                   [6.10, -2.50, 2.35619, 1],
-                   [5.25, -1.80, 2.35619, 1],
-                   [7.50, -2, 0, 1]]
+    coordinates = [[[8, -2.25, 1.5708, 1],
+                    [6.10, -2.50, 2.35619, 1],
+                    [5.25, -1.80, 2.35619, 1],
+                    [7.50, -2, 0, 1]],  # coordinates for same scale
+                   [[5, -3, 0, 1],
+                    [6, 2, 0, 1],
+                    [7.5, 1.8, 0, 1],
+                    [5.5, 2, 3.92699, 1],
+                    [7.5, 2, 0, 1]]]  # coordinates for cross scale
 
     @state(first=True)
     def go_to_scale(self):
         if self.fms_scale == 'R':
+            self.coordinates = self.coordinates[0]
             self.motion.set_waypoints = np.array(self.coordinates[0])
             # go to right scale
         elif self.fms_scale == 'L':
+            self.coordinates = self.coordinates[1]
+            self.motion.set_waypoints = np.array(self.coordinates[0])
+            self.motion.set_waypoints = np.array(self.coordinates[1])
+            self.motion.set_waypoints = np.array(self.coordinates[2])
             # go to left scale
-            pass
         self.next_state("deposit_cube")
