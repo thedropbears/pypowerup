@@ -3,12 +3,13 @@
 import ctre
 import magicbot
 import wpilib
-
+from networktables import NetworkTables
 from automations.intake import IntakeAutomation
 from automations.lifter import LifterAutomation
 from automations.motion import ChassisMotion
 from components.intake import Intake
 from components.lifter import Lifter
+from components.vision import Vision
 from pyswervedrive.swervechassis import SwerveChassis
 from pyswervedrive.swervemodule import SwerveModule
 from utilities.bno055 import BNO055
@@ -21,6 +22,8 @@ class Robot(magicbot.MagicRobot):
     # Add magicbot components here using variable annotations.
     # Any components that directly actuate motors should be declared after
     # any higher-level components (automations) that depend on them.
+
+    vision: Vision
 
     # Automations
     motion: ChassisMotion
@@ -62,6 +65,8 @@ class Robot(magicbot.MagicRobot):
 
         self.spin_rate = 5
 
+        NetworkTables.initialize()
+        self.sd = NetworkTables.getTable("SmartDashboard")
     def teleopInit(self):
         '''Called when teleop starts; optional'''
 
@@ -71,6 +76,7 @@ class Robot(magicbot.MagicRobot):
 
         This is run each iteration of the control loop before magicbot components are executed.
         """
+        print(self.vision.vision)
         if self.joystick.getRawButtonPressed(10):
             self.chassis.odometry_x = 0.0
             self.chassis.odometry_y = 0.0
