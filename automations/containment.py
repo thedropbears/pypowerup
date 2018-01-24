@@ -2,12 +2,13 @@ from magicbot import StateMachine, state, timed_state
 from components.intake import Intake
 
 
-class TestAutomation(StateMachine):
+class Containment(StateMachine):
     intake: Intake
 
     @timed_state(first=True, duration=5, next_state="kick", must_finish=True)
     def clamp(self):
         self.intake.intake_clamp(True)
+        self.intake.intake_push(False)
 
     @timed_state(duration=0.5, next_state="reset", must_finish=True)
     def kick(self):

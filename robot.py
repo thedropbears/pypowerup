@@ -3,7 +3,7 @@
 import magicbot
 import wpilib
 
-from automations.test_intake import TestAutomation
+from automations.containment import Containment
 from components.intake import Intake
 from ctre import WPI_TalonSRX, CANifier
 
@@ -14,7 +14,7 @@ class Robot(magicbot.MagicRobot):
     # any higher-level components (automations) that depend on them.
 
     # Automations
-    test_automation: TestAutomation
+    containment: Containment
 
     # Actuators
     intake: Intake
@@ -30,7 +30,7 @@ class Robot(magicbot.MagicRobot):
         self.clamp_arm_left = wpilib.Solenoid(0)
         self.clamp_arm_right = wpilib.Solenoid(1)
         """This controls the arm in the back section of the intake mechanism"""
-        self.intake_kicker = wpilib.Solenoid(2)
+        self.intake_kicker = wpilib.Solenoid(3)
         """This controls the kicker in the back section of the intake mechanism"""
         self.limit_switch = CANifier(4)
 
