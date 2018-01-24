@@ -54,9 +54,10 @@ class Robot(magicbot.MagicRobot):
         # TODO: Tune these constants for whatever robot they are on
         # self.intake.intake_arm(self.xbox.getBButton())
 
-        if self.xbox.getAButtonReleased():
+        if self.xbox.getXButtonReleased():
             self.intake_automation.engage()
-
+        if self.xbox.getBButtonReleased():
+            self.
 
 if __name__ == '__main__':
     wpilib.run(Robot)
