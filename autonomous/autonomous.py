@@ -16,7 +16,6 @@ class OverallBase(AutonomousStateMachine):
     bno055: BNO055
     motion: ChassisMotion
     chassis: SwerveChassis
-    vision_angle = vision.largest_cube
     # should be the closest cube
     # cubes will be listed in size order along with thier rough size and angle
 
@@ -68,11 +67,11 @@ class OverallBase(AutonomousStateMachine):
         system while moving towards the cube. Combines two angles to find the absolute
         angle towards the cube"""
         angle = self.bno055.getAngle()
-        absolute_cube_direction = angle + self.vision_angle
+        absolute_cube_direction = angle + self.vision.largest_cube()
         self.chassis.field_oriented = True
         self.chassis.set_velocity_heading(math.cos(math.radians(absolute_cube_direction)),
                                           math.sin(math.radians(absolute_cube_direction)),
-                                          (math.radians(self.vision_angle)))
+                                          (math.radians(self.vision.largest_cube())))
         self.next_state("intake_cube")
 
     @state
@@ -102,11 +101,12 @@ class VisionTest(OverallBase):
         system while moving towards the cube. Combines two angles to find the absolute
         angle towards the cube"""
         angle = self.bno055.getAngle()
-        absolute_cube_direction = angle + self.vision_angle
+        cube_angle = math.radians(-self.vision.largest_cube())
+        absolute_cube_direction = angle + cube_angle
         self.chassis.field_oriented = True
         self.chassis.set_velocity_heading(math.cos(math.radians(absolute_cube_direction)),
                                           math.sin(math.radians(absolute_cube_direction)),
-                                          (math.radians(self.vision_angle)))
+                                          (absolute_cube_direction))
         # self.next_state("intake_cube")
 
     @state
