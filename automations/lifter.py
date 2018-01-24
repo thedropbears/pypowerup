@@ -13,7 +13,7 @@ class LifterAutomation(StateMachine):
     @state(must_finish=True, Finish=True)
     def cube_detection(self):
         """Check for cube inside mechanism."""
-        if cube_inside():
+        if self.cube_inside():
             self.next_state("move")
 
     @state(must_finish=True)
@@ -34,6 +34,6 @@ class LifterAutomation(StateMachine):
 
     @state(must_finish=True)
     def unload(self):
-        if unloadButton:
+        if self.unloadButton:
             place_cube()
             self.done
