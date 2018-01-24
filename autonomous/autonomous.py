@@ -26,6 +26,7 @@ class OverallBase(AutonomousStateMachine):
         self.fails = 0
         self.fms_scale = self.game_data_message[1]  # L or R
         self.fms_switch = self.game_data_message[0]  # L or R
+        super().on_enable()
 
     @state(first=True)
     def go_to_scale(self):
@@ -107,6 +108,11 @@ class VisionTest(OverallBase):
                                           math.sin(math.radians(absolute_cube_direction)),
                                           (math.radians(self.vision_angle)))
         # self.next_state("intake_cube")
+
+    @state
+    def go_to_scale(self):
+        """The robot travels to the scale"""
+        pass
 
 
 class SwitchAndScale(OverallBase):

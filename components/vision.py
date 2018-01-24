@@ -4,13 +4,13 @@ from networktables import NetworkTables
 
 
 class Vision:
-    # sd: NetworkTables
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
-        self.sd = NetworkTables.getTable("vision")
-        self.data = self.sd.getEntry("info")
-        self.data.addListener(self.new_value)
+        self.nt = NetworkTables
+        self.sd = self.nt.getTable("/vision")
+        self.entry = self.sd.getEntry("info")
+        self.entry.addListener(self.new_value, self.nt.NotifyFlags.UPDATE)
 
         self.vision = []
 
@@ -28,7 +28,7 @@ class Vision:
 
     def new_value(self, entry, key, value, param):
         start_time = time.time()
-        if key == "info":
+        if key == "/vision/info":
             self.unpack_info(value, start_time)
     
     def format_list(self, lst, n):
