@@ -67,7 +67,10 @@ class OverallBase(AutonomousStateMachine):
         system while moving towards the cube. Combines two angles to find the absolute
         angle towards the cube"""
         angle = self.bno055.getAngle()
-        absolute_cube_direction = angle + self.vision.largest_cube()
+        vision_angle = self.vision.largest_cube()
+        if vision_angle is None:
+            return
+        absolute_cube_direction = angle + vision_angle
         self.chassis.field_oriented = True
         self.chassis.set_velocity_heading(math.cos(math.radians(absolute_cube_direction)),
                                           math.sin(math.radians(absolute_cube_direction)),

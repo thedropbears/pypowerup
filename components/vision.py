@@ -52,5 +52,5 @@ class Vision:
 
     def largest_cube(self):
         if len(self.vision) < 2:
-            return [None]
+            return None
         return self.vision[0][0]
