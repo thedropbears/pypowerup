@@ -16,15 +16,20 @@ class OverallBase(AutonomousStateMachine):
     bno055: BNO055
     motion: ChassisMotion
     chassis: SwerveChassis
+    ds: wpilib.DriverStation
     # should be the closest cube
     # cubes will be listed in size order along with thier rough size and angle
 
     def on_enable(self):
-        self.game_data = wpilib.DriverStation.getInstance()
-        self.game_data_message = self.game_data.getGameSpecificMessage()
+        self.game_data_message = self.ds.getGameSpecificMessage()
         self.fails = 0
-        self.fms_scale = self.game_data_message[1]  # L or R
-        self.fms_switch = self.game_data_message[0]  # L or R
+        if len(self.game_data_message) == 3:
+            self.fms_scale = self.game_data_message[1]  # L or R
+            self.fms_switch = self.game_data_message[0]  # L or R
+        else:
+            # need defaults
+            self.fms_scale = 'R'
+            self.fms_switch = 'R'
         super().on_enable()
 
     @state(first=True)
@@ -72,10 +77,11 @@ class OverallBase(AutonomousStateMachine):
             return
         absolute_cube_direction = angle + vision_angle
         self.chassis.field_oriented = True
-        self.chassis.set_velocity_heading(math.cos(math.radians(absolute_cube_direction)),
-                                          math.sin(math.radians(absolute_cube_direction)),
-                                          (math.radians(self.vision.largest_cube())))
-        self.next_state("intake_cube")
+        self.chassis.set_velocity_heading(math.cos(absolute_cube_direction),
+                                          math.sin(absolute_cube_direction),
+                                          absolute_cube_direction)
+        # TODO: implement state transition
+        # self.next_state("intake_cube")
 
     @state
     def intake_cube(self):
@@ -99,18 +105,11 @@ class VisionTest(OverallBase):
     MODE_NAME = 'Vision Test'
 
     @state(first=True)
-    def turn_and_go_to_cube(self):
+    def vision_test(self):
         """The robot rotates in the direction specified by the vision
         system while moving towards the cube. Combines two angles to find the absolute
         angle towards the cube"""
-        angle = self.bno055.getAngle()
-        cube_angle = math.radians(-self.vision.largest_cube())
-        absolute_cube_direction = angle + cube_angle
-        self.chassis.field_oriented = True
-        self.chassis.set_velocity_heading(math.cos(math.radians(absolute_cube_direction)),
-                                          math.sin(math.radians(absolute_cube_direction)),
-                                          (absolute_cube_direction))
-        # self.next_state("intake_cube")
+        self.next_state("turn_and_go_to_cube")
 
     @state
     def go_to_scale(self):

@@ -23,6 +23,8 @@ class Robot(magicbot.MagicRobot):
     # Any components that directly actuate motors should be declared after
     # any higher-level components (automations) that depend on them.
 
+    ds: wpilib.DriverStation
+
     vision: Vision
 
     # Automations
