@@ -9,6 +9,7 @@ also define start and end point
 """
 import numpy as np
 import math
+from utilities.profile_generator import generate_trapezoidal_function
 
 
 class VectorPursuit:
@@ -19,14 +20,33 @@ class VectorPursuit:
             waypoint list of numpy arrays.
         """
         self.waypoints = waypoints
-        self.segment = self.waypoints[1] - self.waypoints[0]
-        self.segment_idx = 0
+        self.waypoints_xy = np.array([[waypoint[0], waypoint[1]] for waypoint in self.waypoints])
+        self.segment_idx = None
+        self.increment_segment()
 
-    def get_output(self, position: np.ndarray, orientation: int, speed: int):
+    def set_motion_params(self, top_speed, top_accel, top_decel):
+        self.top_speed = top_speed
+        self.top_accel = top_accel
+        self.top_decel = top_decel
+
+    def increment_segment(self):
+        if self.segment_idx is None:
+            self.segment_idx = 0
+        else:
+            self.segment_idx += 1
+        self.segment = (self.waypoints_xy[self.segment_idx+1]
+                        - self.waypoints_xy[self.segment_idx])
+        start_speed = self.waypoints[self.segment_idx][2]
+        end_speed = self.waypoints[self.segment_idx+1][2]
+        seg_length = np.linalg.norm(self.segment)
+        self.speed_function = generate_trapezoidal_function(
+                0, start_speed, seg_length, end_speed,
+                self.top_speed, self.top_accel, self.top_decel)
+
+    def get_output(self, position: np.ndarray, speed: float):
         """Compute the angle to move the robot in to converge with waypoints.
         Args:
             position current robot position
-            orientation of robot in radians
             speed in m/s of robot
 
         Returns:
@@ -34,12 +54,16 @@ class VectorPursuit:
         """
 
         # check if at edge of segment
-        displacement = position - self.waypoints[self.segment_idx]
+        displacement = position - self.waypoints_xy[self.segment_idx]
         scale = displacement.dot(self.segment) / self.segment.dot(self.segment)
 
         # calculate projected point
-        projected_point = (self.waypoints[self.segment_idx]
+        projected_point = (self.waypoints_xy[self.segment_idx]
                            + scale * self.segment)
+
+        projected_point_on_seg = projected_point - self.waypoints_xy[self.segment_idx]
+        segment_dist = np.linalg.norm(projected_point_on_seg)
+        speed_sp = self.speed_function(segment_dist)
         # print(projected_point)
 
         # define look ahead distance
@@ -49,8 +73,8 @@ class VectorPursuit:
         look_ahead_remaining = look_ahead_distance
         look_ahead_waypoint = self.segment_idx
         while look_ahead_remaining > 0:
-            segment_start = self.waypoints[look_ahead_waypoint]
-            segment_end = self.waypoints[look_ahead_waypoint+1]
+            segment_start = self.waypoints_xy[look_ahead_waypoint]
+            segment_end = self.waypoints_xy[look_ahead_waypoint+1]
             segment = segment_end - segment_start
             segment_normalised = segment / np.linalg.norm(segment)
             look_ahead_point = (projected_point + look_ahead_remaining
@@ -61,25 +85,16 @@ class VectorPursuit:
             look_ahead_waypoint += 1
 
         segment_normalised = self.segment / np.linalg.norm(self.segment)
-        # look_ahead_point = (projected_point
-                           # + segment_normalised * look_ahead_distance)
-        # print("Look ahead point: %s, projected_point %s"
-            # % (look_ahead_point, projected_point))
 
         # calculate angle of look ahead from oreintation
         new_x, new_y = look_ahead_point - position
         theta = math.atan2(new_y, new_x)
 
         if scale > 1 and self.segment_idx < len(self.waypoints)-2:
-            self.segment_idx += 1
-            self.segment = (self.waypoints[self.segment_idx+1]
-                            - self.waypoints[self.segment_idx])
-            # print(self.segment_idx)
-            # print(self.segment)
+            self.increment_segment()
 
         over = False
-        if np.linalg.norm(position - self.waypoints[-1]) < 0.2:
+        if np.linalg.norm(position - self.waypoints_xy[-1]) < 0.2:
             over = True
-            # print(over)
 
-        return theta, over
+        return theta, speed_sp, over

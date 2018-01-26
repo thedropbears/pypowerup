@@ -15,7 +15,7 @@ class ChassisMotion:
         self.pursuit = VectorPursuit()
 
     def setup(self):
-        pass
+        self.pursuit.set_motion_params(3.0, 4.5, -4.5)
 
     def set_waypoints(self, waypoints: np.ndarray):
         """ Pass as set of waypoints for the chassis to follow.
@@ -26,8 +26,7 @@ class ChassisMotion:
                 [x_in_meters, y_in_meters, orientation_in_radians, speed_in_meters]
         """
         self.waypoints = waypoints
-        waypoints_xy = np.array([[waypoint[0], waypoint[1]] for waypoint in waypoints])
-        self.pursuit.set_waypoints(waypoints_xy)
+        self.pursuit.set_waypoints(waypoints)
         self.enabled = True
         self.chassis.heading_hold_on()
 
@@ -47,10 +46,7 @@ class ChassisMotion:
 
             speed = np.linalg.norm(odom_vel)
 
-            direction_of_motion, over = self.pursuit.get_output(odom_pos, self.bno055.getAngle(), speed)
-
-            # TODO: control this later
-            speed_sp = self.waypoints[self.waypoint_idx][3]
+            direction_of_motion, speed_sp, over = self.pursuit.get_output(odom_pos, speed)
 
             vx = speed_sp * math.cos(direction_of_motion)
             vy = speed_sp * math.sin(direction_of_motion)
