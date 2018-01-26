@@ -94,14 +94,14 @@ def generate_trapezoidal_function(
     def get_speed(distance):
         if distance < x_cruise:
             print("before vmax")
-            return direction * 0.1 + v_max * (distance / x_cruise)
+            return direction * 0.4 + v_max * (distance / x_cruise)
         elif distance < x_decel:
             print("cruise")
             return v_max
         else:
             print("after vmax %s other shit is  %s" % (v_max,
                 - decel_mag * ((x_final - distance) / decel_dist)))
-            return -direction * 0.1 + v_max
+            return -direction * 0.1 + v_max - decel_mag * ((x_final - distance) / decel_dist)
 
     return get_speed
 

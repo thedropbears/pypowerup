@@ -112,8 +112,8 @@ class VisionTest(OverallBase):
         """The robot drives towards where the next cube should be"""
         if initial_call:
             angle = self.bno055.getAngle()
-            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 1],
-                                       [2.5, 0, math.pi/2, 1],
+            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
+                                       [2.5, 0, math.pi/2, 2],
                                        [2.5, 1, math.pi/2, 1]])
         if not self.motion.enabled:
             print("going to 'turn_and_go_to_cube'")
@@ -124,12 +124,12 @@ class VisionTest(OverallBase):
         """The robot travels to the scale"""
         if initial_call:
             angle = self.bno055.getAngle()
-            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 1],
-                                       [2.5, 0, 0, 1], [5, 0, 0, 0]])
+            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
+                                       #[2.5, 0, 0, 2],
+                                       [5, 0, 0, 0]])
         if not self.motion.enabled:
-            print("At scale")
-            self.chassis.set_inputs(0, 0, 0)
-            self.next_state("go to cube")
+            print("================= At scale ======================")
+            self.next_state("go_to_cube")
 
 
 class SwitchAndScale(OverallBase):
