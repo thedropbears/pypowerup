@@ -6,9 +6,10 @@ class Lifter:
     def setup(self):
         """This is called after variables are injected by magicbot."""
         self.switch_height = None
-        self.scale_height = None
-        self.exchange_height = None
-        self.ground_height = 0
+        self.lower_scale = None
+        self.balanced_scale = None
+        self.upper_scale = None
+        self.ground_height = None
         self.motor = WPI_TalonSRX(0)
         self.motor.config_kP(0)
         self.motor.config_kI(0)
@@ -27,26 +28,30 @@ class Lifter:
         pass
 
     def move_switch(self):
-        """Move the lift to the height of the switch
-        """
+        """Move the lift to the height of the switch."""
         self.set_pos(self.switch_height)
 
-    def move_scale(self):
-        """Move the lift to the height of the scale
-        """
-        self.set_pos(self.scale_height)
+    def move_lower_scale(self):
+        """Move the lift to the lowest height of the scale."""
+        self.set_pos(self.lower_scale)
 
-    def move_exchange(self):
-        """ Move the lift to the height of the exchange
-        """
-        self.set_pos(self.exchange_height)
+    def move_balanced_scale(self):
+        """Move the lift to the balanced height of the scale."""
+        self.set_pos(self.balanced_scale)
+
+    def move_upper_scale(self):
+        """Move the lift to the upper height of the scale."""
+        self.set_pos(self.upper_scale)
+
+    def move_ground(self):
+        """Move the lift to the ground height of the scale."""
+        self.set_pos(self.ground_height)
 
     def set_pos(self, setpos):
         """Run pid loop to position on encoder
 
         Args:
-            setpos (int): Encoder position to move lift to.
-        """
+            setpos (int): Encoder position to move lift to."""
         mode = WPI_TalonSRX.ControlMode.Position
         self.motor.set(mode=mode, value=setpos)
 
@@ -58,6 +63,14 @@ class Lifter:
         """
         return self.motor.getSelectedSensorPosition(0)
 
-    def reset_pos(self):
-        """Move to ground height"""
-        self.setpos(self.ground_height)
+    def switchButton(self):
+        """Button on keyboard that calls the function move_switch."""
+    
+    def lower_scaleButton(self):
+        """Button on keyboard that calls the function move_lower_scale."""
+    
+    def balanced_scaleButton(self):
+        """Button on keyboard that calls the function move_balanced_scale."""
+
+    def upper_scaleButton(self):
+        """Button on keyboard that calls the function move_upper_scale."""

@@ -8,6 +8,7 @@ from components.intake import Intake
 from ctre import WPI_TalonSRX, CANifier
 
 
+
 class Robot(magicbot.MagicRobot):
     # Add magicbot components here using variable annotations.
     # Any components that directly actuate motors should be declared after
@@ -56,7 +57,7 @@ class Robot(magicbot.MagicRobot):
 
         if self.xbox.getXButtonReleased():
             self.intake_automation.engage()
-        if self.xbox.getBButtonReleased():
+        if self.xbox.getPOV 
             self.
 
 if __name__ == '__main__':
