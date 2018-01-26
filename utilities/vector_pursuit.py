@@ -36,8 +36,8 @@ class VectorPursuit:
             self.segment_idx += 1
         self.segment = (self.waypoints_xy[self.segment_idx+1]
                         - self.waypoints_xy[self.segment_idx])
-        start_speed = self.waypoints[self.segment_idx][2]
-        end_speed = self.waypoints[self.segment_idx+1][2]
+        start_speed = self.waypoints[self.segment_idx][3]
+        end_speed = self.waypoints[self.segment_idx+1][3]
         seg_length = np.linalg.norm(self.segment)
         self.speed_function = generate_trapezoidal_function(
                 0, start_speed, seg_length, end_speed,
@@ -64,10 +64,9 @@ class VectorPursuit:
         projected_point_on_seg = projected_point - self.waypoints_xy[self.segment_idx]
         segment_dist = np.linalg.norm(projected_point_on_seg)
         speed_sp = self.speed_function(segment_dist)
-        # print(projected_point)
 
         # define look ahead distance
-        look_ahead_distance = 0.1 + 0.5 * speed
+        look_ahead_distance = 0.1 + 0.3 * speed
 
         look_ahead_point = projected_point
         look_ahead_remaining = look_ahead_distance
@@ -85,10 +84,6 @@ class VectorPursuit:
             look_ahead_waypoint += 1
 
         segment_normalised = self.segment / np.linalg.norm(self.segment)
-        # look_ahead_point = (projected_point
-        #                  + segment_normalised * look_ahead_distance)
-        # print("Look ahead point: %s, projected_point %s"
-        #    % (look_ahead_point, projected_point))
 
         # calculate angle of look ahead from oreintation
         new_x, new_y = look_ahead_point - position
@@ -98,7 +93,7 @@ class VectorPursuit:
             self.increment_segment()
 
         over = False
-        if np.linalg.norm(position - self.waypoints_xy[-1]) < 0.2:
+        if np.linalg.norm(position - self.waypoints_xy[-1]) < 0.1:
             over = True
 
         return theta, speed_sp, over

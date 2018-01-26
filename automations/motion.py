@@ -50,8 +50,7 @@ class ChassisMotion:
 
             vx = speed_sp * math.cos(direction_of_motion)
             vy = speed_sp * math.sin(direction_of_motion)
-            print('speed_sp %s' % speed_sp)
-            # self.chassis.set_inputs(vx, vy, 0.0)
+
             self.chassis.set_velocity_heading(vx, vy, self.waypoints[self.waypoint_idx+1][2])
 
             if over:

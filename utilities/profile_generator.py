@@ -93,15 +93,24 @@ def generate_trapezoidal_function(
 
     def get_speed(distance):
         if distance < x_cruise:
-            print("before vmax")
-            return direction * 0.4 + v_max * (distance / x_cruise)
+            accel_proportion = (distance / x_cruise)
+            target_v = (v_max * accel_proportion
+                        # factor that decays as we accelerate. Used to jump start
+                        # acceleration from 0 speed.
+                        + (1-accel_proportion) * direction * 0.4)
+            print("Accelerating. accel_proportion %s, target_v %s" % (accel_proportion, target_v))
+            return target_v
         elif distance < x_decel:
-            print("cruise")
-            return v_max
+            target_v = v_max
+            print("Cruising at %s" % target_v)
+            return target_v
         else:
-            print("after vmax %s other shit is  %s" % (v_max,
-                - decel_mag * ((x_final - distance) / decel_dist)))
-            return -direction * 0.1 + v_max - decel_mag * ((x_final - distance) / decel_dist)
+            decel_proportion = 1 - ((x_final - distance) / decel_dist)
+            target_v = (v_max
+                        - decel_mag * decel_proportion
+                        + (1 - decel_proportion) * -direction * 0.1)
+            print("Decelerating. decel_proportion %s, target_v %s, final_v %s" % (decel_proportion, target_v, v_final))
+            return target_v
 
     return get_speed
 

@@ -63,3 +63,28 @@ def test_multi_waypoint_converge():
 
     assert abs(robot_x-1) < 0.1
     assert robot_y > 2
+
+
+def test_speed_control():
+    speed = 1  # m/s
+    orientation = 0  # rad
+
+    robot_x = 0.0
+    robot_y = 1.0
+    waypoints = np.array([[0, 0, 0, 0], [1, 0, 0, 1], [1, 2, 0, 2]])
+
+    pursuit = VectorPursuit()
+    pursuit.set_motion_params(3.0, 4.5, -4.5)
+    pursuit.set_waypoints(waypoints)
+
+    last_speed = 0
+
+    for i in range(500):
+        theta, speed, over = pursuit.get_output(np.array([robot_x, robot_y]), last_speed)
+        robot_x, robot_y = position_delta_x_y(theta, speed,
+                                              robot_x, robot_y, orientation)
+        if over:
+            break
+        last_speed = speed
+
+    assert abs(speed - 2) < 0.2
