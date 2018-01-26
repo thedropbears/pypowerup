@@ -72,6 +72,8 @@ class Robot(magicbot.MagicRobot):
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
+        self.motion.enabled = False
+        self.chassis.set_inputs(0, 0, 0)
 
     def teleopPeriodic(self):
         """

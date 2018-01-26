@@ -57,7 +57,7 @@ class SwerveModule:
         self.steer_motor.config_kF(0, 0, 10)
         self.reset_steer_setpoint()
 
-        self.steer_motor.setNeutralMode(True)
+        self.steer_motor.setNeutralMode(ctre.WPI_TalonSRX.NeutralMode.Coast)
 
         self.drive_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, 10)
         # changes direction of motor encoder
@@ -70,7 +70,7 @@ class SwerveModule:
         self.drive_motor.config_kF(0, 1024.0/self.drive_free_speed, 10)
         self.drive_motor.selectProfileSlot(0, 0)
 
-        self.drive_motor.setNeutralMode(True)
+        self.drive_motor.setNeutralMode(ctre.WPI_TalonSRX.NeutralMode.Brake)
 
         self.reset_encoder_delta()
 

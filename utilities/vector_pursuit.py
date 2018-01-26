@@ -43,7 +43,7 @@ class VectorPursuit:
         # print(projected_point)
 
         # define look ahead distance
-        look_ahead_distance = 0.1 + 0.1 * speed
+        look_ahead_distance = 0.1 + 0.5 * speed
 
         look_ahead_point = projected_point
         look_ahead_remaining = look_ahead_distance

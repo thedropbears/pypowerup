@@ -76,7 +76,7 @@ class OverallBase(AutonomousStateMachine):
         print(vision_angle)
         if vision_angle is None:
             self.next_state("go_to_scale")  # tempoary for testing
-            print("going to endpoint")
+            print("going to scale")
             return
         absolute_cube_direction = angle + vision_angle
         self.chassis.field_oriented = True
@@ -107,24 +107,29 @@ class VisionTest(OverallBase):
     DEFAULT = True
     MODE_NAME = 'Vision Test'
 
-    @state(first=True)
+    @state
     def go_to_cube(self, initial_call):
         """The robot drives towards where the next cube should be"""
         if initial_call:
-            self.motion.set_waypoints([[0, 0, 0, 1], [2, 0, math.pi/2, 1], [2, 1, math.pi/2, 1]])
+            angle = self.bno055.getAngle()
+            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 1],
+                                       [2.5, 0, math.pi/2, 1],
+                                       [2.5, 1, math.pi/2, 1]])
         if not self.motion.enabled:
             print("going to 'turn_and_go_to_cube'")
             self.next_state("turn_and_go_to_cube")
 
-    @state
+    @state(first=True)
     def go_to_scale(self, initial_call):
         """The robot travels to the scale"""
         if initial_call:
             angle = self.bno055.getAngle()
-            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 1], [4, 0, 0, 0]])
+            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 1],
+                                       [2.5, 0, 0, 1], [5, 0, 0, 0]])
         if not self.motion.enabled:
-            print("finished")
-            self.done
+            print("At scale")
+            self.chassis.set_inputs(0, 0, 0)
+            self.next_state("go to cube")
 
 
 class SwitchAndScale(OverallBase):
