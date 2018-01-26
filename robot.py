@@ -4,6 +4,7 @@ import ctre
 import magicbot
 import wpilib
 from networktables import NetworkTables
+import numpy as np
 from automations.intake import IntakeAutomation
 from automations.lifter import LifterAutomation
 from automations.motion import ChassisMotion
@@ -14,8 +15,6 @@ from pyswervedrive.swervechassis import SwerveChassis
 from pyswervedrive.swervemodule import SwerveModule
 from utilities.bno055 import BNO055
 from utilities.functions import rescale_js
-
-import numpy as np
 
 
 class Robot(magicbot.MagicRobot):

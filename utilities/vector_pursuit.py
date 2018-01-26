@@ -7,9 +7,9 @@ also define start and end point
 6 calculate angle of look ahead from oreintation
 7 output vector of angle and speed
 """
-import numpy as np
 import math
 from utilities.profile_generator import generate_trapezoidal_function
+import numpy as np
 
 
 class VectorPursuit:
@@ -85,6 +85,10 @@ class VectorPursuit:
             look_ahead_waypoint += 1
 
         segment_normalised = self.segment / np.linalg.norm(self.segment)
+        # look_ahead_point = (projected_point
+        #                  + segment_normalised * look_ahead_distance)
+        # print("Look ahead point: %s, projected_point %s"
+        #    % (look_ahead_point, projected_point))
 
         # calculate angle of look ahead from oreintation
         new_x, new_y = look_ahead_point - position

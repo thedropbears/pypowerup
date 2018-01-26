@@ -1,11 +1,10 @@
-from pyswervedrive.swervemodule import SwerveModule
-from utilities.bno055 import BNO055
+import math
+import hal
+import numpy as np
 from wpilib import PIDController
 from wpilib.interfaces import PIDOutput
-import numpy as np
-import math
-
-import hal
+from utilities.bno055 import BNO055
+from pyswervedrive.swervemodule import SwerveModule
 
 
 class SwerveChassis:
@@ -54,7 +53,6 @@ class SwerveChassis:
         self.heading_pid.disable()
         self.hold_heading = False
 
-
     def on_enable(self):
         self.bno055.resetHeading()
         self.heading_hold_on()
@@ -63,13 +61,13 @@ class SwerveChassis:
         # reference to module [x, y] movement
         self.A_matrix = np.array([
             [1, 0, -1],
-            [0, 1,  1],
+            [0, 1, 1],
             [1, 0, -1],
             [0, 1, -1],
-            [1, 0,  1],
+            [1, 0, 1],
             [0, 1, -1],
-            [1, 0,  1],
-            [0, 1,  1]
+            [1, 0, 1],
+            [0, 1, 1]
             ])
         # figure out the contribution of the robot's overall rotation about the
         # z axis to each module's movement, and encode that information in our
@@ -141,8 +139,7 @@ class SwerveChassis:
             velocity_outputs[i*2+1, 0] = velocity_y
             module.reset_encoder_delta()
 
-        delta_x, delta_y, delta_theta = self.robot_movement_from_odometry(
-                                            odometry_outputs)
+        delta_x, delta_y, delta_theta = self.robot_movement_from_odometry(odometry_outputs)
         v_x, v_y, v_z = self.robot_movement_from_odometry(velocity_outputs)
 
         self.odometry_x += delta_x

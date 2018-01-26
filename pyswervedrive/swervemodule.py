@@ -1,5 +1,5 @@
-import ctre
 import math
+import ctre
 
 
 class SwerveModule:
@@ -23,10 +23,10 @@ class SwerveModule:
     def __init__(self, steer_talon: ctre.WPI_TalonSRX, drive_talon: ctre.WPI_TalonSRX,
                  steer_enc_offset: float, x_pos: float, y_pos: float,
                  drive_free_speed: float,
-                 reverse_steer_direction: bool=False,
-                 reverse_steer_encoder: bool=True,
-                 reverse_drive_direction: bool=False,
-                 reverse_drive_encoder: bool=False):
+                 reverse_steer_direction: bool = False,
+                 reverse_steer_encoder: bool = True,
+                 reverse_drive_direction: bool = False,
+                 reverse_drive_encoder: bool = False):
 
         self.steer_motor = steer_talon
         self.drive_motor = drive_talon
@@ -43,7 +43,8 @@ class SwerveModule:
         self.vx = 0
         self.vy = 0
 
-        self.steer_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.CTRE_MagEncoder_Absolute, 0, 10)
+        self.steer_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.
+                                                      CTRE_MagEncoder_Absolute, 0, 10)
         # changes direction of motor encoder
         self.steer_motor.setSensorPhase(self.reverse_steer_encoder)
         # changes sign of motor throttle vilues
@@ -194,14 +195,17 @@ class SwerveModule:
             azimuth_error = constrain_angle(self.current_measured_azimuth - desired_azimuth)
             if abs(azimuth_error) < math.pi / 6.0:
                 # if we are nearing the correct angle with the module forwards
-                self.drive_motor.set(ctre.ControlMode.Velocity, velocity*self.drive_velocity_to_native_units)
+                self.drive_motor.set(ctre.ControlMode.Velocity,
+                                     velocity*self.drive_velocity_to_native_units)
             elif abs(azimuth_error) > math.pi - math.pi / 6.0:
                 # if we are nearing the correct angle with the module backwards
-                self.drive_motor.set(ctre.ControlMode.Velocity, -velocity*self.drive_velocity_to_native_units)
+                self.drive_motor.set(ctre.ControlMode.Velocity,
+                                     -velocity*self.drive_velocity_to_native_units)
             else:
                 self.drive_motor.set(ctre.ControlMode.Velocity, 0)
         else:
-            self.drive_motor.set(ctre.ControlMode.Velocity, velocity*self.drive_velocity_to_native_units)
+            self.drive_motor.set(ctre.ControlMode.Velocity,
+                                 velocity*self.drive_velocity_to_native_units)
 
     @property
     def current_azimuth(self):
