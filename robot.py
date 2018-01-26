@@ -69,6 +69,7 @@ class Robot(magicbot.MagicRobot):
 
         NetworkTables.initialize()
         self.sd = NetworkTables.getTable("SmartDashboard")
+
     def teleopInit(self):
         '''Called when teleop starts; optional'''
 

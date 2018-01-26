@@ -40,6 +40,7 @@ class ChassisMotion:
     def execute(self):
         if self.enabled:
             self.chassis.field_oriented = True
+            self.chassis.hold_heading = True
 
             odom_pos = np.array([self.chassis.odometry_x, self.chassis.odometry_y])
             odom_vel = np.array([self.chassis.odometry_x, self.chassis.odometry_y])
@@ -55,7 +56,7 @@ class ChassisMotion:
             vy = speed_sp * math.sin(direction_of_motion)
 
             # self.chassis.set_inputs(vx, vy, 0.0)
-            self.chassis.set_velocity_heading(vx, vy, self.waypoints[self.waypoint_idx][2])
+            self.chassis.set_velocity_heading(vx, vy, self.waypoints[self.waypoint_idx+1][2])
 
             if over:
                 self.enabled = False

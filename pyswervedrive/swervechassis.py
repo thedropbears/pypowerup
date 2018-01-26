@@ -43,6 +43,7 @@ class SwerveChassis:
     def set_heading_sp(self, setpoint):
         self.heading_pid.setSetpoint(setpoint)
         self.heading_pid.enable()
+        self.momentum = False
 
     def heading_hold_on(self):
         self.set_heading_sp_current()
@@ -52,6 +53,7 @@ class SwerveChassis:
     def heading_hold_off(self):
         self.heading_pid.disable()
         self.hold_heading = False
+
 
     def on_enable(self):
         self.bno055.resetHeading()
@@ -149,14 +151,14 @@ class SwerveChassis:
         self.odometry_x_vel = v_x
         self.odometry_y_vel = v_y
         self.odometry_z_vel = v_z
-        print("odometry x %s, y %s" % (self.odometry_x, self.odometry_y))
+        # print("odometry x %s, y %s" % (self.odometry_x, self.odometry_y))
 
     def robot_movement_from_odometry(self, odometry_outputs):
         lstsq_ret = np.linalg.lstsq(self.A_matrix, odometry_outputs,
                                     rcond=-1)
         x, y, theta = lstsq_ret[0].reshape(3)
         angle = self.bno055.getAngle()
-        x_field, y_field = self.field_orient(x, y, angle)
+        x_field, y_field = self.field_orient(x, y, 2*math.pi-angle)
         return x_field, y_field, theta
 
     def set_velocity_heading(self, vx, vy, heading):

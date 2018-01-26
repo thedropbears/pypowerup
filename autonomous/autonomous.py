@@ -73,8 +73,11 @@ class OverallBase(AutonomousStateMachine):
         angle towards the cube"""
         angle = self.bno055.getAngle()
         vision_angle = self.vision.largest_cube()
+        print(vision_angle)
         if vision_angle is None:
             self.next_state("go_to_scale")  # tempoary for testing
+            print("going to endpoint")
+            return
         absolute_cube_direction = angle + vision_angle
         self.chassis.field_oriented = True
         self.chassis.set_velocity_heading(math.cos(absolute_cube_direction),
@@ -103,25 +106,25 @@ class VisionTest(OverallBase):
     """To test the vision system"""
     DEFAULT = True
     MODE_NAME = 'Vision Test'
-    first_time = True
 
     @state(first=True)
-    def go_to_cube(self):
+    def go_to_cube(self, initial_call):
         """The robot drives towards where the next cube should be"""
-        if self.first_time:
-            self.motion.set_waypoints = np.array(0, 0, 0, 1)
-            self.first_time = False
-        if self.chassis.x_odometry == 0 and self.chassis.y_odometry == 0:
-            self.motion.set_waypoints = np.array(2, 0, 1.5708, 1)
-        if self.chassis.x_odometry == 2 and self.chassis.y_odometry == 0:
-            self.motion.set_waypoints = np.array(2, 1, 1.5708, 1)
-        if self.chassis.x_odometry == 2 and self.chassis.y_odometry == 1:  # At cube position
-            self.next_state("search_for_cube")
+        if initial_call:
+            self.motion.set_waypoints([[0, 0, 0, 1], [2, 0, math.pi/2, 1], [2, 1, math.pi/2, 1]])
+        if not self.motion.enabled:
+            print("going to 'turn_and_go_to_cube'")
+            self.next_state("turn_and_go_to_cube")
 
     @state
-    def go_to_scale(self):
+    def go_to_scale(self, initial_call):
         """The robot travels to the scale"""
-        self.motion.set_waypoints = np.array(4, 0, 0, 0)
+        if initial_call:
+            angle = self.bno055.getAngle()
+            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 1], [4, 0, 0, 0]])
+        if not self.motion.enabled:
+            print("finished")
+            self.done
 
 
 class SwitchAndScale(OverallBase):

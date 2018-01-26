@@ -43,7 +43,7 @@ class VectorPursuit:
         # print(projected_point)
 
         # define look ahead distance
-        look_ahead_distance = 0.5 + 0.3 * speed
+        look_ahead_distance = 0.1 + 0.1 * speed
 
         look_ahead_point = projected_point
         look_ahead_remaining = look_ahead_distance
@@ -61,23 +61,25 @@ class VectorPursuit:
             look_ahead_waypoint += 1
 
         segment_normalised = self.segment / np.linalg.norm(self.segment)
-        look_ahead_point = (projected_point
-                            + segment_normalised * look_ahead_distance)
-        print("Look ahead point: %s, projected_point %s"
-              % (look_ahead_point, projected_point))
+        # look_ahead_point = (projected_point
+                           # + segment_normalised * look_ahead_distance)
+        # print("Look ahead point: %s, projected_point %s"
+            # % (look_ahead_point, projected_point))
 
         # calculate angle of look ahead from oreintation
         new_x, new_y = look_ahead_point - position
-
         theta = math.atan2(new_y, new_x)
 
         if scale > 1 and self.segment_idx < len(self.waypoints)-2:
             self.segment_idx += 1
             self.segment = (self.waypoints[self.segment_idx+1]
                             - self.waypoints[self.segment_idx])
+            # print(self.segment_idx)
+            # print(self.segment)
 
         over = False
-        if np.linalg.norm(position - self.waypoints[-1]) < 0.1:
+        if np.linalg.norm(position - self.waypoints[-1]) < 0.2:
             over = True
+            # print(over)
 
         return theta, over
