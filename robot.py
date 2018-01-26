@@ -80,7 +80,6 @@ class Robot(magicbot.MagicRobot):
 
         This is run each iteration of the control loop before magicbot components are executed.
         """
-        print(self.vision.vision)
         if self.joystick.getRawButtonPressed(10):
             self.chassis.odometry_x = 0.0
             self.chassis.odometry_y = 0.0
