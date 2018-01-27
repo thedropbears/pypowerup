@@ -59,12 +59,10 @@ class OverallBase(AutonomousStateMachine):
     @state
     def search_for_cube(self):
         """The robot attemppts to find a cube within the frame of the camera"""
-        if self.vision.largest_cube is not None:  # cube found
-            self.next_state("turn_and_go_to_cube")
-        elif self.fails >= 5:  # multiple failures
-            self.next_state("dead_reckon")
+        if self.vision.largest_cube() is None:
+            self.chassis.set_inputs(0, 0, 1)
         else:
-            self.fails += 1
+            self.next_state("turn_and_go_to_cube")
 
     @state
     def turn_and_go_to_cube(self):
@@ -113,11 +111,10 @@ class VisionTest(OverallBase):
         if initial_call:
             angle = self.bno055.getAngle()
             self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
-                                       [2.5, 0, math.pi/2, 2],
-                                       [2.5, 1, math.pi/2, 1]])
+                                       [2.5, 0, math.pi/2, 0]])
         if not self.motion.enabled:
-            print("going to 'turn_and_go_to_cube'")
-            self.next_state("turn_and_go_to_cube")
+            print("going to 'search_for_cube'")
+            self.next_state("search_for_cube")
 
     @state(first=True)
     def go_to_scale(self, initial_call):
@@ -126,7 +123,7 @@ class VisionTest(OverallBase):
             angle = self.bno055.getAngle()
             self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
                                        #[2.5, 0, 0, 2],
-                                       [5, 0, 0, 0]])
+                                       [6, 0, 0, 0]])
         if not self.motion.enabled:
             print("================= At scale ======================")
             self.next_state("go_to_cube")

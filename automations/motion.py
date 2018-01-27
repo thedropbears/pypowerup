@@ -42,9 +42,10 @@ class ChassisMotion:
             self.chassis.hold_heading = True
 
             odom_pos = np.array([self.chassis.odometry_x, self.chassis.odometry_y])
-            odom_vel = np.array([self.chassis.odometry_x, self.chassis.odometry_y])
+            odom_vel = np.array([self.chassis.odometry_x_vel, self.chassis.odometry_y_vel])
 
             speed = np.linalg.norm(odom_vel)
+            print("Odom speed %s" % speed)
 
             direction_of_motion, speed_sp, over = self.pursuit.get_output(odom_pos, speed)
 

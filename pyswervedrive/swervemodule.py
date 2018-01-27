@@ -11,13 +11,13 @@ class SwerveModule:
 
     drive_counts_per_rev = CIMCODER_COUNTS_PER_REV*DRIVE_ENCODER_GEAR_REDUCTION
     drive_counts_per_radian = drive_counts_per_rev / math.tau
-    drive_counts_per_metre = drive_counts_per_rev / (math.pi * WHEEL_DIAMETER)
+    drive_counts_per_metre = drive_counts_per_rev / (math.pi * WHEEL_DIAMETER) / 1.08
 
     # factor by which to scale velocities in m/s to give to our drive talon.
     # 0.1 is because SRX velocities are measured in ticks/100ms
     drive_velocity_to_native_units = drive_counts_per_metre*0.1
 
-    steer_k_p: float = 0.7
+    steer_k_p: float = 0.5
     steer_k_d: float = 0
 
     def __init__(self, steer_talon: ctre.WPI_TalonSRX, drive_talon: ctre.WPI_TalonSRX,
@@ -51,7 +51,7 @@ class SwerveModule:
         self.steer_motor.setInverted(self.reverse_steer_direction)
         sp = self.steer_motor.getSelectedSensorPosition(0)
         self.current_azimuth_sp = float(sp - self.steer_enc_offset) / self.STEER_COUNTS_PER_RADIAN
-        self.steer_motor.config_kP(0, 0.0001, 10)
+        self.steer_motor.config_kP(0, 0.1, 10)
         self.steer_motor.config_kI(0, 0.0, 10)
         self.steer_motor.config_kD(0, 0.0, 10)
         self.steer_motor.selectProfileSlot(0, 0)
@@ -65,8 +65,8 @@ class SwerveModule:
         self.drive_motor.setSensorPhase(self.reverse_drive_encoder)
         # changes sign of motor throttle values
         self.drive_motor.setInverted(self.reverse_drive_direction)
-        self.drive_motor.config_kP(0, 1.0, 10)
-        self.drive_motor.config_kI(0, 0.0, 10)
+        self.drive_motor.config_kP(0, 2.0, 10)
+        self.drive_motor.config_kI(0, 0.002, 10)
         self.drive_motor.config_kD(0, 0.0, 10)
         self.drive_motor.config_kF(0, 1024.0/self.drive_free_speed, 10)
         self.drive_motor.selectProfileSlot(0, 0)
@@ -167,24 +167,29 @@ class SwerveModule:
             delta = constrain_angle(desired_azimuth - self.current_measured_azimuth)
         else:
             # figure out the most efficient way to get the module to the desired direction
-            current_unwound_azimuth = constrain_angle(self.current_measured_azimuth)
+            # current_unwound_azimuth = constrain_angle(self.current_measured_azimuth)
+            current_unwound_azimuth = constrain_angle(self.current_azimuth_sp)
             delta = self.min_angular_displacement(current_unwound_azimuth, desired_azimuth)
 
-        # # Please note, this is *NOT WRAPPED* to +-pi, because if wrapped the module
-        # # will unwind
+        # # # Please note, this is *NOT WRAPPED* to +-pi, because if wrapped the module
+        # # # will unwind
         # azimuth_to_set = (self.current_azimuth_sp+delta)
         # # convert the direction to encoder counts to set as the closed-loop setpoint
         # setpoint = (azimuth_to_set * self.STEER_COUNTS_PER_RADIAN
         #             + self.steer_enc_offset)
-        # self.steer_motor.set(ctre.ControlMode.Position, setpoint)
+        # # self.steer_motor.set(ctre.ControlMode.Position, setpoint)
+        # self.steer_motor.set(ctre.ControlMode.PercentOutput, 1.0)
         # self.current_azimuth_sp = azimuth_to_set
         #
         # Please note, this is *NOT WRAPPED* to +-pi, because if wrapped the module
         # will unwind
         azimuth_to_set = (self.current_azimuth_sp+delta)
         # convert the direction to encoder counts to set as the closed-loop setpoint
-        azimuth_error = constrain_angle(self.current_measured_azimuth - desired_azimuth)
-        d_azimuth = (self.current_measured_azimuth - self.last_az) / 0.02
+        if self.absolute_rotation:
+            azimuth_error = constrain_angle(self.current_measured_azimuth - desired_azimuth)
+        else:
+            azimuth_error = -self.min_angular_displacement(self.current_measured_azimuth, constrain_angle(azimuth_to_set))
+        d_azimuth = constrain_angle(self.current_measured_azimuth - self.last_az) / 0.02
         pid_out = azimuth_error*self.steer_k_p + self.steer_k_d*d_azimuth
         self.steer_motor.set(ctre.ControlMode.PercentOutput, pid_out)
         self.current_azimuth_sp = azimuth_to_set

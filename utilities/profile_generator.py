@@ -105,10 +105,13 @@ def generate_trapezoidal_function(
             print("Cruising at %s" % target_v)
             return target_v
         else:
+            if decel_dist == 0:
+                print("Warning: decel_dist is 0. Returning max_v")
+                return v_max
             decel_proportion = 1 - ((x_final - distance) / decel_dist)
             target_v = (v_max
                         - decel_mag * decel_proportion
-                        + (1 - decel_proportion) * -direction * 0.1)
+                        + (1 - decel_proportion) * -direction * 0.2)
             print("Decelerating. decel_proportion %s, target_v %s, final_v %s" % (decel_proportion, target_v, v_final))
             return target_v
 

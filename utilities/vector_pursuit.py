@@ -66,7 +66,7 @@ class VectorPursuit:
         speed_sp = self.speed_function(segment_dist)
 
         # define look ahead distance
-        look_ahead_distance = 0.1 + 0.3 * speed
+        look_ahead_distance = 0.1 + 0.2 * speed
 
         look_ahead_point = projected_point
         look_ahead_remaining = look_ahead_distance
@@ -88,6 +88,7 @@ class VectorPursuit:
         # calculate angle of look ahead from oreintation
         new_x, new_y = look_ahead_point - position
         theta = math.atan2(new_y, new_x)
+        print("theta %s, new_x %s, new_y %s" % (theta, new_x, new_y))
 
         if scale > 1 and self.segment_idx < len(self.waypoints)-2:
             self.increment_segment()

@@ -16,6 +16,8 @@ from pyswervedrive.swervemodule import SwerveModule
 from utilities.bno055 import BNO055
 from utilities.functions import rescale_js
 
+import math
+
 
 class Robot(magicbot.MagicRobot):
     # Add magicbot components here using variable annotations.
@@ -36,26 +38,26 @@ class Robot(magicbot.MagicRobot):
     intake: Intake
     lifter: Lifter
 
-    module_drive_free_speed: float = 700.
+    module_drive_free_speed: float = 780.
 
     def createObjects(self):
         """Create non-components here."""
 
         self.module_a = SwerveModule(  # top left module
             steer_talon=ctre.WPI_TalonSRX(2), drive_talon=ctre.WPI_TalonSRX(9),
-            steer_enc_offset=-2090, x_pos=0.3, y_pos=0.3,
+            steer_enc_offset=-2055, x_pos=0.3, y_pos=0.3,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_b = SwerveModule(  # bottom left modulet
             steer_talon=ctre.WPI_TalonSRX(11), drive_talon=ctre.WPI_TalonSRX(13),
-            steer_enc_offset=-2644, x_pos=-0.3, y_pos=0.3,
+            steer_enc_offset=-2583, x_pos=-0.3, y_pos=0.3,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_c = SwerveModule(  # bottom right modulet
             steer_talon=ctre.WPI_TalonSRX(8), drive_talon=ctre.WPI_TalonSRX(6),
-            steer_enc_offset=2367, x_pos=-0.3, y_pos=-0.3,
+            steer_enc_offset=-1665, x_pos=-0.3, y_pos=-0.3,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_d = SwerveModule(  # top right modulet
             steer_talon=ctre.WPI_TalonSRX(4), drive_talon=ctre.WPI_TalonSRX(14),
-            steer_enc_offset=3768, x_pos=0.3, y_pos=-0.3,
+            steer_enc_offset=-286, x_pos=0.3, y_pos=-0.3,
             drive_free_speed=Robot.module_drive_free_speed)
 
         # create the imu object
@@ -88,6 +90,10 @@ class Robot(magicbot.MagicRobot):
         if self.joystick.getRawButtonPressed(9):
             self.motion.disable()
             self.chassis.field_oriented = True
+
+        if self.joystick.getRawButtonPressed(8):
+            print("Heading sp set")
+            self.chassis.set_heading_sp(self.bno055.getAngle() + math.pi)
 
         # this is where the joystick inputs get converted to numbers that are sent
         # to the chassis component. we rescale them using the rescale_js function,
