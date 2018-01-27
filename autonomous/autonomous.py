@@ -130,7 +130,7 @@ class VisionTest(OverallBase):
 
     @state
     def intake_cube(self):
-        self.chassis.set_inputs(0, 1, 0)
+        self.chassis.set_inputs(0, 1.5, 0)
         self.chassis.field_oriented = True
         if not self.cube_switch.get():
             self.next_state_now("go_to_scale")

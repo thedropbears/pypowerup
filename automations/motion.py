@@ -15,7 +15,7 @@ class ChassisMotion:
         self.pursuit = VectorPursuit()
 
     def setup(self):
-        self.pursuit.set_motion_params(3.0, 3.0, -3.0)
+        self.pursuit.set_motion_params(4.0, 4.5, -4.5)
 
     def set_waypoints(self, waypoints: np.ndarray):
         """ Pass as set of waypoints for the chassis to follow.
