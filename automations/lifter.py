@@ -8,7 +8,7 @@ class LifterAutomation(StateMachine):
     lifter: Lifter
     intake: Intake
 
-    @state(First=True, must_finish=True)
+    @state(first=True, must_finish=True)
     def move(self):
         """Move to lifter height according to button press(5 buttons)"""
 

@@ -16,8 +16,8 @@ class Lifter:
 
         self.threshold = 100
 
-        self.motor: WPI_TalonSRX
-        self.mode = WPI_TalonSRX.ControlMode.Position
+        self.lift_motor: WPI_TalonSRX
+        self.lift_motor.overrideLimitSwitchesEnable(True)
 
         self.motor.config_kP(0)
         self.motor.config_kI(0)
@@ -74,7 +74,7 @@ class Lifter:
             setpos (int): Encoder position to move lift to.
         """
         self.set_pos = input_setpos
-        self.motor.set(mode=self.mode, value=self.setpos)
+        self.motor.set(mode=self.lift_motor.ControlMode.Position, value=self.setpos)
 
     def get_pos(self):
         """Returns encoder position on lift
@@ -85,7 +85,7 @@ class Lifter:
         return self.motor.getSelectedSensorPosition(0)
 
     def at_pos(self):
-        """Finds if cube location is within threshold
+        """Finds if cube location is at setops and within threshold
 
         Args:
             pos (int): The target encoder position
