@@ -16,7 +16,7 @@ class Lifter:
 
         self.threshold = 100
 
-        self.motor = WPI_TalonSRX
+        self.motor: WPI_TalonSRX
         self.mode = WPI_TalonSRX.ControlMode.Position
 
         self.motor.config_kP(0)

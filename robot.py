@@ -38,6 +38,7 @@ class Robot(magicbot.MagicRobot):
         '''Called when teleop starts; optional'''
         self.intake.intake_clamp(False)
         self.intake.intake_push(False)
+        self.lift_motor = WPI_TalonSRX(0)
 
     def teleopPeriodic(self):
         """
