@@ -9,7 +9,7 @@ class IntakeAutomation(StateMachine):
     lifter: Lifter
     lifter_automation: LifterAutomation
 
-    @state(First=True, must_finish=True)
+    @state(first=True, must_finish=True)
     def intake_cube(self):
         """Start the intake while waiting for the cube to come inside"""
         if self.cube_inside():
@@ -20,7 +20,7 @@ class IntakeAutomation(StateMachine):
 
     @state(must_finish=True)
     def clamp(self):
-        """Grabs cube and Run lifter state machine"""
+        """Grabs cube and starts lifter state machine"""
         self.intake.intake_clamp(True)
         self.intake.intake_push(False)
         self.lifter_automation.engage()

@@ -1,14 +1,15 @@
-from ctre import WPI_TalonSRX, CANifier
+from ctre import WPI_TalonSRX
 import wpilib
 
 
 class Intake:
+    """Importing objects from robot.py"""
     intake_motor1: WPI_TalonSRX
     intake_motor2: WPI_TalonSRX
     clamp_arm_left: wpilib.Solenoid
     clamp_arm_right: wpilib.Solenoid
     intake_kicker: wpilib.Solenoid
-    limit_switch: CANifier
+    limit_switch: wpilib.DigitalInput
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
