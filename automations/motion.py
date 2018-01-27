@@ -12,17 +12,17 @@ class ChassisMotion:
     bno055: BNO055
 
     # heading motion feedforward/back gains
-    kPh = 6  # proportional gain
+    kPh = 2  # proportional gain
     kVh = 1  # feedforward gain
-    kIh = 0.2  # integral gain
-    kDh = 40  # derivative gain
+    kIh = 0  # integral gain
+    kDh = 0  # derivative gain
 
     def __init__(self):
         self.enabled = False
         self.pursuit = VectorPursuit()
 
     def setup(self):
-        self.pursuit.set_motion_params(4.0, 4.5, -4.5)
+        self.pursuit.set_motion_params(4.0, 4, -4)
 
     def set_waypoints(self, waypoints: np.ndarray):
         """ Pass as set of waypoints for the chassis to follow.
@@ -77,7 +77,7 @@ class ChassisMotion:
             if seg_end_dist < self.current_seg_distance / 2:
                 heading_seg = self.heading_profile_function(seg_end_dist, speed)
             else:
-                heading_seg = (self.wayponts[self.waypoint_idx+1][2], 0, 0)
+                heading_seg = (self.waypoints[self.waypoint_idx+1][2], 0, 0)
 
             # get the current heading of the robot since last reset
             heading = self.bno055.getRawHeading() - self.bno055.offset
