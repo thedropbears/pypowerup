@@ -98,13 +98,13 @@ def generate_trapezoidal_function(
                         # factor that decays as we accelerate. Used to jump start
                         # acceleration from 0 speed.
                         + (1-accel_proportion) * direction * 0.4)
-            print("Accelerating. accel_proportion %s, target_v %s" % (accel_proportion, target_v))
+            # print("Accelerating. accel_proportion %s, target_v %s" % (accel_proportion, target_v))
             return target_v
         elif distance < x_decel:
             target_v = v_max
-            print("Cruising at %s" % target_v)
+            # print("Cruising at %s" % target_v)
             return target_v
-        else:
+        elif distance < x_final:
             if decel_dist == 0:
                 print("Warning: decel_dist is 0. Returning max_v")
                 return v_max
@@ -112,8 +112,11 @@ def generate_trapezoidal_function(
             target_v = (v_max
                         - decel_mag * decel_proportion
                         + (1 - decel_proportion) * -direction * 0.2)
-            print("Decelerating. decel_proportion %s, target_v %s, final_v %s" % (decel_proportion, target_v, v_final))
+            # print("Decelerating. decel_proportion %s, target_v %s, final_v %s" % (decel_proportion, target_v, v_final))
             return target_v
+        else:
+            print("WARNING: calling speed profile function when after final distance")
+            return v_final
 
     return get_speed
 

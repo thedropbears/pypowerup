@@ -39,25 +39,26 @@ class Robot(magicbot.MagicRobot):
     lifter: Lifter
 
     module_drive_free_speed: float = 780.
+    length: float = 0.88
 
     def createObjects(self):
         """Create non-components here."""
 
         self.module_a = SwerveModule(  # top left module
             steer_talon=ctre.WPI_TalonSRX(2), drive_talon=ctre.WPI_TalonSRX(9),
-            steer_enc_offset=-2055, x_pos=0.3, y_pos=0.3,
+            steer_enc_offset=-2055, x_pos=0.31, y_pos=0.26,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_b = SwerveModule(  # bottom left modulet
             steer_talon=ctre.WPI_TalonSRX(11), drive_talon=ctre.WPI_TalonSRX(13),
-            steer_enc_offset=-2583, x_pos=-0.3, y_pos=0.3,
+            steer_enc_offset=-2583, x_pos=-0.31, y_pos=0.26,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_c = SwerveModule(  # bottom right modulet
             steer_talon=ctre.WPI_TalonSRX(8), drive_talon=ctre.WPI_TalonSRX(6),
-            steer_enc_offset=-1665, x_pos=-0.3, y_pos=-0.3,
+            steer_enc_offset=-1665, x_pos=-0.31, y_pos=-0.26,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_d = SwerveModule(  # top right modulet
             steer_talon=ctre.WPI_TalonSRX(4), drive_talon=ctre.WPI_TalonSRX(14),
-            steer_enc_offset=-286, x_pos=0.3, y_pos=-0.3,
+            steer_enc_offset=-286, x_pos=0.31, y_pos=-0.26,
             drive_free_speed=Robot.module_drive_free_speed)
 
         # create the imu object
@@ -65,6 +66,8 @@ class Robot(magicbot.MagicRobot):
 
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)
+
+        self.cube_switch = wpilib.DigitalInput(0)
 
         self.spin_rate = 5
 

@@ -26,15 +26,22 @@ class SwerveChassis:
     def setup(self):
         # Heading PID controller
         self.heading_pid_out = ChassisPIDOutput()
-        self.heading_pid = PIDController(Kp=3.0, Ki=0.0, Kd=0.03,
+        self.heading_pid = PIDController(Kp=6.0, Ki=0.0, Kd=0.2,
                                          source=self.bno055.getAngle,
                                          output=self.heading_pid_out,
                                          period=1/50)
         self.heading_pid.setInputRange(-math.pi, math.pi)
-        self.heading_pid.setOutputRange(-2, 2)
+        self.heading_pid.setOutputRange(-3, 3)
         self.heading_pid.setContinuous()
         self.heading_pid.enable()
         self.modules = [self.module_a, self.module_b, self.module_c, self.module_d]
+
+        self.odometry_x = 0
+        self.odometry_y = 0
+        self.odometry_theta = 0
+        self.odometry_x_vel = 0
+        self.odometry_y_vel = 0
+        self.odometry_z_vel = 0
 
     def set_heading_sp_current(self):
         self.set_heading_sp(self.bno055.getAngle())
@@ -81,13 +88,6 @@ class SwerveChassis:
             # encode magnitude
             self.A_matrix[i*2, 2] = z_comp * self.A_matrix[i*2, 2]
             self.A_matrix[i*2+1, 2] = z_comp * self.A_matrix[i*2+1, 2]
-
-        self.odometry_x = 0
-        self.odometry_y = 0
-        self.odometry_theta = 0
-        self.odometry_x_vel = 0
-        self.odometry_y_vel = 0
-        self.odometry_z_vel = 0
 
         for module in self.modules:
             module.reset_steer_setpoint()

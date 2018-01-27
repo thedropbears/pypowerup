@@ -7,6 +7,7 @@ from components.vision import Vision
 from automations.motion import ChassisMotion
 from pyswervedrive.swervechassis import SwerveChassis
 from utilities.bno055 import BNO055
+from robot import Robot
 
 
 class OverallBase(AutonomousStateMachine):
@@ -17,6 +18,8 @@ class OverallBase(AutonomousStateMachine):
     motion: ChassisMotion
     chassis: SwerveChassis
     ds: wpilib.DriverStation
+
+    cube_switch: wpilib.DigitalInput
     # should be the closest cube
     # cubes will be listed in size order along with thier rough size and angle
 
@@ -30,6 +33,8 @@ class OverallBase(AutonomousStateMachine):
             # need defaults
             self.fms_scale = 'R'
             self.fms_switch = 'R'
+        self.chassis.odometry_x = Robot.length / 2
+        self.chassis.odometry_y = 0
         super().on_enable()
 
     @state(first=True)
@@ -71,16 +76,21 @@ class OverallBase(AutonomousStateMachine):
         angle towards the cube"""
         angle = self.bno055.getAngle()
         vision_angle = self.vision.largest_cube()
-        print(vision_angle)
+        # print(vision_angle)
         if vision_angle is None:
-            self.next_state("go_to_scale")  # tempoary for testing
-            print("going to scale")
+            self.next_state_now("search_for_cube")  # tempoary for testing
+            return
+            print("========searching for cube========")
+        if not self.cube_switch.get():
+            self.next_state_now("go_to_scale")
+            print('===========Going to scale===========')
             return
         absolute_cube_direction = angle + vision_angle
+        new_heading = angle + 0.2 * vision_angle
         self.chassis.field_oriented = True
         self.chassis.set_velocity_heading(math.cos(absolute_cube_direction),
                                           math.sin(absolute_cube_direction),
-                                          absolute_cube_direction)
+                                          new_heading)
         # TODO: implement state transition
         # self.next_state("intake_cube")
 
@@ -111,10 +121,21 @@ class VisionTest(OverallBase):
         if initial_call:
             angle = self.bno055.getAngle()
             self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
-                                       [2.5, 0, math.pi/2, 0]])
+                                       [2.5, 0, math.pi/2, 1],
+                                       [2.5, 1, math.pi/2, 0]])
         if not self.motion.enabled:
-            print("going to 'search_for_cube'")
-            self.next_state("search_for_cube")
+            # print("going to 'search_for_cube'")
+            # self.next_state("search_for_cube")
+            self.next_state_now("intake_cube")
+
+    @state
+    def intake_cube(self):
+        self.chassis.set_inputs(0, 1, 0)
+        self.chassis.field_oriented = True
+        if not self.cube_switch.get():
+            self.next_state_now("go_to_scale")
+            print('===========Going to scale===========')
+            return
 
     @state(first=True)
     def go_to_scale(self, initial_call):
@@ -122,7 +143,6 @@ class VisionTest(OverallBase):
         if initial_call:
             angle = self.bno055.getAngle()
             self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
-                                       #[2.5, 0, 0, 2],
                                        [6, 0, 0, 0]])
         if not self.motion.enabled:
             print("================= At scale ======================")

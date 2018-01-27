@@ -15,7 +15,7 @@ class ChassisMotion:
         self.pursuit = VectorPursuit()
 
     def setup(self):
-        self.pursuit.set_motion_params(2.0, 2.0, -2.0)
+        self.pursuit.set_motion_params(3.0, 3.0, -3.0)
 
     def set_waypoints(self, waypoints: np.ndarray):
         """ Pass as set of waypoints for the chassis to follow.
@@ -45,7 +45,7 @@ class ChassisMotion:
             odom_vel = np.array([self.chassis.odometry_x_vel, self.chassis.odometry_y_vel])
 
             speed = np.linalg.norm(odom_vel)
-            print("Odom speed %s" % speed)
+            # print("Odom speed %s" % speed)
 
             direction_of_motion, speed_sp, over = self.pursuit.get_output(odom_pos, speed)
 
