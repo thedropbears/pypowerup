@@ -40,11 +40,11 @@ class ChassisMotion:
         self.heading_error_i = 0
 
     def update_heading_profile(self):
-        current_seg_distance = np.linalg.norm(self.pursuit.segment)
+        self.current_seg_distance = np.linalg.norm(self.pursuit.segment)
         heading_start = self.bno055.getAngle()
         heading_end = self.waypoints[self.waypoint_idx+1][2]
         self.heading_profile_function = generate_interpolation_function(
-                heading_start, heading_end, current_seg_distance)
+                heading_start, heading_end, self.current_seg_distance/2)
         self.last_heading_error = 0
 
     def disable(self):
@@ -73,7 +73,11 @@ class ChassisMotion:
                             - np.linalg.norm(seg_end - odom_pos))
             if seg_end_dist < 0:
                 seg_end_dist = 0
-            heading_seg = self.heading_profile_function(seg_end_dist, speed)
+
+            if seg_end_dist < self.current_seg_distance / 2:
+                heading_seg = self.heading_profile_function(seg_end_dist, speed)
+            else:
+                heading_seg = (self.wayponts[self.waypoint_idx+1][2], 0, 0)
 
             # get the current heading of the robot since last reset
             heading = self.bno055.getRawHeading() - self.bno055.offset
