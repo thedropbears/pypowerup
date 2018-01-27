@@ -90,11 +90,13 @@ class VectorPursuit:
         new_x, new_y = look_ahead_point - position
         theta = math.atan2(new_y, new_x)
 
+        next_seg = False
         if scale > 1 and self.segment_idx < len(self.waypoints)-2:
             self.increment_segment()
+            next_seg = True
 
         over = False
         if np.linalg.norm(position - self.waypoints_xy[-1]) < 0.1:
             over = True
 
-        return theta, speed_sp, over
+        return theta, speed_sp, next_seg, over

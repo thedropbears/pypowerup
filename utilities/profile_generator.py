@@ -52,6 +52,31 @@ def generate_interpolation_trajectory(x_start, x_final, traj_to_match):
     return segments
 
 
+def generate_interpolation_function(x_start, x_final, interpolation_distance):
+    """Generate a function to interpolate in 1 dimension, where the velocity
+    is constant over the duration of the trajectory.
+
+    Args:
+        x_start: starting position on the axis we are controlling
+        x_final: finishing position on the axis we are controlling
+        interpolation_distance: distance we are travelling along the axis we
+            are *not* controlling. Function returned will match position and
+            velocity of the axis we are controlling to distance and speed on
+            the axis we are not controlling.
+    """
+    # distance to cover on the axis we are controlling
+    x = x_final - x_start
+
+    avg_vel = x / interpolation_distance  # units / m
+
+    def get_profile_point(distance, speed):
+        distance_proportion = distance / interpolation_distance
+        # convert from units/m to units / sec
+        vel = avg_vel * speed
+        return (x_start+distance_proportion*x, vel, 0)
+    return get_profile_point
+
+
 def generate_trapezoidal_function(
         x_start, v_start, x_final, v_final, v_max, a_pos, a_neg):
     direction = sign(x_final-x_start)

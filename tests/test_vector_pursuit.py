@@ -28,7 +28,7 @@ def test_single_waypoint_converge():
     last_speed = 0
 
     for i in range(200):
-        theta, speed, over = pursuit.get_output(np.array([robot_x, robot_y]), last_speed)
+        theta, speed, next_seg, over = pursuit.get_output(np.array([robot_x, robot_y]), last_speed)
         robot_x, robot_y = position_delta_x_y(theta, speed,
                                               robot_x, robot_y, orientation)
         if over:
@@ -54,7 +54,7 @@ def test_multi_waypoint_converge():
     last_speed = 0
 
     for i in range(500):
-        theta, speed, over = pursuit.get_output(np.array([robot_x, robot_y]), last_speed)
+        theta, speed, next_seg, over = pursuit.get_output(np.array([robot_x, robot_y]), last_speed)
         robot_x, robot_y = position_delta_x_y(theta, speed,
                                               robot_x, robot_y, orientation)
         if over:
@@ -80,7 +80,7 @@ def test_speed_control():
     last_speed = 0
 
     for i in range(500):
-        theta, speed, over = pursuit.get_output(np.array([robot_x, robot_y]), last_speed)
+        theta, speed, next_seg, over = pursuit.get_output(np.array([robot_x, robot_y]), last_speed)
         robot_x, robot_y = position_delta_x_y(theta, speed,
                                               robot_x, robot_y, orientation)
         if over:

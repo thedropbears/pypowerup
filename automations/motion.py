@@ -3,12 +3,19 @@ import numpy as np
 from pyswervedrive.swervechassis import SwerveChassis
 from utilities.bno055 import BNO055
 from utilities.vector_pursuit import VectorPursuit
+from utilities.profile_generator import generate_interpolation_function
 
 
 class ChassisMotion:
 
     chassis: SwerveChassis
     bno055: BNO055
+
+    # heading motion feedforward/back gains
+    kPh = 6  # proportional gain
+    kVh = 1  # feedforward gain
+    kIh = 0.2  # integral gain
+    kDh = 40  # derivative gain
 
     def __init__(self):
         self.enabled = False
@@ -29,6 +36,16 @@ class ChassisMotion:
         self.pursuit.set_waypoints(waypoints)
         self.enabled = True
         self.chassis.heading_hold_on()
+        self.update_heading_profile()
+        self.heading_error_i = 0
+
+    def update_heading_profile(self):
+        current_seg_distance = np.linalg.norm(self.pursuit.segment)
+        heading_start = self.bno055.getAngle()
+        heading_end = self.waypoints[self.waypoint_idx+1][2]
+        self.heading_profile_function = generate_interpolation_function(
+                heading_start, heading_end, current_seg_distance)
+        self.last_heading_error = 0
 
     def disable(self):
         self.enabled = False
@@ -47,12 +64,43 @@ class ChassisMotion:
             speed = np.linalg.norm(odom_vel)
             # print("Odom speed %s" % speed)
 
-            direction_of_motion, speed_sp, over = self.pursuit.get_output(odom_pos, speed)
+            direction_of_motion, speed_sp, next_seg, over = self.pursuit.get_output(odom_pos, speed)
+
+            if next_seg:
+                self.update_heading_profile()
+            seg_end = self.pursuit.waypoints_xy[self.waypoint_idx+1]
+            seg_end_dist = (np.linalg.norm(self.pursuit.segment)
+                            - np.linalg.norm(seg_end - odom_pos))
+            if seg_end_dist < 0:
+                seg_end_dist = 0
+            heading_seg = self.heading_profile_function(seg_end_dist, speed)
+
+            # get the current heading of the robot since last reset
+            heading = self.bno055.getRawHeading() - self.bno055.offset
+            # calculate the heading error
+            heading_error = heading_seg[0] - heading
+            # wrap heading error, stops jumping by 2 pi from the gyro
+            heading_error = math.atan2(math.sin(heading_error),
+                                       math.cos(heading_error))
+            # sum the heading error over the timestep
+            self.heading_error_i += heading_error
+            # calculate the derivative of the heading error
+            d_heading_error = (heading_error - self.last_heading_error)
+
+            # generate the rotational output to the chassis
+            heading_output = (
+                self.kPh * heading_error + self.kVh * heading_seg[1]
+                + self.heading_error_i*self.kIh + d_heading_error*self.kDh)
+
+            # store the current errors to be used to compute the
+            # derivatives in the next timestep
+            self.last_heading_error = heading_error
 
             vx = speed_sp * math.cos(direction_of_motion)
             vy = speed_sp * math.sin(direction_of_motion)
 
-            self.chassis.set_velocity_heading(vx, vy, self.waypoints[self.waypoint_idx+1][2])
+            # self.chassis.set_velocity_heading(vx, vy, self.waypoints[self.waypoint_idx+1][2])
+            self.chassis.set_inputs(vx, vy, heading_output)
 
             if over:
                 self.enabled = False
