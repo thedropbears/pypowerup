@@ -5,8 +5,7 @@ import wpilib
 
 from automations.intake import IntakeAutomation
 from components.intake import Intake
-from ctre import WPI_TalonSRX, CANifier
-
+from ctre import WPI_TalonSRX
 
 
 class Robot(magicbot.MagicRobot):
@@ -33,7 +32,7 @@ class Robot(magicbot.MagicRobot):
         """This controls the arm in the back section of the intake mechanism"""
         self.intake_kicker = wpilib.Solenoid(3)
         """This controls the kicker in the back section of the intake mechanism"""
-        self.limit_switch = CANifier(4)
+        self.limit_switch = wpilib.DigitalInput(0)
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
@@ -57,8 +56,7 @@ class Robot(magicbot.MagicRobot):
 
         if self.xbox.getXButtonReleased():
             self.intake_automation.engage()
-        if self.xbox.getPOV 
-            self.
+        
 
 if __name__ == '__main__':
     wpilib.run(Robot)

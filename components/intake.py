@@ -37,16 +37,9 @@ class Intake:
     def cube_inside(self):
         """Run when the limit switch is pressed and when the current
         output is above a threshold, which stops the motors."""
-        if (self.intake_motor.getOutputCurrent() > 3 and
-                self.limit_switch.getLimitSwitchState()):
+        if self.limit_switch.get():
             return True
-
-    def cube_outside(self):
-        """Run when a button is pushed on the joystick. Makes the
-        wheels back drive."""
-        if (self.intake_motor.getOutputCurrent() < 3 and
-                self.limit_switch.getLimitSwitchState()):
-            return True
+        return False
 
     def intake_clamp(self, value):
         """Turns intake arm on or off"""
