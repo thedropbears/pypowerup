@@ -64,6 +64,7 @@ class OverallBase(AutonomousStateMachine):
     @state
     def search_for_cube(self):
         """The robot attemppts to find a cube within the frame of the camera"""
+        print('search for cube')
         if self.vision.largest_cube() is None:
             self.chassis.set_inputs(0, 0, 1)
         else:
@@ -85,6 +86,8 @@ class OverallBase(AutonomousStateMachine):
             self.next_state_now("go_to_scale")
             print('===========Going to scale===========')
             return
+        else:
+            print("no cube switch")
         absolute_cube_direction = angle + vision_angle
         new_heading = angle + 0.2 * vision_angle
         self.chassis.field_oriented = True
@@ -121,7 +124,7 @@ class VisionTest(OverallBase):
         if initial_call:
             angle = self.bno055.getAngle()
             self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
-                                       [2.5, 0, math.pi/2, 1],
+                                       [2.5, 0, math.pi/2, 2],
                                        [2.5, 1, math.pi/2, 0]])
         if not self.motion.enabled:
             # print("going to 'search_for_cube'")

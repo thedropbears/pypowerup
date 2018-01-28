@@ -12,17 +12,19 @@ class ChassisMotion:
     bno055: BNO055
 
     # heading motion feedforward/back gains
-    kPh = 2  # proportional gain
+    kPh = 3  # proportional gain
     kVh = 1  # feedforward gain
     kIh = 0  # integral gain
-    kDh = 0  # derivative gain
+    kDh = 5  # derivative gain
+
+    heading_adjustment_proportion = 0.8
 
     def __init__(self):
         self.enabled = False
         self.pursuit = VectorPursuit()
 
     def setup(self):
-        self.pursuit.set_motion_params(4.0, 4, -4)
+        self.pursuit.set_motion_params(4.0, 4, -3)
 
     def set_waypoints(self, waypoints: np.ndarray):
         """ Pass as set of waypoints for the chassis to follow.
@@ -44,7 +46,7 @@ class ChassisMotion:
         heading_start = self.bno055.getAngle()
         heading_end = self.waypoints[self.waypoint_idx+1][2]
         self.heading_profile_function = generate_interpolation_function(
-                heading_start, heading_end, self.current_seg_distance/2)
+                heading_start, heading_end, self.current_seg_distance*self.heading_adjustment_proportion)
         self.last_heading_error = 0
 
     def disable(self):
@@ -74,7 +76,7 @@ class ChassisMotion:
             if seg_end_dist < 0:
                 seg_end_dist = 0
 
-            if seg_end_dist < self.current_seg_distance / 2:
+            if seg_end_dist < self.current_seg_distance*self.heading_adjustment_proportion:
                 heading_seg = self.heading_profile_function(seg_end_dist, speed)
             else:
                 heading_seg = (self.waypoints[self.waypoint_idx+1][2], 0, 0)

@@ -198,11 +198,11 @@ class SwerveModule:
         if not self.absolute_rotation:
             # logic to only move the modules when we are close to the corret angle
             azimuth_error = constrain_angle(self.current_measured_azimuth - desired_azimuth)
-            if abs(azimuth_error) < math.pi / 6.0:
+            if abs(azimuth_error) < math.pi / 3.0:
                 # if we are nearing the correct angle with the module forwards
                 self.drive_motor.set(ctre.ControlMode.Velocity,
                                      velocity*self.drive_velocity_to_native_units)
-            elif abs(azimuth_error) > math.pi - math.pi / 6.0:
+            elif abs(azimuth_error) > math.pi - math.pi / 3.0:
                 # if we are nearing the correct angle with the module backwards
                 self.drive_motor.set(ctre.ControlMode.Velocity,
                                      -velocity*self.drive_velocity_to_native_units)
