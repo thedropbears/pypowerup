@@ -28,13 +28,13 @@ class Robot(magicbot.MagicRobot):
         """This controls the back section of the intake mechanism, this controls two motors."""
         self.intake_motor2 = WPI_TalonSRX(2)
         """This controls the left arm in the containment mechanism"""
-        self.clamp_arm_left = wpilib.DoubleSolenoid(0)
+        self.clamp_arm_left = wpilib.Solenoid(0)
         """This controls the right arm in the containment mechanism"""
-        self.clamp_arm_right = wpilib.DoubleSolenoid(1)
+        self.clamp_arm_right = wpilib.Solenoid(1)
         """This controls the kicker in the back section of the intake mechanism"""
-        self.intake_kicker = wpilib.DoubleSolenoid(3)
-        self.extension_arm_left = wpilib.DoubleSolenoid(4)
-        self.extension_arm_right = wpilib.DoubleSolenoid(5)
+        self.intake_kicker = wpilib.Solenoid(2)
+        self.extension_arm_left = wpilib.Solenoid(3)
+        self.extension_arm_right = wpilib.Solenoid(4)
         """This is the limit switch at the back of the containment section"""
         self.limit_switch = wpilib.DigitalInput(0)
 

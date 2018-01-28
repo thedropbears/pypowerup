@@ -6,11 +6,11 @@ class Intake:
     """Importing objects from robot.py"""
     intake_motor1: WPI_TalonSRX
     intake_motor2: WPI_TalonSRX
-    clamp_arm_left: wpilib.DoubleSolenoid
-    clamp_arm_right: wpilib.DoubleSolenoid
-    intake_kicker: wpilib.DoubleSolenoid
-    extension_arm_left:wpilib.DoubleSolenoid
-    extension_arm_right:wpilib.DoubleSolenoid
+    clamp_arm_left: wpilib.Solenoid
+    clamp_arm_right: wpilib.Solenoid
+    intake_kicker: wpilib.Solenoid
+    extension_arm_left: wpilib.Solenoid
+    extension_arm_right: wpilib.Solenoid
     limit_switch: wpilib.DigitalInput
 
     def setup(self):
