@@ -121,20 +121,23 @@ class VisionTest(OverallBase):
     @state
     def go_to_cube(self, initial_call):
         """The robot drives towards where the next cube should be"""
+        print("I am going to the cube")
         if initial_call:
             angle = self.bno055.getAngle()
             self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
-                                       [2.5, 0, math.pi/2, 2],
-                                       [2.5, 1, math.pi/2, 0]])
+                                       [2.5, 0, math.pi/2, 1.5],
+                                       [2.5, 1, math.pi/2, 1.5]])
         if not self.motion.enabled:
-            # print("going to 'search_for_cube'")
+            print("going to 'intake cube'")
             # self.next_state("search_for_cube")
             self.next_state_now("intake_cube")
 
     @state
     def intake_cube(self):
-        self.chassis.set_inputs(0, 1.5, 0)
         self.chassis.field_oriented = True
+        self.chassis.set_inputs(0, 1.5, 0)
+        print("i am waiting to intake the cube")
+        print("cube switch intake cube %s" % (not self.cube_switch.get()))
         if not self.cube_switch.get():
             self.next_state_now("go_to_scale")
             print('===========Going to scale===========')

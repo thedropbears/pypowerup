@@ -1,5 +1,4 @@
 import math
-import hal
 import numpy as np
 from wpilib import PIDController
 from wpilib.interfaces import PIDOutput
@@ -121,11 +120,7 @@ class SwerveChassis:
             vz_y = module_dist*vz*math.cos(module_angle)
             # TODO: re enable this and test field-oriented mode
             if self.field_oriented:
-                if hal.isSimulation():
-                    from hal_impl.data import hal_data
-                    angle = math.radians(-hal_data['robot']['bno055'])
-                else:
-                    angle = self.bno055.getAngle()
+                angle = self.bno055.getAngle()
                 vx, vy = self.field_orient(self.vx, self.vy, angle)
             else:
                 vx, vy = self.vx, self.vy

@@ -15,9 +15,9 @@ class ChassisMotion:
     kPh = 3  # proportional gain
     kVh = 1  # feedforward gain
     kIh = 0  # integral gain
-    kDh = 5  # derivative gain
+    kDh = 10  # derivative gain
 
-    heading_adjustment_proportion = 0.8
+    heading_adjustment_proportion = 0.6
 
     def __init__(self):
         self.enabled = False
@@ -58,7 +58,7 @@ class ChassisMotion:
     def execute(self):
         if self.enabled:
             self.chassis.field_oriented = True
-            self.chassis.hold_heading = True
+            self.chassis.hold_heading = False
 
             odom_pos = np.array([self.chassis.odometry_x, self.chassis.odometry_y])
             odom_vel = np.array([self.chassis.odometry_x_vel, self.chassis.odometry_y_vel])
