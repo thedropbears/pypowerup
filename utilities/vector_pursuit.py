@@ -7,8 +7,9 @@ also define start and end point
 6 calculate angle of look ahead from oreintation
 7 output vector of angle and speed
 """
-import numpy as np
 import math
+from utilities.profile_generator import generate_trapezoidal_function
+import numpy as np
 
 
 class VectorPursuit:
@@ -19,16 +20,33 @@ class VectorPursuit:
             waypoint list of numpy arrays.
         """
         self.waypoints = waypoints
-        self.segment = self.waypoints[1] - self.waypoints[0]
-        self.segment_start = self.waypoints[0]
-        self.segment_end = self.waypoints[1]
-        self.waypoint_idx = 0
+        self.waypoints_xy = np.array([[waypoint[0], waypoint[1]] for waypoint in self.waypoints])
+        self.segment_idx = None
+        self.increment_segment()
 
-    def get_output(self, position: np.ndarray, orientation: int, speed: int):
+    def set_motion_params(self, top_speed, top_accel, top_decel):
+        self.top_speed = top_speed
+        self.top_accel = top_accel
+        self.top_decel = top_decel
+
+    def increment_segment(self):
+        if self.segment_idx is None:
+            self.segment_idx = 0
+        else:
+            self.segment_idx += 1
+        self.segment = (self.waypoints_xy[self.segment_idx+1]
+                        - self.waypoints_xy[self.segment_idx])
+        start_speed = self.waypoints[self.segment_idx][3]
+        end_speed = self.waypoints[self.segment_idx+1][3]
+        seg_length = np.linalg.norm(self.segment)
+        self.speed_function = generate_trapezoidal_function(
+                0, start_speed, seg_length, end_speed,
+                self.top_speed, self.top_accel, self.top_decel)
+
+    def get_output(self, position: np.ndarray, speed: float):
         """Compute the angle to move the robot in to converge with waypoints.
         Args:
             position current robot position
-            orientation of robot in radians
             speed in m/s of robot
 
         Returns:
@@ -36,35 +54,49 @@ class VectorPursuit:
         """
 
         # check if at edge of segment
-        displacement = position - self.segment_start
+        displacement = position - self.waypoints_xy[self.segment_idx]
         scale = displacement.dot(self.segment) / self.segment.dot(self.segment)
 
         # calculate projected point
-        projected_point = self.segment_start + scale * self.segment
-        # print(projected_point)
+        projected_point = (self.waypoints_xy[self.segment_idx]
+                           + scale * self.segment)
+
+        dist_to_end = np.linalg.norm(self.segment) - np.linalg.norm(self.waypoints_xy[self.segment_idx+1] - position)
+        if dist_to_end < 0:
+            dist_to_end = 0
+        speed_sp = self.speed_function(dist_to_end)
 
         # define look ahead distance
-        look_ahead_distance = 1 + 0.3 * speed
+        look_ahead_distance = 0.1 + 0.3 * speed
+
+        look_ahead_point = projected_point
+        look_ahead_remaining = look_ahead_distance
+        look_ahead_waypoint = self.segment_idx
+        while look_ahead_remaining > 0:
+            segment_start = self.waypoints_xy[look_ahead_waypoint]
+            segment_end = self.waypoints_xy[look_ahead_waypoint+1]
+            segment = segment_end - segment_start
+            segment_normalised = segment / np.linalg.norm(segment)
+            look_ahead_point = (projected_point + look_ahead_remaining
+                                * segment_normalised)
+            if look_ahead_waypoint == len(self.waypoints)-2:
+                break
+            projected_point = segment_end
+            look_ahead_waypoint += 1
 
         segment_normalised = self.segment / np.linalg.norm(self.segment)
-        look_ahead_point = (projected_point
-                            + segment_normalised * look_ahead_distance)
-        print("Look ahead point: %s, projected_point %s"
-              % (look_ahead_point, projected_point))
 
         # calculate angle of look ahead from oreintation
         new_x, new_y = look_ahead_point - position
         theta = math.atan2(new_y, new_x)
-        angle = theta - orientation
 
-        # output vector of angle and speed
-        vx = speed * math.cos(angle)
-        vy = speed * math.sin(angle)
+        next_seg = False
+        if scale > 1 and self.segment_idx < len(self.waypoints)-2:
+            self.increment_segment()
+            next_seg = True
 
-        if scale > 1 and self.waypoint_idx < len(self.waypoints)-2:
-            self.waypoint_idx += 1
-            self.segment_end = self.waypoints[self.waypoint_idx+1]
-            self.segment_start = self.waypoints[self.waypoint_idx]
-            self.segment = self.segment_end - self.segment_start
+        over = False
+        if np.linalg.norm(position - self.waypoints_xy[-1]) < 0.1:
+            over = True
 
-        return vx, vy
+        return theta, speed_sp, next_seg, over
