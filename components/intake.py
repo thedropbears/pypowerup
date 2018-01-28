@@ -4,8 +4,8 @@ import wpilib
 
 class Intake:
     """Importing objects from robot.py"""
-    intake_motor1: WPI_TalonSRX
-    intake_motor2: WPI_TalonSRX
+    intake_left: WPI_TalonSRX
+    intake_right: WPI_TalonSRX
     clamp_arm_left: wpilib.Solenoid
     clamp_arm_right: wpilib.Solenoid
     intake_kicker: wpilib.Solenoid
@@ -31,11 +31,13 @@ class Intake:
 
     def intake_rotate(self, value):
         """Turns intake mechanism on."""
-        self.intake_motor.set(value)
+        self.intake_left.set(value)
+        self.intake_right.set(value)
 
     def intake_disable(self):
         """Turns intake mechanism off."""
-        self.intake_motor.set(0.0)
+        self.intake_left.set(0.0)
+        self.intake_right.set(0.0)
 
     def cube_inside(self):
         """Run when the limit switch is pressed and when the current
