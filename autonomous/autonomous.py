@@ -24,7 +24,7 @@ class OverallBase(AutonomousStateMachine):
     # cubes will be listed in size order along with thier rough size and angle
 
     def on_enable(self):
-        self.game_data_message = self.ds.getGameSpecificMessage()
+        self.game_data_message = self.ds.getGameSpecificMessage()  # TODO test this
         self.fails = 0
         if len(self.game_data_message) == 3:
             self.fms_scale = self.game_data_message[1]  # L or R
@@ -118,6 +118,12 @@ class VisionTest(OverallBase):
     @state
     def go_to_cube(self, initial_call):
         """The robot drives towards where the next cube should be"""
+        if self.fms_scale == 'L':
+            # go to left scale
+            print('Scale is left')
+        if self.fms_scale == 'R':
+            # go to right scale
+            print('Scale is right')
         if initial_call:
             angle = self.bno055.getAngle()
             self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
@@ -126,7 +132,7 @@ class VisionTest(OverallBase):
         if not self.motion.enabled:
             # print("going to 'search_for_cube'")
             # self.next_state("search_for_cube")
-            self.next_state_now("intake_cube")
+            self.next_state_now("deposit_cube")
 
     @state
     def intake_cube(self):
@@ -250,9 +256,7 @@ class LeftDoubleScale(OverallBase):
     def go_to_scale(self):
         if self.fms_scale == 'R':
             self.coordinates = self.coordinates[1]
-            self.motion.set_waypoints = np.array(self.coordinates[0])
-            self.motion.set_waypoints = np.array(self.coordinates[1])
-            self.motion.set_waypoints = np.array(self.coordinates[2])
+            self.motion.set_waypoints = self.coordinates[:2]
             # go to right scale
         elif self.fms_scale == 'L':
             self.coordinates = self.coordinates[0]
