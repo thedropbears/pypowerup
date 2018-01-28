@@ -53,6 +53,6 @@ class Intake:
         """Turns the pushing pneumatic on or off"""
         self.intake_kicker.set(value)
 
-    def extensions(self, value):
+    def extension(self, value):
         self.extension_arm_left(value)
         self.extension_arm_right(value)

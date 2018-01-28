@@ -12,9 +12,11 @@ class IntakeAutomation(StateMachine):
         """Start the intake while waiting for the cube to come inside"""
         if self.cube_inside():
             self.intake_rotate(0.0)
+            self.intake.extension(False)
             self.next_state("clamp")
         else:
             self.intake_rotate(0.5)
+            self.intake.extension(True)
 
     @state(must_finish=True)
     def clamp(self):
