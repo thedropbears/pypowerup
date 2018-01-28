@@ -6,9 +6,11 @@ class Intake:
     """Importing objects from robot.py"""
     intake_motor1: WPI_TalonSRX
     intake_motor2: WPI_TalonSRX
-    clamp_arm_left: wpilib.Solenoid
-    clamp_arm_right: wpilib.Solenoid
-    intake_kicker: wpilib.Solenoid
+    clamp_arm_left: wpilib.DoubleSolenoid
+    clamp_arm_right: wpilib.DoubleSolenoid
+    intake_kicker: wpilib.DoubleSolenoid
+    extension_arm_left:wpilib.DoubleSolenoid
+    extension_arm_right:wpilib.DoubleSolenoid
     limit_switch: wpilib.DigitalInput
 
     def setup(self):
@@ -38,7 +40,7 @@ class Intake:
     def cube_inside(self):
         """Run when the limit switch is pressed and when the current
         output is above a threshold, which stops the motors."""
-        if self.limit_switch.get():
+        if self.limit_switch.getPWMInput(0):
             return True
         return False
 
@@ -51,5 +53,6 @@ class Intake:
         """Turns the pushing pneumatic on or off"""
         self.intake_kicker.set(value)
 
-    def switch(self):
-        print(self.limit_switch.getPWMInput(4))
+    def extensions(self, value):
+        self.extension_arm_left(value)
+        self.extension_arm_right(value)

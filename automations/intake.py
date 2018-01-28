@@ -1,12 +1,10 @@
 from magicbot import StateMachine, state
 from components.intake import Intake
-from components.lifter import Lifter
 from automations.lifter import LifterAutomation
 
 
 class IntakeAutomation(StateMachine):
     intake: Intake
-    lifter: Lifter
     lifter_automation: LifterAutomation
 
     @state(first=True, must_finish=True)
@@ -16,7 +14,7 @@ class IntakeAutomation(StateMachine):
             self.intake_rotate(0.0)
             self.next_state("clamp")
         else:
-            self.intake_rotate(0.3)
+            self.intake_rotate(0.5)
 
     @state(must_finish=True)
     def clamp(self):

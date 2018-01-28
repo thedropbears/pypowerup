@@ -46,7 +46,7 @@ class Lifter:
         """ Move the lift to the height of the exchange
         """
         self.move_to(self.exchange_height)
-    
+
     def reset_pos(self):
         """Move to ground height"""
         self.move_to(self.ground_height)
