@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import ctre
 import magicbot
 import wpilib
 from networktables import NetworkTables
 import numpy as np
 from automations.intake import IntakeAutomation
+<<<<<<< HEAD
 from automations.lifter import LifterAutomation
 from automations.motion import ChassisMotion
 from components.intake import Intake
@@ -15,6 +15,10 @@ from pyswervedrive.swervechassis import SwerveChassis
 from pyswervedrive.swervemodule import SwerveModule
 from utilities.bno055 import BNO055
 from utilities.functions import rescale_js
+=======
+from components.intake import Intake
+from ctre import WPI_TalonSRX
+>>>>>>> d3c8d1f4aee24fe9a79a7a5a451e5bdb838412a7
 
 import math
 
@@ -31,10 +35,8 @@ class Robot(magicbot.MagicRobot):
     # Automations
     motion: ChassisMotion
     intake_automation: IntakeAutomation
-    lifter_automation: LifterAutomation
 
     # Actuators
-    chassis: SwerveChassis
     intake: Intake
     lifter: Lifter
 
@@ -71,6 +73,25 @@ class Robot(magicbot.MagicRobot):
 
         self.spin_rate = 5
 
+    def createObjects(self):
+        """Create non-components here."""
+        """This is to state what channel our xbox controller is on"""
+        self.xbox = wpilib.XboxController(0)
+        """This controls the front section of the intake mechanism, This controls two motors."""
+        self.intake_motor1 = WPI_TalonSRX(1)
+        """This controls the back section of the intake mechanism, this controls two motors."""
+        self.intake_motor2 = WPI_TalonSRX(2)
+        """This controls the left arm in the containment mechanism"""
+        self.clamp_arm_left = wpilib.Solenoid(0)
+        """This controls the right arm in the containment mechanism"""
+        self.clamp_arm_right = wpilib.Solenoid(1)
+        """This controls the kicker in the back section of the intake mechanism"""
+        self.intake_kicker = wpilib.Solenoid(2)
+        self.extension_arm_left = wpilib.Solenoid(3)
+        self.extension_arm_right = wpilib.Solenoid(4)
+        """This is the limit switch at the back of the containment section"""
+        self.limit_switch = wpilib.DigitalInput(0)
+
         NetworkTables.initialize()
         self.sd = NetworkTables.getTable("SmartDashboard")
 
@@ -78,12 +99,17 @@ class Robot(magicbot.MagicRobot):
         '''Called when teleop starts; optional'''
         self.motion.enabled = False
         self.chassis.set_inputs(0, 0, 0)
+        self.intake.intake_clamp(False)
+        self.intake.intake_push(False)
+        self.extensions(True)
+        self.lift_motor = WPI_TalonSRX(0)
 
     def teleopPeriodic(self):
         """
         Process inputs from the driver station here.
 
-        This is run each iteration of the control loop before magicbot components are executed.
+        This is run each iteration of the control loop before magicbot
+        components are executed.
         """
         if self.joystick.getRawButtonPressed(10):
             self.chassis.odometry_x = 0.0
@@ -107,6 +133,11 @@ class Robot(magicbot.MagicRobot):
         vy = -rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2, rate=4)
         vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=15.0, rate=self.spin_rate)
         self.chassis.set_inputs(vx, vy, vz)
+
+        # self.intake.intake_arm(self.xbox.getBButton())
+
+        if self.xbox.getXButtonReleased():
+            self.intake_automation.engage()
 
 
 if __name__ == '__main__':

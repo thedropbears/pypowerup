@@ -126,3 +126,4 @@ tags
 *.iws
 .deploy_cfg
 test.py
+.vscode/
