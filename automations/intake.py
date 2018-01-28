@@ -4,6 +4,7 @@ from automations.lifter import LifterAutomation
 
 
 class IntakeAutomation(StateMachine):
+    """Importing objects from other files"""
     intake: Intake
     lifter_automation: LifterAutomation
 
