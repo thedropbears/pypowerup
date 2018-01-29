@@ -4,6 +4,8 @@ from wpilib import PIDController
 from wpilib.interfaces import PIDOutput
 from utilities.bno055 import BNO055
 from pyswervedrive.swervemodule import SwerveModule
+from wpilib import SmartDashboard
+from networktables import NetworkTables
 
 
 class SwerveChassis:
@@ -147,6 +149,16 @@ class SwerveChassis:
         self.odometry_y_vel = v_y
         self.odometry_z_vel = v_z
         print("odometry x %s, y %s" % (self.odometry_x, self.odometry_y))
+
+        SmartDashboard.putNumber('module_a_speed', self.modules[0].current_speed)
+        SmartDashboard.putNumber('module_b_speed', self.modules[1].current_speed)
+        SmartDashboard.putNumber('module_c_speed', self.modules[2].current_speed)
+        SmartDashboard.putNumber('module_d_speed', self.modules[3].current_speed)
+        SmartDashboard.putNumber('module_a_pos', self.modules[0].current_measured_azimuth)
+        SmartDashboard.putNumber('module_b_pos', self.modules[1].current_measured_azimuth)
+        SmartDashboard.putNumber('module_c_pos', self.modules[2].current_measured_azimuth)
+        SmartDashboard.putNumber('module_d_pos', self.modules[3].current_measured_azimuth)
+        NetworkTables.flush()
 
     def robot_movement_from_odometry(self, odometry_outputs):
         lstsq_ret = np.linalg.lstsq(self.A_matrix, odometry_outputs,

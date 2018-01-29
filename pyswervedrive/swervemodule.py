@@ -26,8 +26,8 @@ class SwerveModule:
     def __init__(self, steer_talon: ctre.WPI_TalonSRX, drive_talon: ctre.WPI_TalonSRX,
                  steer_enc_offset: float, x_pos: float, y_pos: float,
                  drive_free_speed: float,
-                 reverse_steer_direction: bool = False,
-                 reverse_steer_encoder: bool = True,
+                 reverse_steer_direction: bool = True,
+                 reverse_steer_encoder: bool = False,
                  reverse_drive_direction: bool = False,
                  reverse_drive_encoder: bool = False):
 
@@ -56,11 +56,10 @@ class SwerveModule:
         self.steer_motor.setSensorPhase(self.reverse_steer_encoder)
         # changes sign of motor throttle vilues
         self.steer_motor.setInverted(self.reverse_steer_direction)
-        sp = self.steer_motor.getSelectedSensorPosition(0)
-        self.current_azimuth_sp = float(sp - self.steer_enc_offset) / self.STEER_COUNTS_PER_RADIAN
-        self.steer_motor.config_kP(0, 0.1, 10)
+
+        self.steer_motor.config_kP(0, 1.5, 10)
         self.steer_motor.config_kI(0, 0.0, 10)
-        self.steer_motor.config_kD(0, 0.0, 10)
+        self.steer_motor.config_kD(0, 5.0, 10)
         self.steer_motor.selectProfileSlot(0, 0)
         self.steer_motor.config_kF(0, 0, 10)
         self.reset_steer_setpoint()
@@ -72,17 +71,15 @@ class SwerveModule:
         self.drive_motor.setSensorPhase(self.reverse_drive_encoder)
         # changes sign of motor throttle values
         self.drive_motor.setInverted(self.reverse_drive_direction)
-        self.drive_motor.config_kP(0, 5.0, 10)
+        self.drive_motor.config_kP(0, 1.0, 10)
         self.drive_motor.config_kI(0, 0.0, 10)
-        self.drive_motor.config_kD(0, 0.05, 10)
+        self.drive_motor.config_kD(0, 0.1, 10)
         self.drive_motor.config_kF(0, 1024.0/self.drive_free_speed, 10)
         self.drive_motor.selectProfileSlot(0, 0)
 
         self.drive_motor.setNeutralMode(ctre.WPI_TalonSRX.NeutralMode.Brake)
 
         self.reset_encoder_delta()
-
-        self.last_az = 0
 
     def set_rotation_mode(self, rotation_mode):
         """Set whether we want the modules to rotate to the nearest possible
@@ -182,26 +179,12 @@ class SwerveModule:
         # control on the Talon SRXs themselves.
         # Please note, this is *NOT WRAPPED* to +-pi, because if wrapped the module
         # will unwind
-        # azimuth_to_set = (self.current_azimuth_sp+delta)
-        # convert the direction to encoder counts to set as the closed-loop setpoint
-        # setpoint = (azimuth_to_set * self.STEER_COUNTS_PER_RADIAN
-        #             + self.steer_enc_offset)
-        # self.steer_motor.set(ctre.ControlMode.Position, setpoint)
-        # self.current_azimuth_sp = azimuth_to_set
-
-        # Please note, this is *NOT WRAPPED* to +-pi, because if wrapped the module
-        # will unwind
         azimuth_to_set = (self.current_azimuth_sp+delta)
         # convert the direction to encoder counts to set as the closed-loop setpoint
-        if self.absolute_rotation:
-            azimuth_error = constrain_angle(self.current_measured_azimuth - desired_azimuth)
-        else:
-            azimuth_error = -self.min_angular_displacement(self.current_measured_azimuth, constrain_angle(azimuth_to_set))
-        d_azimuth = constrain_angle(self.current_measured_azimuth - self.last_az) / 0.02
-        pid_out = azimuth_error*self.steer_k_p + self.steer_k_d*d_azimuth
-        self.steer_motor.set(ctre.ControlMode.PercentOutput, pid_out)
+        setpoint = (azimuth_to_set * self.STEER_COUNTS_PER_RADIAN
+                    + self.steer_enc_offset)
+        self.steer_motor.set(ctre.ControlMode.Position, setpoint)
         self.current_azimuth_sp = azimuth_to_set
-        self.last_az = self.current_measured_azimuth
 
         if not self.absolute_rotation:
             # logic to only move the modules when we are close to the corret angle
