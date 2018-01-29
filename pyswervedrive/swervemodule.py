@@ -41,7 +41,7 @@ class SwerveModule:
         self.reverse_drive_encoder = reverse_drive_encoder
         self.drive_free_speed = drive_free_speed
 
-        self.absolute_rotation = True
+        self.absolute_rotation = False
         self.vx = 0
         self.vy = 0
 

@@ -124,3 +124,9 @@ class SwerveChassis:
         oriented_vx = vx * math.cos(heading) + vy * math.sin(heading)
         oriented_vy = -vx * math.sin(heading) + vy * math.cos(heading)
         return oriented_vx, oriented_vy
+
+    def reset_odometry(self):
+        """Reset all 3 odometry variables to a value of 0."""
+        self.odometry_x = 0
+        self.odometry_y = 0
+        self.odometry_theta = 0

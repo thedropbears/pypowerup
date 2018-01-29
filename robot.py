@@ -22,20 +22,20 @@ class Robot(magicbot.MagicRobot):
 
         self.module_a = SwerveModule(  # top left module
             steer_talon=ctre.WPI_TalonSRX(4), drive_talon=ctre.WPI_TalonSRX(13),
-            steer_enc_offset=-3893, x_pos=0.3, y_pos=0.3,
+            steer_enc_offset=-3854, x_pos=0.3, y_pos=0.3,
             drive_free_speed=Robot.module_drive_free_speed,
             reverse_drive_direction=True, reverse_drive_encoder=True)
         self.module_b = SwerveModule(  # bottom left modulet
             steer_talon=ctre.WPI_TalonSRX(2), drive_talon=ctre.WPI_TalonSRX(9),
-            steer_enc_offset=-3543, x_pos=-0.3, y_pos=0.3,
+            steer_enc_offset=-3349, x_pos=-0.3, y_pos=0.3,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_c = SwerveModule(  # bottom right modulet
             steer_talon=ctre.WPI_TalonSRX(8), drive_talon=ctre.WPI_TalonSRX(14),
-            steer_enc_offset=-1832, x_pos=-0.3, y_pos=-0.3,
+            steer_enc_offset=-1830, x_pos=-0.3, y_pos=-0.3,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_d = SwerveModule(  # top right modulet
             steer_talon=ctre.WPI_TalonSRX(11), drive_talon=ctre.WPI_TalonSRX(6),
-            steer_enc_offset=-1541, x_pos=0.3, y_pos=-0.3,
+            steer_enc_offset=-1350, x_pos=0.3, y_pos=-0.3,
             drive_free_speed=Robot.module_drive_free_speed)
 
         # create the imu object
