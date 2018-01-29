@@ -15,10 +15,10 @@ class LifterAutomation(StateMachine):
     @state()
     def move_complete(self):
         """This state makes sure that you are at you set height."""
-        if self.lifter.get_pos() == self.setpos:
+        if self.lifter.get_pos() == self.lifter.setpos:
             self.next_state("eject")
 
-    @timed_state(first=True, duration=0.5, next_state="reset", must_finish=True)
+    @timed_state(duration=0.5, next_state="reset", must_finish=True)
     def eject(self):
         """Ejects cube from mechanism as height is reached."""
         self.intake.intake_clamp(False)

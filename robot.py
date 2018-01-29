@@ -91,14 +91,13 @@ class Robot(magicbot.MagicRobot):
         """This controls the right extension arm"""
         self.extension_arm_right = wpilib.Solenoid(4)
         """This is the limit switch in the containment mechanism."""
-        self.limit_switch = wpilib.DigitalInput(0)
+        self.limit_switch = wpilib.DigitalInput(1)
         self.lift_motor = WPI_TalonSRX(0)
 
     def teleopInit(self):
         """Called when teleop starts; optional"""
         self.intake.intake_clamp(False)
         self.intake.intake_push(False)
-        self.extensions(True)  # What is this?
         self.lift_motor = WPI_TalonSRX(0)
         self.motion.enabled = False
         self.chassis.set_inputs(0, 0, 0)
