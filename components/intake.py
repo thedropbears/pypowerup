@@ -56,5 +56,5 @@ class Intake:
         self.intake_kicker.set(value)
 
     def extension(self, value):
-        self.extension_arm_left(value)
-        self.extension_arm_right(value)
+        self.extension_arm_left.set(value)
+        self.extension_arm_right.set(value)

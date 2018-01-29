@@ -48,7 +48,7 @@ class Robot(magicbot.MagicRobot):
         """Called when teleop starts; optional"""
         self.intake.intake_clamp(False)
         self.intake.intake_push(False)
-        self.extensions(True)
+        self.intake.extension(True)
 
     def teleopPeriodic(self):
         """
