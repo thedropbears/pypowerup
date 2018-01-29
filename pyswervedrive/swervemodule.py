@@ -11,7 +11,10 @@ class SwerveModule:
 
     drive_counts_per_rev = CIMCODER_COUNTS_PER_REV*DRIVE_ENCODER_GEAR_REDUCTION
     drive_counts_per_radian = drive_counts_per_rev / math.tau
-    drive_counts_per_metre = drive_counts_per_rev / (math.pi * WHEEL_DIAMETER) / 1.08
+    # odometry is consistently slightly off, need a fudge factor to compensate
+    drive_odometry_fudge_factor = 1 / 1.08
+    drive_counts_per_metre = (drive_counts_per_rev / (math.pi * WHEEL_DIAMETER)
+                              * drive_odometry_fudge_factor)
 
     # factor by which to scale velocities in m/s to give to our drive talon.
     # 0.1 is because SRX velocities are measured in ticks/100ms
@@ -42,6 +45,10 @@ class SwerveModule:
         self.absolute_rotation = False
         self.vx = 0
         self.vy = 0
+
+        # NOTE: In all the following config* calls to the drive and steer
+        # motors, the last argument is the timeout in milliseconds. See
+        # robotpy-ctre documentation for details.
 
         self.steer_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.
                                                       CTRE_MagEncoder_Absolute, 0, 10)
@@ -171,16 +178,17 @@ class SwerveModule:
             current_unwound_azimuth = constrain_angle(self.current_azimuth_sp)
             delta = self.min_angular_displacement(current_unwound_azimuth, desired_azimuth)
 
-        # # # Please note, this is *NOT WRAPPED* to +-pi, because if wrapped the module
-        # # # will unwind
+        # Following commented block is to work with the (currently broken) PID
+        # control on the Talon SRXs themselves.
+        # Please note, this is *NOT WRAPPED* to +-pi, because if wrapped the module
+        # will unwind
         # azimuth_to_set = (self.current_azimuth_sp+delta)
-        # # convert the direction to encoder counts to set as the closed-loop setpoint
+        # convert the direction to encoder counts to set as the closed-loop setpoint
         # setpoint = (azimuth_to_set * self.STEER_COUNTS_PER_RADIAN
         #             + self.steer_enc_offset)
-        # # self.steer_motor.set(ctre.ControlMode.Position, setpoint)
-        # self.steer_motor.set(ctre.ControlMode.PercentOutput, 1.0)
+        # self.steer_motor.set(ctre.ControlMode.Position, setpoint)
         # self.current_azimuth_sp = azimuth_to_set
-        #
+
         # Please note, this is *NOT WRAPPED* to +-pi, because if wrapped the module
         # will unwind
         azimuth_to_set = (self.current_azimuth_sp+delta)

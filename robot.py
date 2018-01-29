@@ -3,7 +3,6 @@
 import ctre
 import magicbot
 import wpilib
-from networktables import NetworkTables
 import numpy as np
 from automations.intake import IntakeAutomation
 from automations.lifter import LifterAutomation
@@ -23,8 +22,6 @@ class Robot(magicbot.MagicRobot):
     # Add magicbot components here using variable annotations.
     # Any components that directly actuate motors should be declared after
     # any higher-level components (automations) that depend on them.
-
-    ds: wpilib.DriverStation
 
     vision: Vision
 
@@ -70,9 +67,6 @@ class Robot(magicbot.MagicRobot):
         self.cube_switch = wpilib.DigitalInput(0)
 
         self.spin_rate = 5
-
-        NetworkTables.initialize()
-        self.sd = NetworkTables.getTable("SmartDashboard")
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''

@@ -15,9 +15,13 @@ import numpy as np
 class VectorPursuit:
 
     def set_waypoints(self, waypoints: np.array):
-        """Add way points to.
+        """Set the waypoints the controller should drive the robot through.
+
         Args:
-            waypoint list of numpy arrays.
+            waypoints: A list of [x, y, orientation, speed] points to pass
+                through.
+                Note that this controller does not currently control
+                orientation, only speed and position.
         """
         self.waypoints = waypoints
         self.waypoints_xy = np.array([[waypoint[0], waypoint[1]] for waypoint in self.waypoints])
@@ -25,6 +29,16 @@ class VectorPursuit:
         self.increment_segment()
 
     def set_motion_params(self, top_speed, top_accel, top_decel):
+        """Set the speed and acceleration limits the controller is to respect.
+
+        Args:
+            cruise_vel: Cruise velocity of the drivebase (top speed the
+                controller will set). Units m/s.
+            top_accel: Maximum acceleration the controller will set. Units
+                m/s/s.
+            top_decel: Maximum deceleration the controller will set. Must be
+                less than 0. Units m/s/s.
+        """
         self.top_speed = top_speed
         self.top_accel = top_accel
         self.top_decel = top_decel
@@ -46,11 +60,15 @@ class VectorPursuit:
     def get_output(self, position: np.ndarray, speed: float):
         """Compute the angle to move the robot in to converge with waypoints.
         Args:
-            position current robot position
-            speed in m/s of robot
-
+            position: Robot's position as an [x, y] numpy array. Units m.
+            speed: Robot's speed as a scalar value (i.e. the norm of it's x, y
+                velocity), must be >0. Units of m/s.
         Returns:
-            A vector of speed and direction based off robot's orientation.
+            float: Direction of motion to command the robot at. Units radians
+                clockwise from the positive x axis.
+            float: Speed of motion to command the robot at. Units of m/s.
+            bool: Whether we moved to the next waypoint or not.
+            bool: Wherther we finished executing the entire set trajectory.
         """
 
         # check if at edge of segment

@@ -10,7 +10,8 @@ def sign(x):
 
 def cubic_generator(keypoints):
     """Return a function that returns the distance and speed at a given time.
-    :args: a list of (time, distance, speed) tuples.
+    Args:
+        keypoints: a list of (time, distance, speed) tuples.
     """
 
     # Approach taken from Introduction to Robotics: Mechanics, Planning and
@@ -42,7 +43,12 @@ def cubic_generator(keypoints):
 def generate_interpolation_trajectory(x_start, x_final, traj_to_match):
     """Generate a 1d interpolation profile, where the velocity is constant
     over the duration of the trajectory.
-    :returns: a list of (pos, vel acc) tuples.
+    Args:
+        x_start: Start position of the trajectory.
+        x_final: End position of the trajectory.
+        traj_to_match: Motion profile to interpolate along the length of.
+    Returns:
+        A list of (pos, vel acc) tuples.
     """
     x = x_final - x_start
 
@@ -150,7 +156,9 @@ def generate_trapezoidal_function(
 def generate_trapezoidal_trajectory(
         x_start, v_start, x_final, v_final, v_max, a_pos, a_neg, frequency):
     """Generate a 1d trapezoidal profile.
-    :returns: a list of (pos, vel acc) tuples
+
+    Returns:
+        A list of (pos, vel acc) tuples.
     """
     direction = sign(x_final-x_start)
 
