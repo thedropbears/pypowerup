@@ -56,6 +56,8 @@ class Robot(magicbot.MagicRobot):
         """
 
         # self.intake.intake_arm(self.xbox.getBButton())
+        if self.xbox.getPOV() != -1:
+            self.lifter.pov_change(self.xbox.getPOV())
 
         if self.xbox.getXButtonReleased():
             self.intake_automation.engage()

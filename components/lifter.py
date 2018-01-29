@@ -24,11 +24,12 @@ class Lifter:
         self.lift_motor.configMotionCruiseVelocity(775, 10)
         self.lift_motor.configMotionProfileTrajectoryPeriod(1, 10)
 
-        self.set_pos = None
+        self.set_pos = self.GROUND_HEIGHT
+        self.default_height = self.BALANCED_SCALE
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
-        pass
+        self.reset()
 
     def on_disable(self):
         """This is called whenever the robot transitions to disabled mode."""
@@ -38,32 +39,35 @@ class Lifter:
         """Run at the end of every control loop iteration."""
         pass
 
-    def move_switch(self):
-        """Move the lift to the height of the switch
+    def pov_change(self, pos):
+        """Sets the default height based on position on D-Pad
+                  ▲ Balanced Scale
+    Lower Scale ◀   ▶ Upper Scale
+           Switch ▼
         """
-        self.move_to(self.SWITCH_HEIGHT)
-
-    def reset_pos(self):
-        """Move to ground height"""
-        self.move_to(self.GROUND_HEIGHT)
-
-    def move_lower_scale(self):
-        """Move the lift to the lowest height of the scale."""
-        self.move_pos(self.LOWER_SCALE)
-
-    def move_balanced_scale(self):
-        """Move the lift to the balanced height of the scale."""
-        self.move_pos(self.BALANCED_SCALE)
-
-    def move_upper_scale(self):
-        """Move the lift to the upper height of the scale."""
-        self.move_pos(self.UPPER_SCALE)
+        if pos <= 45 or pos >= 315:  # Up button
+            self.default_height = self.BALANCED_SCALE
+        elif pos > 45 and pos <= 135:  # Right button
+            self.default_height = self.UPPER_SCALE
+        elif pos > 135 and pos <= 225:  # Down button 
+            self.default_height = self.SWITCH_HEIGHT
+        elif pos > 255 and pos < 315:  # Left button
+            self.default_height = self.LOWER_SCALE
 
     def stop(self):
         """Stop the lift motor"""
         self.motor.stopMotor()
 
-    def move_to(self, input_setpos):
+    def reset(self):
+        self.set_pos = self.GROUND_HEIGHT * self.DISTANCE_PER_COUNT
+        self.motor.set(mode=self.self.motor.ControlMode.MotionMagic, value=self.setpos)
+
+    def move(self):
+        """Move lift to pos set on controller"""
+        self.set_pos = self.default_height * self.DISTANCE_PER_COUNT
+        self.motor.set(mode=self.self.motor.ControlMode.MotionMagic, value=self.setpos)
+
+    def move_to_height(self, input_setpos):
         """Move lift to height on encoder
 
         Args:
