@@ -33,7 +33,6 @@ class Robot(magicbot.MagicRobot):
     motion: ChassisMotion
     intake_automation: IntakeAutomation
     lifter_automation: LifterAutomation
-
     # Actuators
     chassis: SwerveChassis
     intake: Intake
@@ -93,6 +92,7 @@ class Robot(magicbot.MagicRobot):
         self.extension_arm_right = wpilib.Solenoid(4)
         """This is the limit switch in the containment mechanism."""
         self.limit_switch = wpilib.DigitalInput(0)
+        self.lift_motor = WPI_TalonSRX(0)
 
     def teleopInit(self):
         """Called when teleop starts; optional"""
@@ -102,6 +102,7 @@ class Robot(magicbot.MagicRobot):
         self.lift_motor = WPI_TalonSRX(0)
         self.motion.enabled = False
         self.chassis.set_inputs(0, 0, 0)
+        self.intake.extension(True)
 
     def teleopPeriodic(self):
         """
