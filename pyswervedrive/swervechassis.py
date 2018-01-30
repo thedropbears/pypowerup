@@ -93,6 +93,8 @@ class SwerveChassis:
         for module in self.modules:
             module.reset_steer_setpoint()
 
+        self.last_heading = self.bno055.getAngle()
+
     def execute(self):
 
         pid_z = 0
@@ -139,8 +141,11 @@ class SwerveChassis:
             velocity_outputs[i*2+1, 0] = velocity_y
             module.reset_encoder_delta()
 
-        delta_x, delta_y, delta_theta = self.robot_movement_from_odometry(odometry_outputs)
-        v_x, v_y, v_z = self.robot_movement_from_odometry(velocity_outputs)
+        heading = self.bno055.getAngle()
+        heading_delta = heading - self.last_heading
+        timestep_average_heading = heading - heading_delta / 2
+        delta_x, delta_y, delta_theta = self.robot_movement_from_odometry(odometry_outputs, timestep_average_heading)
+        v_x, v_y, v_z = self.robot_movement_from_odometry(velocity_outputs, heading)
 
         self.odometry_x += delta_x
         self.odometry_y += delta_y
@@ -148,7 +153,6 @@ class SwerveChassis:
         self.odometry_x_vel = v_x
         self.odometry_y_vel = v_y
         self.odometry_z_vel = v_z
-        print("odometry x %s, y %s" % (self.odometry_x, self.odometry_y))
 
         SmartDashboard.putNumber('module_a_speed', self.modules[0].current_speed)
         SmartDashboard.putNumber('module_b_speed', self.modules[1].current_speed)
@@ -158,13 +162,23 @@ class SwerveChassis:
         SmartDashboard.putNumber('module_b_pos', self.modules[1].current_measured_azimuth)
         SmartDashboard.putNumber('module_c_pos', self.modules[2].current_measured_azimuth)
         SmartDashboard.putNumber('module_d_pos', self.modules[3].current_measured_azimuth)
+        SmartDashboard.putNumber('odometry_x', self.odometry_x)
+        SmartDashboard.putNumber('odometry_y', self.odometry_y)
+        SmartDashboard.putNumber('odometry_theta', self.odometry_theta)
+        SmartDashboard.putNumber('odometry_delta_x', delta_x)
+        SmartDashboard.putNumber('odometry_delta_y', delta_y)
+        SmartDashboard.putNumber('odometry_delta_theta', delta_theta)
+        SmartDashboard.putNumber('odometry_x_vel', self.odometry_x_vel)
+        SmartDashboard.putNumber('odometry_y_vel', self.odometry_y_vel)
+        SmartDashboard.putNumber('odometry_z_vel', self.odometry_z_vel)
         NetworkTables.flush()
 
-    def robot_movement_from_odometry(self, odometry_outputs):
+        self.last_heading = heading
+
+    def robot_movement_from_odometry(self, odometry_outputs, angle):
         lstsq_ret = np.linalg.lstsq(self.A_matrix, odometry_outputs,
                                     rcond=-1)
         x, y, theta = lstsq_ret[0].reshape(3)
-        angle = self.bno055.getAngle()
         x_field, y_field = self.field_orient(x, y, 2*math.pi-angle)
         return x_field, y_field, theta
 
