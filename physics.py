@@ -46,7 +46,6 @@ class PhysicsEngine:
 
         motor_speeds = []
         for i, can_id in enumerate(self.module_drive_can_ids):
-            # divide value by 1023 as it gets multiplied by 1023 in talon code
             speed_sp = hal_data['CAN'][can_id]['value']
             speed = speed_sp / SwerveModule.drive_velocity_to_native_units
             hal_data['CAN'][can_id]['quad_position'] += int(speed_sp*10*tm_diff)
