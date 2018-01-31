@@ -45,7 +45,7 @@ class OverallBase(AutonomousStateMachine):
         super().on_enable()
 
     @state(first=true)
-    def setup(self)
+    def setup(self):
         if switch_first==true:
             self.next_state("go_to_switch")
             #change switch postion one off
@@ -131,8 +131,8 @@ class OverallBase(AutonomousStateMachine):
 
     @state
     def deposit_cube(self):             
-    # This is for depositing the cube to either the Scale or The switch 
-    self.next_state("navigation_point")  
+        # This is for depositing the cube to either the Scale or The switch 
+        self.next_state("navigation_point")
 
     @state
     def turn_and_go_to_cube(self):
@@ -183,8 +183,6 @@ class OverallBase(AutonomousStateMachine):
             # go to right scale
             pass
         self.next_state("deposit_cube")
-
-    @state
 
 class VisionTest(OverallBase):
     """To test the vision system"""
