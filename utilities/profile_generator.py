@@ -1,5 +1,5 @@
-
 import math
+
 
 def sign(x):
     if x >= 0:
@@ -7,9 +7,11 @@ def sign(x):
     else:
         return -1
 
+
 def cubic_generator(keypoints):
     """Return a function that returns the distance and speed at a given time.
-    :args: a list of (time, distance, speed) tuples.
+    Args:
+        keypoints: a list of (time, distance, speed) tuples.
     """
 
     # Approach taken from Introduction to Robotics: Mechanics, Planning and
@@ -22,9 +24,10 @@ def cubic_generator(keypoints):
         d0, v0 = start[1:3]
         df, vf = finish[1:3]
         coefficients.append((start[0], finish[0],
-            (d0, v0,
-                3/tf**2*(df-d0)-2*v0/tf-vf/tf,
-                -2/tf**3*(df-d0)+(vf+v0)/tf**2)))
+                            (d0, v0,
+                             3/tf**2*(df-d0)-2*v0/tf-vf/tf,
+                             -2/tf**3*(df-d0)+(vf+v0)/tf**2)))
+
     def trajectory(t):
         for coeff in coefficients:
             if coeff[0] <= t <= coeff[1]:
@@ -33,17 +36,21 @@ def cubic_generator(keypoints):
                 d = c[0]+c[1]*t_rel+c[2]*t_rel**2+c[3]*t_rel**3
                 v = c[1]+2*c[2]*t_rel+3*c[3]*t_rel**2
                 a = 2*c[2]+6*c[3]*t_rel
-                return (d,v,a)
+                return (d, v, a)
     return trajectory
+
 
 def generate_interpolation_trajectory(x_start, x_final, traj_to_match):
     """Generate a 1d interpolation profile, where the velocity is constant
     over the duration of the trajectory.
-    :returns: a list of (pos, vel acc) tuples.
+    Args:
+        x_start: Start position of the trajectory.
+        x_final: End position of the trajectory.
+        traj_to_match: Motion profile to interpolate along the length of.
+    Returns:
+        A list of (pos, vel acc) tuples.
     """
     x = x_final - x_start
-
-    direction = sign(x)
 
     vel = 50*x/len(traj_to_match)
 
@@ -149,7 +156,9 @@ def generate_trapezoidal_function(
 def generate_trapezoidal_trajectory(
         x_start, v_start, x_final, v_final, v_max, a_pos, a_neg, frequency):
     """Generate a 1d trapezoidal profile.
-    :returns: a list of (pos, vel acc) tuples
+
+    Returns:
+        A list of (pos, vel acc) tuples.
     """
     direction = sign(x_final-x_start)
 
@@ -178,7 +187,7 @@ def generate_trapezoidal_trajectory(
     t_slow = (v_final - v_max)/a_neg
     # time at which we start decelerating
     t_decel = (x-t_cruise*(v_start + v_max)/2
-            - t_slow*(v_final + v_max)/2)/v_max + t_cruise
+               - t_slow*(v_final + v_max)/2)/v_max + t_cruise
     # how long we are cruising at v_max for (flat part of the trapezoid)
     t_constant = t_decel - t_cruise
     # how far we have travelled since the start when we start decelerating
@@ -203,7 +212,7 @@ def generate_trapezoidal_trajectory(
     num_segments = int(t_decel*frequency - num_segments)
     segments += [(
         (x_start+x_cruise + v_max * (t_decel-t_cruise) * i / num_segments),
-                  v_max, 0) for i in range(1, num_segments+1)]
+        v_max, 0) for i in range(1, num_segments+1)]
 
     # interpolate along the deceleration portion of the path
     num_segments = int((t_f-t_decel)*frequency)

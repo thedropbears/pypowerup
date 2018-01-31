@@ -26,6 +26,14 @@ class Lifter:
 
         self.set_pos = self.GROUND_HEIGHT
         self.default_height = self.UPPER_SCALE
+        # PID loop needs tuning
+        """
+        self.lift_motor.config_kP(0)
+        self.lift_motor.config_kI(0)
+        self.lift_motor.config_kD(0)
+        """
+
+        self.set_pos = None
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
@@ -56,7 +64,7 @@ class Lifter:
 
     def stop(self):
         """Stop the lift motor"""
-        self.motor.stopMotor()
+        self.lift_motor.stopMotor()
 
     def reset(self):
         self.set_pos = self.GROUND_HEIGHT * self.DISTANCE_PER_COUNT
@@ -83,7 +91,7 @@ class Lifter:
             input_setpos (int): Encoder position to move lift to in encoder counts
         """
         self.set_pos = input_setpos
-        self.motor.set(mode=self.self.motor.ControlMode.MotionMagic, value=self.setpos)
+        self.lift_motor.set(mode=self.lift_motor.ControlMode.Position, value=self.set_pos)
 
     def get_pos(self):
         """Returns encoder position on lift
@@ -91,7 +99,7 @@ class Lifter:
        Returns:
             int: The location of the lift
         """
-        return self.motor.getSelectedSensorPosition(0)
+        return self.lift_motor.getSelectedSensorPosition(0)
 
     def at_pos(self):
         """Finds if cube location is at setops and within threshold
