@@ -78,13 +78,14 @@ class OverallBase(AutonomousStateMachine):
             self.next_state("turn_and_go_to_cube")
 
     @state
-    def turn_and_go_to_cube(self):
+    def turn_and_go_to_cube(self, initial_call):
         """The robot rotates in the direction specified by the vision
         system while moving towards the cube. Combines two angles to find the absolute
         angle towards the cube"""
-        angle = self.bno055.getAngle()
-        vision_angle = self.vision.largest_cube()
-        # print(vision_angle)
+        if initial_call:
+            angle = self.bno055.getAngle()
+            vision_angle = self.vision.largest_cube()
+            # print(vision_angle)
         if vision_angle is None:
             self.next_state("search_for_cube")
             # print("=========searching for cube=========")

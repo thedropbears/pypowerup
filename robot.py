@@ -74,23 +74,23 @@ class Robot(magicbot.MagicRobot):
         NetworkTables.initialize()
         self.sd = NetworkTables.getTable("SmartDashboard")
 
-        """This is to state what channel our xbox controller is on."""
+        # This is to state what channel our xbox controller is on.
         self.xbox = wpilib.XboxController(0)
-        """This controls the left motor in the intake mechanism."""
+        # This controls the left motor in the intake mechanism.
         self.intake_left = WPI_TalonSRX(1)
-        """This controls the right motor in the intake mechanism."""
+        # This controls the right motor in the intake mechanism.
         self.intake_right = WPI_TalonSRX(2)
-        """This controls the left arm in the containment mechanism."""
+        # This controls the left arm in the containment mechanism.
         self.clamp_arm_left = wpilib.Solenoid(0)
-        """This controls the right arm in the containment mechanism."""
+        # This controls the right arm in the containment mechanism.
         self.clamp_arm_right = wpilib.Solenoid(1)
-        """This controls the kicker in the containment mechanism."""
+        # This controls the kicker in the containment mechanism.
         self.intake_kicker = wpilib.Solenoid(2)
-        """This controls the left extension arm"""
+        # This controls the left extension arm
         self.extension_arm_left = wpilib.Solenoid(3)
-        """This controls the right extension arm"""
+        # This controls the right extension arm
         self.extension_arm_right = wpilib.Solenoid(4)
-        """This is the limit switch in the containment mechanism."""
+        # This is the limit switch in the containment mechanism.
         self.limit_switch = wpilib.DigitalInput(1)
         self.lift_motor = WPI_TalonSRX(0)
 

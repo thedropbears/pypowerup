@@ -2,6 +2,8 @@ from ctre import WPI_TalonSRX
 
 
 class Lifter:
+    
+    lift_motor: WPI_TalonSRX
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
@@ -16,12 +18,14 @@ class Lifter:
 
         self.threshold = 100
 
-        self.lift_motor: WPI_TalonSRX
         self.lift_motor.overrideLimitSwitchesEnable(True)
 
-        self.motor.config_kP(0)
-        self.motor.config_kI(0)
-        self.motor.config_kD(0)
+        # PID loop needs tuning
+        """
+        self.lift_motor.config_kP(0)
+        self.lift_motor.config_kI(0)
+        self.lift_motor.config_kD(0)
+        """
 
         self.set_pos = None
 
@@ -53,7 +57,7 @@ class Lifter:
 
     def stop(self):
         """Stop the lift motor"""
-        self.motor.stopMotor()
+        self.lift_motor.stopMotor()
 
     def move_lower_scale(self):
         """Move the lift to the lowest height of the scale."""
@@ -74,7 +78,7 @@ class Lifter:
             setpos (int): Encoder position to move lift to.
         """
         self.set_pos = input_setpos
-        self.motor.set(mode=self.lift_motor.ControlMode.Position, value=self.setpos)
+        self.lift_motor.set(mode=self.lift_motor.ControlMode.Position, value=self.set_pos)
 
     def get_pos(self):
         """Returns encoder position on lift
@@ -82,7 +86,7 @@ class Lifter:
        Returns:
             int: The location of the lift
         """
-        return self.motor.getSelectedSensorPosition(0)
+        return self.lift_motor.getSelectedSensorPosition(0)
 
     def at_pos(self):
         """Finds if cube location is at setops and within threshold
