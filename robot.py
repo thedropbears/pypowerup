@@ -80,18 +80,18 @@ class Robot(magicbot.MagicRobot):
         self.intake_left = WPI_TalonSRX(1)
         """This controls the right motor in the intake mechanism."""
         self.intake_right = WPI_TalonSRX(2)
-        """This controls the left arm in the containment mechanism."""
-        self.clamp_arm_left = wpilib.Solenoid(0)
-        """This controls the right arm in the containment mechanism."""
-        self.clamp_arm_right = wpilib.Solenoid(1)
+        """This controls the arm in the containment mechanism."""
+        self.clamp_arm = wpilib.Solenoid(0)
         """This controls the kicker in the containment mechanism."""
-        self.intake_kicker = wpilib.Solenoid(2)
+        self.intake_kicker = wpilib.Solenoid(1)
         """This controls the left extension arm"""
-        self.extension_arm_left = wpilib.Solenoid(3)
+        self.extension_arm_left = wpilib.Solenoid(2)
         """This controls the right extension arm"""
-        self.extension_arm_right = wpilib.Solenoid(4)
-        """This is the limit switch in the containment mechanism."""
-        self.limit_switch = wpilib.DigitalInput(0)
+        self.extension_arm_right = wpilib.Solenoid(3)
+        """This is the infrared sensor that is in the back of the
+        containment mechanism."""
+        self.infrared = wpilib.AnalogInput(0)
+
         self.lift_motor = WPI_TalonSRX(0)
 
     def teleopInit(self):

@@ -1,17 +1,17 @@
 from ctre import WPI_TalonSRX
 import wpilib
+import math
 
 
 class Intake:
     """Importing objects from robot.py"""
     intake_left: WPI_TalonSRX
     intake_right: WPI_TalonSRX
-    clamp_arm_left: wpilib.Solenoid
-    clamp_arm_right: wpilib.Solenoid
+    clamp_arm: wpilib.Solenoid
     intake_kicker: wpilib.Solenoid
     extension_arm_left: wpilib.Solenoid
     extension_arm_right: wpilib.Solenoid
-    limit_switch: wpilib.DigitalInput
+    infrared: wpilib.AnalogInput
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
@@ -39,22 +39,30 @@ class Intake:
         self.intake_left.set(0.0)
         self.intake_right.set(0.0)
 
-    def cube_inside(self):
-        """Run when the limit switch is pressed and when the current
-        output is above a threshold, which stops the motors."""
-        if self.limit_switch.getPWMInput(0):
-            return True
-        return False
-
     def intake_clamp(self, value):
         """Turns intake arm on or off"""
-        self.clamp_arm_left.set(value)
-        self.clamp_arm_right.set(value)
+        self.clamp_arm.set(value)
 
     def intake_push(self, value):
         """Turns the pushing pneumatic on or off"""
         self.intake_kicker.set(value)
 
     def extension(self, value):
+        """Turns both pneumatic extensions on or off"""
         self.extension_arm_left.set(value)
         self.extension_arm_right.set(value)
+
+    def infraredDistance(self):
+        infrared_voltage = self.infrared.getVoltage()
+        """Makes sure that the voltage is above 0.00001"""
+        voltage = max(infrared_voltage, 0.00001)
+        distance = 12.84*math.pow(voltage, -0.9824)
+        """This makes sure that the distance is above 4.5 and below 35"""
+        self.cube_distance = max(min(distance, 35.0), 4.5)
+
+    def cube_inside(self):
+        """Run when the limit switch is pressed and when the current
+        output is above a threshold, which stops the motors."""
+        if 7 <= self.cube_distance <= 13:
+            return True
+        return False
