@@ -3,6 +3,8 @@ import math
 import wpilib
 from magicbot.state_machine import AutonomousStateMachine, state
 from components.vision import Vision
+from components.lifter import Lifter
+from automation.lifter import LifterAutomation
 from automations.motion import ChassisMotion
 from automations.intake import IntakeAutomation
 from automations.lifter import LifterAutomation
@@ -15,6 +17,8 @@ class OverallBase(AutonomousStateMachine):
     """statemachine designed to intelegently respond to possible situations in auto"""
 
     vision: Vision
+    lifter: Lifter
+    lifter_automation: LifterAutomation
     bno055: BNO055
     chassis: SwerveChassis
     ds: wpilib.DriverStation
@@ -27,6 +31,7 @@ class OverallBase(AutonomousStateMachine):
     cube_switch: wpilib.DigitalInput  # the switch used to confirm cube capture during early testing
 
     def on_enable(self):
+        lifter.reset.pos() 
         self.game_data_message = self.ds.getGameSpecificMessage()  # TODO test this
         self.toggle_searching_closest_objective = True
         #make y +ve or -ve depending on where we start
@@ -133,12 +138,15 @@ class OverallBase(AutonomousStateMachine):
             self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0]])
         if not self.motion.enabled:
 
-            self.next_state_now("deposit_cube")
+            self.next_state_now("lifting")
 
     @state
-    def deposit_cube(self):
-        # This is for depositing the cube to either the Scale or The switch
-        self.next_state("navigating")
+    def lifting(self):
+        self.lifter_automation.engage()
+        """The robot releases its cube into either the scale or switch"""
+        # Release cube
+        if self.lifter_automation.is_executing()
+            self.next_state("navigating")
 
     @state
     def turn_and_go_to_cube(self, initial_call):
@@ -179,7 +187,7 @@ class OverallBase(AutonomousStateMachine):
         if self.fms_switch == 'R':
             # go to right switch
             pass
-        self.next_state("deposit_cube")
+        self.next_state("lifting")
 
     @state
     def go_to_scale(self):
@@ -190,7 +198,7 @@ class OverallBase(AutonomousStateMachine):
         if self.fms_scale == 'R':
             # go to right scale
             pass
-        self.next_state("deposit_cube")
+        self.next_state("lifting")
 
 
 class VisionTest(OverallBase):
@@ -209,7 +217,7 @@ class VisionTest(OverallBase):
         if not self.motion.enabled:
             print("going to 'intake cube'")
             # self.next_state("search_for_cube")
-            self.next_state_now("intake_cube")
+            self.next_state_now("lifting")
 
     @state
     def intake_cube(self):
