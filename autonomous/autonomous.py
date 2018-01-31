@@ -51,14 +51,15 @@ class OverallBase(AutonomousStateMachine):
         if self.fms_scale == 'R':
             # go to right scale
             pass
-        self.next_state("deposit_cube")
+        self.next_state("lifting")
 
     @state
-    def deposit_cube(self):
+    def lifting(self):
         self.lifter_automation.engage()
         """The robot releases its cube into either the scale or switch"""
         # Release cube
-        self.next_state("go_to_cube")
+        if self.lifter_automation.is_executing()
+            self.next_state("go_to_cube")
 
     @state
     def go_to_cube(self):  # this will need to be overridden in the subclasses
@@ -138,7 +139,7 @@ class VisionTest(OverallBase):
         if not self.motion.enabled:
             # print("going to 'search_for_cube'")
             # self.next_state("search_for_cube")
-            self.next_state_now("deposit_cube")
+            self.next_state_now("lifting")
 
     @state
     def intake_cube(self):
@@ -178,7 +179,7 @@ class SwitchAndScale(OverallBase):
         if self.fms_switch == 'R':
             # go to right switch
             pass
-        self.next_state("deposit_cube")
+        self.next_state("lifting")
 
     @state
     def intake_cube(self):
@@ -207,7 +208,7 @@ class LeftSwitchAndScale(SwitchAndScale):
         elif self.fms_scale == 'L':
             # go to left scale
             pass
-        self.next_state("deposit_cube")
+        self.next_state("lifting")
 
 
 class RightSwitchAndScale(SwitchAndScale):
@@ -242,7 +243,7 @@ class RightSwitchAndScale(SwitchAndScale):
         elif self.fms_scale == 'L':
             # go to left scale
             pass
-        self.next_state("deposit_cube")
+        self.next_state("lifting")
 
 
 class LeftDoubleScale(OverallBase):
@@ -268,7 +269,7 @@ class LeftDoubleScale(OverallBase):
             self.coordinates = self.coordinates[0]
             self.motion.set_waypoints = np.array(self.coordinates[0])
             # go to left scale
-        self.next_state("deposit_cube")
+        self.next_state("lifting")
 
 
 class RightDoubleScale(OverallBase):
@@ -296,4 +297,4 @@ class RightDoubleScale(OverallBase):
             self.motion.set_waypoints = np.array(self.coordinates[1])
             self.motion.set_waypoints = np.array(self.coordinates[2])
             # go to left scale
-        self.next_state("deposit_cube")
+        self.next_state("lifting")
