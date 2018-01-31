@@ -76,29 +76,28 @@ class Robot(magicbot.MagicRobot):
 
         """This is to state what channel our xbox controller is on."""
         self.xbox = wpilib.XboxController(0)
-        """This controls the left motor in the intake mechanism."""
-        self.intake_left = WPI_TalonSRX(1)
-        """This controls the right motor in the intake mechanism."""
-        self.intake_right = WPI_TalonSRX(2)
-        """This controls the arm in the containment mechanism."""
-        self.clamp_arm = wpilib.Solenoid(0)
-        """This controls the kicker in the containment mechanism."""
-        self.intake_kicker = wpilib.Solenoid(1)
-        """This controls the left extension arm"""
-        self.extension_arm_left = wpilib.Solenoid(2)
-        """This controls the right extension arm"""
-        self.extension_arm_right = wpilib.Solenoid(3)
-        """This is the infrared sensor that is in the back of the
-        containment mechanism."""
-        self.infrared = wpilib.AnalogInput(0)
+        """This controls the front section of the intake mechanism, This controls two motors."""
+        self.intake_motor1 = ctre.WPI_TalonSRX(1)
+        """This controls the back section of the intake mechanism, this controls two motors."""
+        self.intake_motor2 = ctre.WPI_TalonSRX(2)
+        """This controls the left arm in the containment mechanism"""
+        self.clamp_arm_left = wpilib.Solenoid(0)
+        """This controls the right arm in the containment mechanism"""
+        self.clamp_arm_right = wpilib.Solenoid(1)
+        """This controls the kicker in the back section of the intake mechanism"""
+        self.intake_kicker = wpilib.Solenoid(2)
+        self.extension_arm_left = wpilib.Solenoid(3)
+        self.extension_arm_right = wpilib.Solenoid(4)
+        """This is the limit switch at the back of the containment section"""
+        self.limit_switch = wpilib.DigitalInput(0)
 
-        self.lift_motor = WPI_TalonSRX(0)
+        self.lift_motor = ctre.WPI_TalonSRX(5)
 
     def teleopInit(self):
         """Called when teleop starts; optional"""
         self.intake.intake_clamp(False)
         self.intake.intake_push(False)
-        self.extensions(True)  # What is this?
+        
         self.lift_motor = WPI_TalonSRX(0)
         self.motion.enabled = False
         self.chassis.set_inputs(0, 0, 0)

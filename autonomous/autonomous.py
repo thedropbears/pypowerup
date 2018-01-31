@@ -4,6 +4,7 @@ import wpilib
 import numpy as np
 from magicbot.state_machine import AutonomousStateMachine, state
 from components.vision import Vision
+from components.lifter import Lifter
 from automations.motion import ChassisMotion
 from pyswervedrive.swervechassis import SwerveChassis
 from utilities.bno055 import BNO055
@@ -14,6 +15,7 @@ class OverallBase(AutonomousStateMachine):
     """statemachine that is subclassed to all deal with all possible autonomous requirements."""
 
     vision: Vision
+    lifter: Lifter
     bno055: BNO055
     motion: ChassisMotion
     chassis: SwerveChassis
@@ -24,6 +26,7 @@ class OverallBase(AutonomousStateMachine):
     # cubes will be listed in size order along with thier rough size and angle
 
     def on_enable(self):
+        lifter.reset.pos()              
         self.game_data_message = self.ds.getGameSpecificMessage()  # TODO test this
         self.fails = 0
         if len(self.game_data_message) == 3:
@@ -50,6 +53,7 @@ class OverallBase(AutonomousStateMachine):
 
     @state
     def deposit_cube(self):
+        
         """The robot releases its cube into either the scale or switch"""
         # Release cube
         self.next_state("go_to_cube")

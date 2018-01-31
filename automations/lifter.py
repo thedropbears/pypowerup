@@ -3,7 +3,7 @@ from magicbot import StateMachine, state, timed_state
 from components.lifter import Lifter
 from components.intake import Intake
 
-
+ 
 class LifterAutomation(StateMachine):
     lifter: Lifter
     intake: Intake
@@ -11,11 +11,12 @@ class LifterAutomation(StateMachine):
     @state(first=True)
     def move(self):
         """Move to lifter height according to button press(5 buttons)"""
+        self.lifter.move()
 
     @state()
     def move_complete(self):
         """This state makes sure that you are at you set height."""
-        if self.lifter.get_pos() == self.setpos:
+        if self.lifter.at_pos():
             self.next_state("eject")
 
     @timed_state(first=True, duration=0.5, next_state="reset", must_finish=True)
@@ -27,4 +28,4 @@ class LifterAutomation(StateMachine):
     @state()
     def reset(self):
         self.intake.intake_push(False)
-        self.done()
+        self.lifter.reset_pos()
