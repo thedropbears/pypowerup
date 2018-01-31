@@ -30,7 +30,7 @@ class Vision:
         start_time = time.time()
         if key == "/vision/info":
             self.unpack_info(value, start_time)
-    
+
     def format_list(self, lst, n):
         out = [lst[i:i+n] for i in range(0, len(lst), n)]
         t = out[-1][0]

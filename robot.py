@@ -4,7 +4,6 @@ import ctre
 from ctre import WPI_TalonSRX
 import magicbot
 import wpilib
-from networktables import NetworkTables
 import numpy as np
 from automations.intake import IntakeAutomation
 from automations.lifter import LifterAutomation
@@ -24,8 +23,6 @@ class Robot(magicbot.MagicRobot):
     # Add magicbot components here using variable annotations.
     # Any components that directly actuate motors should be declared after
     # any higher-level components (automations) that depend on them.
-
-    ds: wpilib.DriverStation
 
     vision: Vision
 
