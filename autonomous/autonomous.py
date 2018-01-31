@@ -5,6 +5,7 @@ import numpy as np
 from magicbot.state_machine import AutonomousStateMachine, state
 from components.vision import Vision
 from components.lifter import Lifter
+from automation.lifter import LifterAutomation
 from automations.motion import ChassisMotion
 from pyswervedrive.swervechassis import SwerveChassis
 from utilities.bno055 import BNO055
@@ -16,6 +17,7 @@ class OverallBase(AutonomousStateMachine):
 
     vision: Vision
     lifter: Lifter
+    lifter_automation: LifterAutomation
     bno055: BNO055
     motion: ChassisMotion
     chassis: SwerveChassis
@@ -53,7 +55,7 @@ class OverallBase(AutonomousStateMachine):
 
     @state
     def deposit_cube(self):
-        
+        self.lifter_automation.engage()
         """The robot releases its cube into either the scale or switch"""
         # Release cube
         self.next_state("go_to_cube")

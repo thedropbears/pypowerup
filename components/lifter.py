@@ -1,5 +1,5 @@
 import ctre
-
+from networktables import NetworkTables
 
 class Lifter:
     lift_motor: ctre.WPI_TalonSRX
@@ -25,7 +25,7 @@ class Lifter:
         self.lift_motor.configMotionProfileTrajectoryPeriod(1, 10)
 
         self.set_pos = self.GROUND_HEIGHT
-        self.default_height = self.BALANCED_SCALE
+        self.default_height = self.UPPER_SCALE
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""

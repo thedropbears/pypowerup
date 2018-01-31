@@ -29,3 +29,4 @@ class LifterAutomation(StateMachine):
     def reset(self):
         self.intake.intake_push(False)
         self.lifter.reset_pos()
+        self.done()

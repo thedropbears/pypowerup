@@ -93,6 +93,8 @@ class Robot(magicbot.MagicRobot):
 
         self.lift_motor = ctre.WPI_TalonSRX(5)
 
+        self.sd = NetworkTables.getTable("SmartDashboard")
+
     def teleopInit(self):
         """Called when teleop starts; optional"""
         self.intake.intake_clamp(False)
@@ -116,6 +118,7 @@ class Robot(magicbot.MagicRobot):
         if self.joystick.getRawButtonPressed(9):
             self.motion.disable()
             self.chassis.field_oriented = True
+        self.put_dashboard()
 
         if self.joystick.getRawButtonPressed(8):
             print("Heading sp set")
@@ -132,6 +135,9 @@ class Robot(magicbot.MagicRobot):
         self.chassis.set_inputs(vx, vy, vz)
         if self.xbox.getXButtonReleased():
             self.intake_automation.engage()
+
+    def put_dashboard(self):
+        self.sd.putString("default_height", self.lifter.default_height)
 
 
 if __name__ == '__main__':
