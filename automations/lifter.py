@@ -12,6 +12,7 @@ class LifterAutomation(StateMachine):
     def move(self):
         """Move to lifter height according to button press(5 buttons)"""
         self.lifter.move()
+        self.next_state("move_complete")
 
     @state()
     def move_complete(self):
