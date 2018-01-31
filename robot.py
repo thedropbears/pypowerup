@@ -7,6 +7,7 @@ from automations.intake import IntakeAutomation
 from components.intake import Intake
 from components.lifter import Lifter
 import ctre
+from networktables import NetworkTables
 
 class Robot(magicbot.MagicRobot):
     # Add magicbot components here using variable annotations.
@@ -41,6 +42,8 @@ class Robot(magicbot.MagicRobot):
 
         self.lift_motor = ctre.WPI_TalonSRX(5)
 
+        self.sd = NetworkTables.getTable("SmartDashboard")
+
     def teleopInit(self):
         '''Called when teleop starts; optional'''
         self.intake.intake_clamp(False)
@@ -54,6 +57,7 @@ class Robot(magicbot.MagicRobot):
         This is run each iteration of the control loop before magicbot
         components are executed.
         """
+        self.put_dashboard()
 
         # self.intake.intake_arm(self.xbox.getBButton())
         if self.xbox.getPOV() != -1:
@@ -61,6 +65,9 @@ class Robot(magicbot.MagicRobot):
 
         if self.xbox.getXButtonReleased():
             self.intake_automation.engage()
+
+    def put_dashboard(self):
+        self.sd.putString("default_height", self.lifter.default_height)
 
 
 if __name__ == '__main__':
