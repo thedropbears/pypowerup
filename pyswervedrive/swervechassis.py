@@ -6,6 +6,7 @@ from utilities.bno055 import BNO055
 from pyswervedrive.swervemodule import SwerveModule
 from wpilib import SmartDashboard
 from networktables import NetworkTables
+from utilities.functions import constrain_angle
 
 
 class SwerveChassis:
@@ -125,7 +126,7 @@ class SwerveChassis:
             # TODO: re enable this and test field-oriented mode
             if self.field_oriented:
                 angle = self.bno055.getAngle()
-                vx, vy = self.field_orient(self.vx, self.vy, angle)
+                vx, vy = self.robot_orient(self.vx, self.vy, angle)
             else:
                 vx, vy = self.vx, self.vy
             module.set_velocity(vx+vz_x, vy+vz_y)
@@ -142,7 +143,7 @@ class SwerveChassis:
             module.reset_encoder_delta()
 
         heading = self.bno055.getAngle()
-        heading_delta = heading - self.last_heading
+        heading_delta = constrain_angle(heading - self.last_heading)
         timestep_average_heading = heading - heading_delta / 2
         delta_x, delta_y, delta_theta = self.robot_movement_from_odometry(odometry_outputs, timestep_average_heading)
         v_x, v_y, v_z = self.robot_movement_from_odometry(velocity_outputs, heading)
@@ -171,6 +172,9 @@ class SwerveChassis:
         SmartDashboard.putNumber('odometry_x_vel', self.odometry_x_vel)
         SmartDashboard.putNumber('odometry_y_vel', self.odometry_y_vel)
         SmartDashboard.putNumber('odometry_z_vel', self.odometry_z_vel)
+        SmartDashboard.putNumber('imu_heading', heading)
+        SmartDashboard.putNumber('heading_delta', heading_delta)
+        SmartDashboard.putNumber('average_heading', timestep_average_heading)
         NetworkTables.flush()
 
         self.last_heading = heading
@@ -179,7 +183,7 @@ class SwerveChassis:
         lstsq_ret = np.linalg.lstsq(self.A_matrix, odometry_outputs,
                                     rcond=-1)
         x, y, theta = lstsq_ret[0].reshape(3)
-        x_field, y_field = self.field_orient(x, y, 2*math.pi-angle)
+        x_field, y_field = self.field_orient(x, y, angle)
         return x_field, y_field, theta
 
     def set_velocity_heading(self, vx, vy, heading):
@@ -211,9 +215,37 @@ class SwerveChassis:
         self.field_oriented = field_oriented
 
     @staticmethod
-    def field_orient(vx, vy, heading):
+    def robot_orient(vx, vy, heading):
+        """Turn a vx and vy relative to the field into a vx and vy based on the
+        robot.
+
+        Args:
+            vx: vx to robot orient
+            vy: vy to robot orient
+            heading: current heading of the robot. In radians CCW from +x axis.
+        Returns:
+            float: robot oriented vx speed
+            float: robot oriented vy speed
+        """
         oriented_vx = vx * math.cos(heading) + vy * math.sin(heading)
         oriented_vy = -vx * math.sin(heading) + vy * math.cos(heading)
+        return oriented_vx, oriented_vy
+
+    @staticmethod
+    def field_orient(vx, vy, heading):
+        """Turn a vx and vy relative to the robot into a vx and vy based on the
+        field.
+
+        Args:
+            vx: vx to field orient
+            vy: vy to field orient
+            heading: current heading of the robot. In radians CCW from +x axis.
+        Returns:
+            float: field oriented vx speed
+            float: field oriented vy speed
+        """
+        oriented_vx = vx * math.cos(heading) - vy * math.sin(heading)
+        oriented_vy = vx * math.sin(heading) + vy * math.cos(heading)
         return oriented_vx, oriented_vy
 
 

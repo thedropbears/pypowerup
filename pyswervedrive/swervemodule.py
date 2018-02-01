@@ -1,5 +1,6 @@
 import math
 import ctre
+from utilities.functions import constrain_angle
 
 
 class SwerveModule:
@@ -114,7 +115,8 @@ class SwerveModule:
         This is intended to be called by the SwerveChassis in order to track
         odometry.
         """
-        steer_delta = self.current_measured_azimuth - self.zero_azimuth
+        steer_delta = constrain_angle(self.current_measured_azimuth
+                                      - self.zero_azimuth)
         drive_delta = (self.drive_motor.getSelectedSensorPosition(0)
                        / self.drive_counts_per_metre) - self.zero_drive_pos
         return steer_delta, drive_delta
@@ -235,8 +237,3 @@ class SwerveModule:
         if abs(diff) < abs(opp_diff):
             return diff
         return opp_diff
-
-
-def constrain_angle(angle):
-    """Wrap :param angle: to between +pi and -pi"""
-    return math.atan2(math.sin(angle), math.cos(angle))
