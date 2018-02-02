@@ -6,15 +6,16 @@ from utilities.functions import constrain_angle
 
 class SwerveModule:
 
-    CIMCODER_COUNTS_PER_REV: int = 80
+    SRX_MAG_COUNTS_PER_REV: int = 4096
     WHEEL_DIAMETER: float = 0.0254 * 3
-    DRIVE_ENCODER_GEAR_REDUCTION: float = 66/14*30/26
+    DRIVE_ENCODER_GEAR_REDUCTION: float = 30/26
     STEER_COUNTS_PER_RADIAN = 4096 / math.tau
 
-    drive_counts_per_rev = CIMCODER_COUNTS_PER_REV*DRIVE_ENCODER_GEAR_REDUCTION
+    drive_counts_per_rev = SRX_MAG_COUNTS_PER_REV*DRIVE_ENCODER_GEAR_REDUCTION
     drive_counts_per_radian = drive_counts_per_rev / math.tau
     # odometry is consistently slightly off, need a fudge factor to compensate
-    drive_odometry_fudge_factor = 1 / 1.08
+    # TODO: Tune the fudge factor
+    drive_odometry_fudge_factor = 1
     drive_counts_per_metre = (drive_counts_per_rev / (math.pi * WHEEL_DIAMETER)
                               * drive_odometry_fudge_factor)
 
