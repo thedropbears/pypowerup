@@ -1,13 +1,12 @@
-"""The autonomous controls for the robot. Vision code is not yet included"""
+"""The autonomous controls for the robot."""
 import math
 import wpilib
 from magicbot.state_machine import AutonomousStateMachine, state
 from components.vision import Vision
 from components.lifter import Lifter
-from automation.lifter import LifterAutomation
+from automations.lifter import LifterAutomation
 from automations.motion import ChassisMotion
 from automations.intake import IntakeAutomation
-from automations.lifter import LifterAutomation
 from pyswervedrive.swervechassis import SwerveChassis
 from utilities.bno055 import BNO055
 from robot import Robot
@@ -31,14 +30,16 @@ class OverallBase(AutonomousStateMachine):
     cube_switch: wpilib.DigitalInput  # the switch used to confirm cube capture during early testing
 
     def on_enable(self):
-        lifter.reset.pos() 
-        self.game_data_message = self.ds.getGameSpecificMessage()  # TODO test this
-        self.toggle_searching_closest_objective = True
-        #make y +ve or -ve depending on where we start
+        self.lifter.reset.pos()
+        self.game_data_message = self.ds.getGameSpecificMessage()
+        self.picking_up_cube = True  # is the robot trying to pickup a cube or deposit?
+        # make y +ve or -ve depending on where we start
         self.navigation_point = [5.6, 2.4, 0, 1]
-        self.strategy = 'double_scale'  # this will be set by the dashboard
+        self.switch_enabled = True
+        self.double_scale_strategy = True  # this will be set by the dashboard
         self.start_side = 'R'  # set by the dashboard
-
+        self.scale_objective = True
+        self.opposite = True  # does the robot need to swap sides?
         if len(self.game_data_message) == 3:
             self.fms_scale = self.game_data_message[1]  # L or R
             self.fms_switch = self.game_data_message[0]  # L or R
@@ -53,99 +54,114 @@ class OverallBase(AutonomousStateMachine):
     @state(first=True)
     def setup(self):
         """Do robot initilisation specific to the statemachine in here."""
-        if self.target_objective()[0] == 'same_l_switch' or 'same_r_switch' or 'cross_r_switch' or 'cross_l_switch':
+        if self.start_side == self.fms_switch:
+            self.scale_objective = False
             self.next_state("go_to_switch")
             #change switch postion one off
         else:
+            if self.double_scale_strategy:
+                self.scale_objective = True
+            if self.start_side == self.fms_switch:
+                self.opposite = True
+            else:
+                self.opposite = False
             self.next_state("navigating")
 
     def invert_co_ordinates(self, co_ordinate):
         """Inverts the y-coordinates of the input annd returns the output"""
         for i in co_ordinate:
-            co_ordinate[1] *= -1
+            co_ordinate[i][1] *= -1
         return co_ordinate
 
-    def close_to_objective(self, objective):
-        if self.start_side == self.fms_switch and objective == 'switch':
-            return True
-        else:
-            return False
-        if self.start_side == self.fms_scale and objective == 'scale':
-            return True
-        else:
-            return False
+    # def close_to_objective(self, objective):
+    #     """checks if the robot is on the same side of the field as the objective."""
+    #     if self.start_side == self.fms_switch and objective == 'switch':
+    #         return True
+    #     else:
+    #         return False
+    #     if self.start_side == self.fms_scale and objective == 'scale':
+    #         return True
+    #     else:
+    #         return False
 
-    def target_objective(self):
-        """A dictionary function that gives an output on the order of objectives based on inputs.
-        The inputs are designated on the left in a tuple in the order of robot start side, strategy, switch side
-        scale side. The outputs are given on the right in the order which the robot needs to go to"""
-        objective_calculation = {
-            # Double scale with right start
-            ('R', 'double_scale', 'L', 'L'): ('cross_l_scale', 'same_l_scale'),
-            ('R', 'double_scale', 'R', 'L'): ('cross_l_scale', 'same_l_scale'),
-            ('R', 'double_scale', 'R', 'R'): ('same_r_scale', 'same_r_scale'),
-            ('R', 'double_scale', 'L', 'R'): ('same_r_scale', 'same_r_scale'),
-            # Double scale with left start
-            ('L', 'double_scale', 'L', 'L'): ('same_l_scale', 'same_l_scale'),
-            ('L', 'double_scale', 'R', 'L'): ('same_l_scale', 'same_l_scale'),
-            ('L', 'double_scale', 'R', 'R'): ('cross_r_scale', 'same_r_scale'),
-            ('L', 'double_scale', 'L', 'R'): ('cross_r_scale', 'same_r_scale'),
-            # Switch and scale with right start
-            ('R', 'switch_and_scale', 'L', 'R'): ('cross_l_scale', 'same_r_scale'),
-            ('R', 'switch_and_scale', 'L', 'L'): ('cross_l_scale', 'same_l_switch'),
-            ('R', 'switch_and_scale', 'R', 'L'): ('same_r_switch', 'cross_l_scale'),
-            ('R', 'switch_and_scale', 'R', 'R'): ('same_r_switch', 'same_r_scale'),
-            # Switch and scale with left start
-            ('L', 'switch_and_scale', 'R', 'L'): ('same_l_scale', 'cross_r_switch'),
-            ('L', 'switch_and_scale', 'R', 'R'): ('cross_r_scale', 'same_r_switch'),
-            ('L', 'switch_and_scale', 'L', 'R'): ('same_l_switch', 'cross_r_scale'),
-            ('L', 'switch_and_scale', 'L', 'L'): ('same_l_switch', 'same_l_scale')
-        }
-        return objective_calculation[(self.start_side, self.strategy, self.fms_switch, self.fms_scale)]
+    # def target_objective(self):
+    #     """A dictionary function that gives an output on the order of objectives based on inputs.
+    #     inputs are designated on the left in a tuple in the order of robot start side, strategy,
+    #     switch side scale side. Outputs are given on the right in the order which the
+    #     robot needs to go to"""
+    #     objective_calculation = {
+    #         # Double scale with right start
+    #         ('R', 'double_scale', 'L', 'L'): ('cross_l_scale', 'same_l_scale'),
+    #         ('R', 'double_scale', 'R', 'L'): ('cross_l_scale', 'same_l_scale'),
+    #         ('R', 'double_scale', 'R', 'R'): ('same_r_scale', 'same_r_scale'),
+    #         ('R', 'double_scale', 'L', 'R'): ('same_r_scale', 'same_r_scale'),
+    #         # Double scale with left start
+    #         ('L', 'double_scale', 'L', 'L'): ('same_l_scale', 'same_l_scale'),
+    #         ('L', 'double_scale', 'R', 'L'): ('same_l_scale', 'same_l_scale'),
+    #         ('L', 'double_scale', 'R', 'R'): ('cross_r_scale', 'same_r_scale'),
+    #         ('L', 'double_scale', 'L', 'R'): ('cross_r_scale', 'same_r_scale'),
+    #         # Switch and scale with right start
+    #         ('R', 'switch_and_scale', 'L', 'R'): ('cross_l_scale', 'same_r_scale'),
+    #         ('R', 'switch_and_scale', 'L', 'L'): ('cross_l_scale', 'same_l_switch'),
+    #         ('R', 'switch_and_scale', 'R', 'L'): ('same_r_switch', 'cross_l_scale'),
+    #         ('R', 'switch_and_scale', 'R', 'R'): ('same_r_switch', 'same_r_scale'),
+    #         # Switch and scale with left start
+    #         ('L', 'switch_and_scale', 'R', 'L'): ('same_l_scale', 'cross_r_switch'),
+    #         ('L', 'switch_and_scale', 'R', 'R'): ('cross_r_scale', 'same_r_switch'),
+    #         ('L', 'switch_and_scale', 'L', 'R'): ('same_l_switch', 'cross_r_scale'),
+    #         ('L', 'switch_and_scale', 'L', 'L'): ('same_l_switch', 'same_l_scale')
+    #     }
+    #     return objective_calculation[(self.start_side, self.strategy, self.fms_switch,
+    #                                   self.fms_scale)]
 
     @state(first=True)
     def navigating(self, initial_call):
+        """The robot navigates to one of two nav-points, if the one it is at is the wrong one,
+        it swaps to the opposite side."""
         if initial_call:
             angle = self.bno055.getAngle()
             #seraching for objective
-            if 1 == 1:  # TODO fix this
-                if self.close_to_objective(self.target_objective):
+            if not self.picking_up_cube:
+                if self.opposite:
+                    # go to other navigation point
+                    self.navpoint = self.invert_co_ordinates(self.navpoint)
+                    # invert the y-co-ordinates of the navpoint
+                    self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
+                                               self.navigation_point])
+                else:
                     # at correct nav point
                     self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
                                                self.navigation_point])
-                else:
-                    # go to other navigation point
-                    self.navpoint = self.invert_co_ordinates(self.navpoint)
-                    self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
-                                               self.navigation_point])
 
-                if self.target_objective == 'switch':
-                    self.next_state('go_to_switch')
-                else:
+                if self.scale_objective:
                     self.next_state('go_to_scale')
+                else:
+                    self.next_state('go_to_switch')
             else:
                 #serach for cube , nav  point close to us
                 self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
                                            self.navigation_point])
                 self.next_state("go_to_cube")
-            #self.toggle_searching_closest_objective=not(toggle_searching_closest_objective)
+            #self.picking_up_cube=not(picking_up_cube)
 
     @state
     def go_to_cube(self, initial_call):
         """The robot drives towards where the next cube should be"""
         if initial_call:
             angle = self.bno055.getAngle()
-            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0]])
+            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y,
+                                       angle, 0]])
         if not self.motion.enabled:
 
             self.next_state_now("lifting")
 
     @state
     def lifting(self):
+        """The robot lifts then releases its cube into either the scale or switch.
+        Makes use of the external lifting statemachine"""
         self.lifter_automation.engage()
-        """The robot releases its cube into either the scale or switch"""
         # Release cube
-        if self.lifter_automation.is_executing()
+        if self.lifter_automation.is_executing():
             self.next_state("navigating")
 
     @state
@@ -179,8 +195,14 @@ class OverallBase(AutonomousStateMachine):
             self.next_state("turn_and_go_to_cube")
 
     @state
-    def go_to_switch(self):
+    def go_to_switch(self, initial_call):
         """The robot travels to the switch"""
+        if initial_call:
+            self.switch_enabled = False
+            if self.start_side == self.fms_scale:
+                self.opposite = False
+            else:
+                self.opposite = True
         if self.fms_switch == 'L':
             # go to left switch
             pass
@@ -241,4 +263,3 @@ class VisionTest(OverallBase):
         if not self.motion.enabled:
             print("================= At scale ======================")
             self.next_state("go_to_cube")
-

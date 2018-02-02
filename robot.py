@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import math
 import ctre
 from ctre import WPI_TalonSRX
 import magicbot
@@ -15,8 +16,6 @@ from pyswervedrive.swervechassis import SwerveChassis
 from pyswervedrive.swervemodule import SwerveModule
 from utilities.bno055 import BNO055
 from utilities.functions import rescale_js
-
-import math
 
 
 class Robot(magicbot.MagicRobot):
@@ -68,8 +67,8 @@ class Robot(magicbot.MagicRobot):
 
         self.spin_rate = 5
 
-        NetworkTables.initialize()
-        self.sd = NetworkTables.getTable("SmartDashboard")
+        # NetworkTables.initialize()  # this seems to be broken
+        # self.sd = NetworkTables.getTable("SmartDashboard")
 
         # This is to state what channel our xbox controller is on.
         self.xbox = wpilib.XboxController(0)
