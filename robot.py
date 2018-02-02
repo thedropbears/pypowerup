@@ -7,7 +7,7 @@ from automations.intake import IntakeAutomation
 from automations.lifter import LifterAutomation
 from components.intake import Intake
 from components.lifter import Lifter
-from ctre import WPI_TalonSRX
+from ctre
 from networktables import NetworkTables
 
 class Robot(magicbot.MagicRobot):
@@ -27,9 +27,9 @@ class Robot(magicbot.MagicRobot):
         """This is to state what channel our xbox controller is on."""
         self.xbox = wpilib.XboxController(0)
         """This controls the left motor in the intake mechanism."""
-        self.intake_left = WPI_TalonSRX(1)
+        self.intake_left = ctre.WPI_TalonSRX(1)
         """This controls the right motor in the intake mechanism."""
-        self.intake_right = WPI_TalonSRX(2)
+        self.intake_right = ctre.WPI_TalonSRX(2)
         """This controls the arm in the containment mechanism."""
         self.clamp_arm = wpilib.Solenoid(0)
         """This controls the kicker in the containment mechanism."""
@@ -42,7 +42,7 @@ class Robot(magicbot.MagicRobot):
         containment mechanism."""
         self.infrared = wpilib.AnalogInput(0)
         """This is the lift motor"""
-        self.lift_motor = WPI_TalonSRX(5)
+        self.lift_motor = ctre.WPI_TalonSRX(5)
 
         self.sd = NetworkTables.getTable("SmartDashboard")
 
