@@ -18,13 +18,14 @@ class LifterAutomation(StateMachine):
         if self.lifter.get_pos() == self.setpos:
             self.next_state("eject")
 
-    @timed_state(first=True, duration=0.5, next_state="reset", must_finish=True)
+    @timed_state(duration=0.5, next_state="reset", must_finish=True)
     def eject(self):
-        """Ejects cube from mechanism as height is reached."""
+        """Ejects cube from mechanism when height is reached."""
         self.intake.intake_clamp(False)
         self.intake.intake_push(True)
 
     @state()
     def reset(self):
+        """Resets the rest of the intake mechanism(Kicker)"""
         self.intake.intake_push(False)
         self.done()
