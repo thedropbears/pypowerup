@@ -34,11 +34,11 @@ class PhysicsEngine:
         pass
 
     def update_sim(self, hal_data, now, tm_diff):
-        """
-        Update pyfrc simulator.
-        :param hal_data: Data about motors and other components
-        :param now: Current time in ms
-        :param tm_diff: Difference between current time and time when last checked
+        """Update pyfrc simulator.
+        Args:
+            hal_data: Data about motors and other components
+            now: Current time in ms
+            tm_diff: Difference between current time and time when last checked
         """
 
         steer_positions = []
