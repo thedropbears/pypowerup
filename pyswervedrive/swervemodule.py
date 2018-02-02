@@ -21,9 +21,6 @@ class SwerveModule:
     # 0.1 is because SRX velocities are measured in ticks/100ms
     drive_velocity_to_native_units = drive_counts_per_metre*0.1
 
-    steer_k_p: float = 0.5
-    steer_k_d: float = 0
-
     def __init__(self, steer_talon: ctre.WPI_TalonSRX, drive_talon: ctre.WPI_TalonSRX,
                  steer_enc_offset: float, x_pos: float, y_pos: float,
                  drive_free_speed: float,
