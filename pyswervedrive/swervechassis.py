@@ -90,6 +90,7 @@ class SwerveChassis:
             self.z_axis_adjustment[i*2+1, 0] = module_dist*math.cos(module_angle)
 
         for module in self.modules:
+            module.reset_encoder_delta()
             module.reset_steer_setpoint()
 
         self.last_heading = self.bno055.getAngle()
