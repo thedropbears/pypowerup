@@ -13,7 +13,7 @@ class PhysicsEngine:
         self.controller = controller
 
         self.drive_counts_per_rev = \
-            SwerveModule.CIMCODER_COUNTS_PER_REV*SwerveModule.DRIVE_ENCODER_GEAR_REDUCTION
+            SwerveModule.SRX_MAG_COUNTS_PER_REV*SwerveModule.DRIVE_ENCODER_GEAR_REDUCTION
         self.drive_counts_per_meter = \
             self.drive_counts_per_rev / (math.pi * SwerveModule.WHEEL_DIAMETER)
 
