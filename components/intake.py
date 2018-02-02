@@ -63,6 +63,6 @@ class Intake:
     def cube_inside(self):
         """Run when the limit switch is pressed and when the current
         output is above a threshold, which stops the motors."""
-        if 7 <= self.cube_distance <= 13:
+        if 10 <= self.cube_distance <= 15:
             return True
         return False
