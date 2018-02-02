@@ -116,8 +116,8 @@ class VectorPursuit:
         if scale > 1 and self.segment_idx < len(self.waypoints)-2:
             self.increment_segment()
             next_seg = True
-        elif (np.linalg.norm(position - self.waypoints_xy[-1]) < 0.1
-              or (scale >= 1 and self.segment_idx == len(self.waypoints)-2)):
+        elif (np.linalg.norm(position - self.waypoints_xy[-1]) < 0.2
+              or (scale >= 0.95 and self.segment_idx == len(self.waypoints)-2)):
             over = True
 
         return theta, speed_sp, next_seg, over

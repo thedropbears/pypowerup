@@ -1,5 +1,6 @@
 import math
 import ctre
+from utilities.functions import constrain_angle
 
 
 class SwerveModule:
@@ -19,9 +20,6 @@ class SwerveModule:
     # factor by which to scale velocities in m/s to give to our drive talon.
     # 0.1 is because SRX velocities are measured in ticks/100ms
     drive_velocity_to_native_units = drive_counts_per_metre*0.1
-
-    steer_k_p: float = 0.5
-    steer_k_d: float = 0
 
     def __init__(self, steer_talon: ctre.WPI_TalonSRX, drive_talon: ctre.WPI_TalonSRX,
                  steer_enc_offset: float, x_pos: float, y_pos: float,
@@ -114,7 +112,8 @@ class SwerveModule:
         This is intended to be called by the SwerveChassis in order to track
         odometry.
         """
-        steer_delta = self.current_measured_azimuth - self.zero_azimuth
+        steer_delta = constrain_angle(self.current_measured_azimuth
+                                      - self.zero_azimuth)
         drive_delta = (self.drive_motor.getSelectedSensorPosition(0)
                        / self.drive_counts_per_metre) - self.zero_drive_pos
         return steer_delta, drive_delta
@@ -235,8 +234,3 @@ class SwerveModule:
         if abs(diff) < abs(opp_diff):
             return diff
         return opp_diff
-
-
-def constrain_angle(angle):
-    """Wrap :param angle: to between +pi and -pi"""
-    return math.atan2(math.sin(angle), math.cos(angle))

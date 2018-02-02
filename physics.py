@@ -59,8 +59,8 @@ class PhysicsEngine:
             four_motor_swerve_drivetrain(lr_speed, rr_speed, lf_speed, rf_speed,
                                          lr_angle, rr_angle, lf_angle, rf_angle,
                                          x_wheelbase=self.X_WHEELBASE, y_wheelbase=self.Y_WHEELBASE)
-        vx *= 0.3048
-        vy *= 0.3048
+        vx /= 0.3048
+        vy /= 0.3048
         vw *= -1
         self.controller.vector_drive(vx, vy, vw, tm_diff)
 
@@ -92,6 +92,8 @@ def four_motor_swerve_drivetrain(lr_speed, rr_speed, lf_speed, rf_speed, lr_angl
     # Sin an Cos inverted because forward is 0 on swerve wheels
     Vx = (math.sin(-lr_angle) * lr_speed) + (math.sin(-rr_angle) * rr_speed) + (math.sin(-lf_angle) * lf_speed) + (math.sin(-rf_angle) * rf_speed)
     Vy = (math.cos(-lr_angle) * lr_speed) + (math.cos(-rr_angle) * rr_speed) + (math.cos(-lf_angle) * lf_speed) + (math.cos(-rf_angle) * rf_speed)
+    Vx *= 0.25
+    Vy *= 0.25
 
     # Adjusts the angle corresponding to a diameter that is perpendicular to the radius (add or subtract 45deg)
     lr_angle = (-lr_angle + (math.pi / 4)) % (2 * math.pi)
@@ -100,7 +102,8 @@ def four_motor_swerve_drivetrain(lr_speed, rr_speed, lf_speed, rf_speed, lr_angl
     rf_angle = (-rf_angle + (math.pi / 4)) % (2 * math.pi)
 
     # Finds the rotational velocity by finding the torque and adding them up
-    Vw = wheelbase_radius * -((math.cos(-lr_angle) * lr_speed) + (math.cos(-rr_angle) * -rr_speed) + (math.cos(-lf_angle) * lf_speed) + (math.cos(-rf_angle) * -rf_speed))
-    Vw *= -1
+    Vw = -((math.cos(-lr_angle) * lr_speed) + (math.cos(-rr_angle) * -rr_speed) + (math.cos(-lf_angle) * lf_speed) + (math.cos(-rf_angle) * -rf_speed))
+    Vw /= wheelbase_radius
+    Vw *= -0.25
 
     return Vx, Vy, Vw
