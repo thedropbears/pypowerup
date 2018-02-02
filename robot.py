@@ -2,13 +2,13 @@
 
 import magicbot
 import wpilib
-
+from automations.lifter import LifterAutomation
 from automations.intake import IntakeAutomation
 from automations.lifter import LifterAutomation
 from components.intake import Intake
 from components.lifter import Lifter
 from ctre import WPI_TalonSRX
-
+from networktables import NetworkTables
 
 class Robot(magicbot.MagicRobot):
     # Add magicbot components here using variable annotations.
@@ -42,7 +42,9 @@ class Robot(magicbot.MagicRobot):
         containment mechanism."""
         self.infrared = wpilib.AnalogInput(0)
         """This is the lift motor"""
-        self.lift_motor = WPI_TalonSRX(0)
+        self.lift_motor = WPI_TalonSRX(5)
+
+        self.sd = NetworkTables.getTable("SmartDashboard")
 
     def teleopInit(self):
         """Called when teleop starts"""
@@ -55,8 +57,17 @@ class Robot(magicbot.MagicRobot):
         This is run each iteration of the control loop before magicbot
         components are executed."""
 
+        self.put_dashboard()
+
+        # self.intake.intake_arm(self.xbox.getBButton())
+        if self.xbox.getPOV() != -1:
+            self.lifter.pov_change(self.xbox.getPOV())
+
         if self.xbox.getXButtonReleased():
             self.intake_automation.engage()
+
+    def put_dashboard(self):
+        self.sd.putString("default_height", self.lifter.default_height)
 
 
 if __name__ == '__main__':

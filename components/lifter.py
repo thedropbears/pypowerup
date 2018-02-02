@@ -1,80 +1,89 @@
-from ctre import WPI_TalonSRX
-
+import ctre
+from networktables import NetworkTables
 
 class Lifter:
+    lift_motor: ctre.WPI_TalonSRX
+    #  TODO find encoder values, tune height values to include robot height and cube
+    COUNTS_PER_REV = None
+    DISTANCE_PER_COUNT = None  # in cm
+    
+    SWITCH_HEIGHT = 47.625
+    LOWER_SCALE = 121.92
+    BALANCED_SCALE = 152.4
+    UPPER_SCALE = 182.88
+    GROUND_HEIGHT = 0
+
+    THRESHOLD = 100
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
-        self.switch_height = None
 
-        self.lower_scale = None
-        self.balanced_scale = None
-        self.upper_scale = None
-
-        self.exchange_height = None
-        self.ground_height = None
-
-        self.threshold = 100
-
-        self.lift_motor: WPI_TalonSRX
         self.lift_motor.overrideLimitSwitchesEnable(True)
+        #  TODO tune motion profiling
+        self.lift_motor.configMotionAcceleration(100, 10)
+        self.lift_motor.configMotionCruiseVelocity(775, 10)
+        self.lift_motor.configMotionProfileTrajectoryPeriod(1, 10)
 
-        self.motor.config_kP(0)
-        self.motor.config_kI(0)
-        self.motor.config_kD(0)
-
-        self.set_pos = None
+        self.set_pos = self.GROUND_HEIGHT
+        self.default_height = self.UPPER_SCALE
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
-        pass
+        self.reset()
 
     def on_disable(self):
         """This is called whenever the robot transitions to disabled mode."""
-        pass
+        self.stop()
 
     def execute(self):
         """Run at the end of every control loop iteration."""
         pass
 
-    def move_switch(self):
-        """Move the lift to the height of the switch
+    def pov_change(self, pos):
+        """Sets the default height based on position on D-Pad
+                  ▲ Balanced Scale
+    Lower Scale ◀   ▶ Upper Scale
+           Switch ▼
         """
-        self.move_to(self.switch_height)
-
-    def move_exchange(self):
-        """ Move the lift to the height of the exchange
-        """
-        self.move_to(self.exchange_height)
-
-    def reset_pos(self):
-        """Move to ground height"""
-        self.move_to(self.ground_height)
+        if pos <= 45 or pos >= 315:  # Up button
+            self.default_height = self.BALANCED_SCALE
+        elif pos > 45 and pos <= 135:  # Right button
+            self.default_height = self.UPPER_SCALE
+        elif pos > 135 and pos <= 225:  # Down button 
+            self.default_height = self.SWITCH_HEIGHT
+        elif pos > 255 and pos < 315:  # Left button
+            self.default_height = self.LOWER_SCALE
 
     def stop(self):
         """Stop the lift motor"""
         self.motor.stopMotor()
 
-    def move_lower_scale(self):
-        """Move the lift to the lowest height of the scale."""
-        self.set_pos(self.lower_scale)
+    def reset(self):
+        self.set_pos = self.GROUND_HEIGHT * self.DISTANCE_PER_COUNT
+        self.motor.set(mode=self.self.motor.ControlMode.MotionMagic, value=self.setpos)
 
-    def move_balanced_scale(self):
-        """Move the lift to the balanced height of the scale."""
-        self.set_pos(self.balanced_scale)
+    def move(self):
+        """Move lift to pos set on controller"""
+        self.set_pos = self.default_height * self.DISTANCE_PER_COUNT
+        self.motor.set(mode=self.self.motor.ControlMode.MotionMagic, value=self.setpos)
 
-    def move_upper_scale(self):
-        """Move the lift to the upper height of the scale."""
-        self.set_pos(self.upper_scale)
-
-    def move_to(self, input_setpos):
-        """Run pid loop to position on encoder
+    def move_to_height(self, input_setpos):
+        """Move lift to height on encoder
 
         Args:
-            setpos (int): Encoder position to move lift to.
+            input_setpos (int): Encoder position to move lift to in cm.
+        """
+        self.set_pos = input_setpos * self.DISTANCE_PER_COUNT
+        self.motor.set(mode=self.self.motor.ControlMode.MotionMagic, value=self.setpos)
+
+    def move_to_encoder_pos(self, input_setpos):
+        """Move lift to position on encoder
+
+        Args:
+            input_setpos (int): Encoder position to move lift to in encoder counts
         """
         self.set_pos = input_setpos
-        self.motor.set(mode=self.lift_motor.ControlMode.Position, value=self.setpos)
+        self.motor.set(mode=self.self.motor.ControlMode.MotionMagic, value=self.setpos)
 
     def get_pos(self):
         """Returns encoder position on lift
@@ -94,4 +103,4 @@ class Lifter:
             bool: If the encoder is at the pos
         """
         current_pos = self.get_pos
-        return self.set_pos <= current_pos + self.threshold and self.set_pos >= current_pos - self.threshold
+        return self.set_pos <= current_pos + self.THRESHOLD and self.set_pos >= current_pos - self.THRESHOLD
