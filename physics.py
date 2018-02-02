@@ -1,5 +1,7 @@
 import math
 from pyswervedrive.swervemodule import SwerveModule
+from utilities.functions import constrain_angle
+import numpy as np
 
 
 class PhysicsEngine:
@@ -23,6 +25,8 @@ class PhysicsEngine:
         self.module_steer_can_ids = [2, 11, 8, 4]
         self.module_drive_can_ids = [9, 13, 6, 14]
         self.module_steer_offsets = [-2055, -2583, -1665, -286]
+        self.module_x_offsets = [0.31, -0.31, -0.31, 0.31]
+        self.module_y_offsets = [0.26, 0.26, -0.26, -0.26]
 
         self.controller.add_device_gyro_channel('bno055')
 
@@ -41,7 +45,9 @@ class PhysicsEngine:
         for can_id, offset in zip(self.module_steer_can_ids, self.module_steer_offsets):
             value = hal_data['CAN'][can_id]['value']
             hal_data['CAN'][can_id]['pulse_width_position'] = value
-            position = (hal_data['CAN'][can_id]['pulse_width_position']-offset) / SwerveModule.STEER_COUNTS_PER_RADIAN
+            position = constrain_angle(
+                    (hal_data['CAN'][can_id]['pulse_width_position']-offset)
+                    / SwerveModule.STEER_COUNTS_PER_RADIAN)
             steer_positions.append(position)
 
         motor_speeds = []
@@ -55,55 +61,55 @@ class PhysicsEngine:
         lf_speed, lr_speed, rr_speed, rf_speed = motor_speeds
 
         lf_angle, lr_angle, rr_angle, rf_angle = steer_positions
-        vx, vy, vw = \
-            four_motor_swerve_drivetrain(lr_speed, rr_speed, lf_speed, rf_speed,
-                                         lr_angle, rr_angle, lf_angle, rf_angle,
-                                         x_wheelbase=self.X_WHEELBASE, y_wheelbase=self.Y_WHEELBASE)
+        vx, vy, vw = better_four_motor_swerve_drivetrain(motor_speeds, steer_positions, self.module_x_offsets, self.module_y_offsets)
+        # convert meters to ft. (cause america)
         vx /= 0.3048
         vy /= 0.3048
-        vw *= -1
-        self.controller.vector_drive(vx, vy, vw, tm_diff)
+        self.controller.vector_drive(vy, vx, vw, tm_diff)
 
 
-def four_motor_swerve_drivetrain(lr_speed, rr_speed, lf_speed, rf_speed, lr_angle, rr_angle, lf_angle, rf_angle,
-                                 x_wheelbase=2, y_wheelbase=2):
-    '''
-        Four motors that can be rotated in any direction
-        If any motors are inverted, then you will need to multiply that motor's
-        value by -1.
-        :param lr_speed:   Left rear motor speed. In m/s
-        :param rr_speed:   Right rear motor speed. In m/s
-        :param lf_speed:   Left front motor speed. In m/s
-        :param rf_speed:   Right front motor speed. In m/s
-        :param lr_angle:   Left rear motor angle in radians (measured counterclockwise from forward position)
-        :param rr_angle:   Right rear motor angle in radians (measured counterclockwise from forward position)
-        :param lf_angle:   Left front motor angle in radians (measured counterclockwise from forward position)
-        :param rf_angle:   Right front motor angle in radians (measured counterclockwise from forward position)
-        :param x_wheelbase: The distance in feet between right and left wheels. In m
-        :param y_wheelbase: The distance in feet between forward and rear wheels. In m
-        :returns: Speed of robot in x (m/s), Speed of robot in y (m/s),
-                  counterclockwise rotation of robot (radians/s)
-    '''
+def better_four_motor_swerve_drivetrain(module_speeds, module_angles, module_x_offsets, module_y_offsets):
+    """Solve the least-squares of the speed and angles of four swerve modules
+    to retrieve delta x and y in the robot frame.
 
-    # Calculate wheelbase radius
-    wheelbase_radius = math.hypot(x_wheelbase / 2, y_wheelbase / 2)
+    Note:
+        This function uses the standard (and superior) ROS coordinate system,
+        with forward being positive x, leftward being positive y, and a
+        counter clockwise rotation being one about the positive z axis.
+    Args:
+        module_speeds: List of the speeds of each module (m/s)
+        module_angles: List of the angles of each module (radians)
+        module_x_offsets: Offset of each module on the x axis.
+        module_y_offsets: Offset of each module on the y axis.
+    Returns:
+        vx: float, robot velocity on the x axis (m/s)
+        vy: float, robot velocity on the y axis (m/s)
+        vz: float, robot velocity about the z axis (radians/s)
+    """
+    A = np.array([
+        [1, 0, 1],
+        [0, 1, 1],
+        [1, 0, 1],
+        [0, 1, 1],
+        [1, 0, 1],
+        [0, 1, 1],
+        [1, 0, 1],
+        [0, 1, 1]
+    ], dtype=float)
+    module_states = np.zeros((8, 1))
+    for i in range(4):
+        module_dist = math.hypot(module_x_offsets[i], module_y_offsets[i])
+        module_angle = math.atan2(module_y_offsets[i], module_x_offsets[i])
+        A[i*2, 2] = -module_dist*math.sin(module_angle)
+        A[i*2+1, 2] = module_dist*math.cos(module_angle)
 
-    # Calculates the Vx and Vy components
-    # Sin an Cos inverted because forward is 0 on swerve wheels
-    Vx = (math.sin(-lr_angle) * lr_speed) + (math.sin(-rr_angle) * rr_speed) + (math.sin(-lf_angle) * lf_speed) + (math.sin(-rf_angle) * rf_speed)
-    Vy = (math.cos(-lr_angle) * lr_speed) + (math.cos(-rr_angle) * rr_speed) + (math.cos(-lf_angle) * lf_speed) + (math.cos(-rf_angle) * rf_speed)
-    Vx *= 0.25
-    Vy *= 0.25
+        x_vel = module_speeds[i] * math.cos(module_angles[i])
+        y_vel = module_speeds[i] * math.sin(module_angles[i])
+        module_states[i*2, 0] = x_vel
+        module_states[i*2+1, 0] = y_vel
 
-    # Adjusts the angle corresponding to a diameter that is perpendicular to the radius (add or subtract 45deg)
-    lr_angle = (-lr_angle + (math.pi / 4)) % (2 * math.pi)
-    rr_angle = (-rr_angle - (math.pi / 4)) % (2 * math.pi)
-    lf_angle = (-lf_angle - (math.pi / 4)) % (2 * math.pi)
-    rf_angle = (-rf_angle + (math.pi / 4)) % (2 * math.pi)
+    lstsq_ret = np.linalg.lstsq(A, module_states,
+                                rcond=-1)
+    vx, vy, vz = lstsq_ret[0].reshape(3)
 
-    # Finds the rotational velocity by finding the torque and adding them up
-    Vw = -((math.cos(-lr_angle) * lr_speed) + (math.cos(-rr_angle) * -rr_speed) + (math.cos(-lf_angle) * lf_speed) + (math.cos(-rf_angle) * -rf_speed))
-    Vw /= wheelbase_radius
-    Vw *= -0.25
-
-    return Vx, Vy, Vw
+    return vx, vy, vz

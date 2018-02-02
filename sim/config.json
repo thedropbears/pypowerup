@@ -11,16 +11,6 @@
       "w": 25,
       "h": 27,
       "px_per_ft": 10
-    },
-    "CAN": {
-      "2": "Front Left Steer Motor",
-      "11": "Rear Left Steer Motor",
-      "8": "Rear Right Steer Motor",
-      "4": "Front Right Steer Motor",
-      "9": "Front Left Drive Motor",
-      "13": "Rear Left Drive Motor",
-      "6": "Rear Right Drive Motor",
-      "14": "Front Right Drive Motor"
     }
   }
 }
