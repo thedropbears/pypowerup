@@ -137,8 +137,7 @@ class VisionTest(OverallBase):
         self.chassis.field_oriented = True
         self.chassis.set_inputs(0, 1.5, 0)
         print("i am waiting to intake the cube")
-        print("cube switch intake cube %s" % (not self.cube_switch.get()))
-        if not self.cube_switch.get():
+        if True:  # not self.cube_switch.get():
             self.next_state_now("go_to_scale")
             print('===========Going to scale===========')
             return

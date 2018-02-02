@@ -3,6 +3,7 @@ branch = True
 source = .
 omit =
     tests/*
+    physics.py
 
 [report]
 exclude_lines =

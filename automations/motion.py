@@ -4,6 +4,8 @@ from pyswervedrive.swervechassis import SwerveChassis
 from utilities.bno055 import BNO055
 from utilities.vector_pursuit import VectorPursuit
 from utilities.profile_generator import generate_interpolation_function
+from wpilib import SmartDashboard
+from networktables import NetworkTables
 
 
 class ChassisMotion:
@@ -108,7 +110,12 @@ class ChassisMotion:
             # self.chassis.set_velocity_heading(vx, vy, self.waypoints[self.waypoint_idx+1][2])
             self.chassis.set_inputs(vx, vy, heading_output)
 
+            SmartDashboard.putNumber('vector_pursuit_heading', direction_of_motion)
+            SmartDashboard.putNumber('vector_pursuit_speed', speed_sp)
+            NetworkTables.flush()
+
             if over:
+                print("Motion over")
                 self.enabled = False
 
     @property

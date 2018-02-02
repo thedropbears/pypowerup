@@ -5,6 +5,7 @@ import struct
 
 from hal_impl.i2c_helpers import I2CSimBase
 from .bno055 import BNO055
+from hal_impl.data import hal_data
 
 
 class BNO055Sim(I2CSimBase):
@@ -20,6 +21,9 @@ class BNO055Sim(I2CSimBase):
 
         :returns: number of bytes returned
         """
+        if 'bno055' in hal_data['robot']:
+            self.heading = math.radians(-hal_data['robot']['bno055'])
+
         if data_to_send[0] == BNO055.Register.EULER_H_LSB:
             struct.pack_into('<h', data_received, 0, int(self.heading * 900.0))
         if data_to_send[0] == BNO055.Register.EULER_P_LSB:

@@ -1,12 +1,3 @@
-"""steps:
-1 given way points set current way point to first way point
-also define start and end point
-3 calculate scale to check if gone over segment
-4 calculate projected point
-5 calculate look ahead point
-6 calculate angle of look ahead from oreintation
-7 output vector of angle and speed
-"""
 import math
 from utilities.profile_generator import generate_trapezoidal_function
 import numpy as np
@@ -79,6 +70,7 @@ class VectorPursuit:
         projected_point = (self.waypoints_xy[self.segment_idx]
                            + scale * self.segment)
 
+        # calculate the norm of the vector to the end of our current trajectory
         dist_to_end = np.linalg.norm(self.segment) - np.linalg.norm(self.waypoints_xy[self.segment_idx+1] - position)
         if dist_to_end < 0:
             dist_to_end = 0
@@ -87,6 +79,8 @@ class VectorPursuit:
         # define look ahead distance
         look_ahead_distance = 0.1 + 0.3 * speed
 
+        # iterate over the segments from our current projected position until
+        # we exhaust the lookahead distance
         look_ahead_point = projected_point
         look_ahead_remaining = look_ahead_distance
         look_ahead_waypoint = self.segment_idx
@@ -94,11 +88,20 @@ class VectorPursuit:
             segment_start = self.waypoints_xy[look_ahead_waypoint]
             segment_end = self.waypoints_xy[look_ahead_waypoint+1]
             segment = segment_end - segment_start
+
+            # unit vector of the segment we are iterating over
             segment_normalised = segment / np.linalg.norm(segment)
+
             look_ahead_point = (projected_point + look_ahead_remaining
                                 * segment_normalised)
+
+            # take away from the remaining look ahead the amount we have travelled
+            # along the segment
+            look_ahead_remaining -= np.linalg.norm(segment_end-projected_point)
             if look_ahead_waypoint == len(self.waypoints)-2:
                 break
+
+            # projected point is now the start of the next segment
             projected_point = segment_end
             look_ahead_waypoint += 1
 
@@ -109,12 +112,12 @@ class VectorPursuit:
         theta = math.atan2(new_y, new_x)
 
         next_seg = False
+        over = False
         if scale > 1 and self.segment_idx < len(self.waypoints)-2:
             self.increment_segment()
             next_seg = True
-
-        over = False
-        if np.linalg.norm(position - self.waypoints_xy[-1]) < 0.1:
+        elif (np.linalg.norm(position - self.waypoints_xy[-1]) < 0.1
+              or (scale >= 0.95 and self.segment_idx == len(self.waypoints)-2)):
             over = True
 
         return theta, speed_sp, next_seg, over
