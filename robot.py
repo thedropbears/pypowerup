@@ -41,11 +41,11 @@ class Robot(magicbot.MagicRobot):
         """This is the infrared sensor that is in the back of the
         containment mechanism."""
         self.infrared = wpilib.AnalogInput(0)
-
+        """This is the lift motor"""
         self.lift_motor = WPI_TalonSRX(0)
 
     def teleopInit(self):
-        """Called when teleop starts; optional"""
+        """Called when teleop starts"""
         self.intake.intake_clamp(False)
         self.intake.intake_push(False)
         self.intake.extension(True)

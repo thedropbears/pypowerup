@@ -10,7 +10,7 @@ class IntakeAutomation(StateMachine):
 
     @state(first=True)
     def intake_cube(self):
-        """Start the intake while waiting for the cube to come inside"""
+        """Starts the intake motors while waiting for the cube be seen by the infrared sensor"""
         if self.cube_inside():
             self.intake_rotate(0.0)
             self.intake.extension(False)
