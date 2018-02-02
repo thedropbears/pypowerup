@@ -12,3 +12,5 @@ exclude =
 	__pycache__,
 	# Tests are sacred.
 	tests
+application-import-names = automations,components,pyswervedrive,utilities
+import-order-style = edited
