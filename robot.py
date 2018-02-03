@@ -58,13 +58,22 @@ class Robot(magicbot.MagicRobot):
             x_pos=0.31, y_pos=-0.26,
             drive_free_speed=Robot.module_drive_free_speed)
 
+        self.intake_left = ctre.WPI_TalonSRX(0)
+        self.intake_right = ctre.WPI_TalonSRX(1)
+        self.clamp_arm = wpilib.Solenoid(0)
+        self.intake_kicker = wpilib.Solenoid(1)
+        self.extension_arm_left = wpilib.Solenoid(2)
+        self.extension_arm_right = wpilib.Solenoid(3)
+        self.infrared = wpilib.AnalogInput(0)
+        self.lift_motor = ctre.WPI_TalonSRX(3)
+        self.cube_switch = wpilib.DigitalInput(0)
+
         # create the imu object
         self.bno055 = BNO055()
 
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)
-
-        self.cube_switch = wpilib.DigitalInput(0)
+        self.gamepad = wpilib.XboxController(1)
 
         self.spin_rate = 5
 
@@ -73,12 +82,19 @@ class Robot(magicbot.MagicRobot):
         self.motion.enabled = False
         self.chassis.set_inputs(0, 0, 0)
 
+        self.intake.intake_clamp(False)
+        self.intake.intake_push(False)
+        self.intake.extension(True)
+
     def teleopPeriodic(self):
         """
         Process inputs from the driver station here.
 
         This is run each iteration of the control loop before magicbot components are executed.
         """
+        if self.joystick.getTriggerPressed():
+            self.intake_automation.engage()
+
         if self.joystick.getRawButtonPressed(10):
             self.chassis.odometry_x = 0.0
             self.chassis.odometry_y = 0.0
