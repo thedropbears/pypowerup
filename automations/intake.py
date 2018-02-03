@@ -12,7 +12,7 @@ class IntakeAutomation(StateMachine):
     def intake_cube(self):
         """Starts the intake motors while waiting for the cube be seen by the
         infrared sensor"""
-        if self.cube_inside():
+        if self.intake.cube_inside():
             self.intake.intake_rotate(0.0)
             self.intake.extension(False)
             self.done()

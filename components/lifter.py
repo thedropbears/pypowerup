@@ -89,5 +89,5 @@ class Lifter:
         Returns:
             bool: If the encoder is at the pos
         """
-        current_pos = self.get_pos
-        return self.set_pos <= current_pos + self.THRESHOLD and self.set_pos >= current_pos - self.THRESHOLD
+        current_pos = self.get_pos()
+        return current_pos - self.THRESHOLD <= self.set_pos <= current_pos + self.THRESHOLD
