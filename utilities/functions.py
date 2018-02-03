@@ -31,6 +31,7 @@ def rescale_js(value, deadzone: float=0.0, exponential: float=0.0,
         value = (math.exp(a * (value - deadzone)) - 1) / exponential
     return value * value_negative * rate
 
+
 def constrain_angle(angle):
     """Wrap :param angle: to between +pi and -pi"""
     return math.atan2(math.sin(angle), math.cos(angle))

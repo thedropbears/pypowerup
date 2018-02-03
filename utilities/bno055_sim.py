@@ -21,7 +21,9 @@ class BNO055Sim(I2CSimBase):
 
         :returns: number of bytes returned
         """
-        self.heading = math.radians(-hal_data['robot']['bno055'])
+        if 'bno055' in hal_data['robot']:
+            self.heading = math.radians(-hal_data['robot']['bno055'])
+
         if data_to_send[0] == BNO055.Register.EULER_H_LSB:
             struct.pack_into('<h', data_received, 0, int(self.heading * 900.0))
         if data_to_send[0] == BNO055.Register.EULER_P_LSB:
