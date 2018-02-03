@@ -1,11 +1,12 @@
 import ctre
 from networktables import NetworkTables
 
+
 class Lifter:
     lift_motor: ctre.WPI_TalonSRX
     #  TODO find encoder values, tune height values to include robot height and cube
-    COUNTS_PER_REV = None
-    DISTANCE_PER_COUNT = None  # in cm
+    COUNTS_PER_REV = 0
+    DISTANCE_PER_COUNT = 0  # in cm
     
     SWITCH_HEIGHT = 47.625
     LOWER_SCALE = 121.92
@@ -57,7 +58,7 @@ class Lifter:
             self.default_height = self.BALANCED_SCALE
         elif pos > 45 and pos <= 135:  # Right button
             self.default_height = self.UPPER_SCALE
-        elif pos > 135 and pos <= 225:  # Down button 
+        elif pos > 135 and pos <= 225:  # Down button
             self.default_height = self.SWITCH_HEIGHT
         elif pos > 255 and pos < 315:  # Left button
             self.default_height = self.LOWER_SCALE
@@ -68,12 +69,12 @@ class Lifter:
 
     def reset(self):
         self.set_pos = self.GROUND_HEIGHT * self.DISTANCE_PER_COUNT
-        self.motor.set(mode=self.self.motor.ControlMode.MotionMagic, value=self.setpos)
+        self.lift_motor.set(mode=self.lift_motor.ControlMode.MotionMagic, value=self.set_pos)
 
     def move(self):
         """Move lift to pos set on controller"""
         self.set_pos = self.default_height * self.DISTANCE_PER_COUNT
-        self.motor.set(mode=self.self.motor.ControlMode.MotionMagic, value=self.setpos)
+        self.lift_motor.set(mode=self.lift_motor.ControlMode.MotionMagic, value=self.set_pos)
 
     def move_to_height(self, input_setpos):
         """Move lift to height on encoder
@@ -82,7 +83,7 @@ class Lifter:
             input_setpos (int): Encoder position to move lift to in cm.
         """
         self.set_pos = input_setpos * self.DISTANCE_PER_COUNT
-        self.motor.set(mode=self.self.motor.ControlMode.MotionMagic, value=self.setpos)
+        self.lift_motor.set(mode=self.lift_motor.ControlMode.MotionMagic, value=self.set_pos)
 
     def move_to_encoder_pos(self, input_setpos):
         """Move lift to position on encoder

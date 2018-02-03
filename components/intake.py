@@ -7,7 +7,8 @@ class Intake:
     """Importing objects from robot.py"""
     intake_left: WPI_TalonSRX
     intake_right: WPI_TalonSRX
-    clamp_arm: wpilib.Solenoid
+    clamp_arm_left: wpilib.Solenoid
+    clamp_arm_right: wpilib.Solenoid
     intake_kicker: wpilib.Solenoid
     extension_arm_left: wpilib.Solenoid
     extension_arm_right: wpilib.Solenoid
@@ -41,7 +42,8 @@ class Intake:
 
     def intake_clamp(self, value):
         """Turns intake arm on or off"""
-        self.clamp_arm.set(value)
+        self.clamp_arm_left.set(value)
+        self.clamp_arm_right.set(value)
 
     def intake_push(self, value):
         """Turns the pushing pneumatic on or off"""

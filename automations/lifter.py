@@ -17,7 +17,7 @@ class LifterAutomation(StateMachine):
     @state()
     def move_complete(self):
         """This state makes sure that you are at you set height."""
-        if self.lifter.get_pos() == self.lifter.setpos:
+        if self.lifter.get_pos() == self.lifter.set_pos:
             self.next_state("eject")
 
     @timed_state(duration=0.5, next_state="reset", must_finish=True)
@@ -29,5 +29,5 @@ class LifterAutomation(StateMachine):
     @state()
     def reset(self):
         self.intake.intake_push(False)
-        self.lifter.reset_pos()
+        self.lifter.reset()
         self.done()

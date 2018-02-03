@@ -30,7 +30,7 @@ class OverallBase(AutonomousStateMachine):
     cube_switch: wpilib.DigitalInput  # the switch used to confirm cube capture during early testing
 
     def on_enable(self):
-        self.lifter.reset.pos()
+        # self.lifter.reset() do we need this?
         self.game_data_message = self.ds.getGameSpecificMessage()
         self.picking_up_cube = True  # is the robot trying to pickup a cube or deposit?
         # make y +ve or -ve depending on where we start
@@ -73,48 +73,6 @@ class OverallBase(AutonomousStateMachine):
             co_ordinate[i][1] *= -1
         return co_ordinate
 
-
-'''     def close_to_objective(self, objective):
-        """checks if the robot is on the same side of the field as the objective."""
-        if self.start_side == self.fms_switch and objective == 'switch':
-            return True
-        else:
-            return False
-        if self.start_side == self.fms_scale and objective == 'scale':
-            return True
-        else:
-            return False
-
-    def target_objective(self):
-        """A dictionary function that gives an output on the order of objectives based on inputs.
-        inputs are designated on the left in a tuple in the order of robot start side, strategy,
-        switch side scale side. Outputs are given on the right in the order which the
-        robot needs to go to"""
-        objective_calculation = {
-            # Double scale with right start
-            ('R', 'double_scale', 'L', 'L'): ('cross_l_scale', 'same_l_scale'),
-            ('R', 'double_scale', 'R', 'L'): ('cross_l_scale', 'same_l_scale'),
-            ('R', 'double_scale', 'R', 'R'): ('same_r_scale', 'same_r_scale'),
-            ('R', 'double_scale', 'L', 'R'): ('same_r_scale', 'same_r_scale'),
-            # Double scale with left start
-            ('L', 'double_scale', 'L', 'L'): ('same_l_scale', 'same_l_scale'),
-            ('L', 'double_scale', 'R', 'L'): ('same_l_scale', 'same_l_scale'),
-            ('L', 'double_scale', 'R', 'R'): ('cross_r_scale', 'same_r_scale'),
-            ('L', 'double_scale', 'L', 'R'): ('cross_r_scale', 'same_r_scale'),
-            # Switch and scale with right start
-            ('R', 'switch_and_scale', 'L', 'R'): ('cross_l_scale', 'same_r_scale'),
-            ('R', 'switch_and_scale', 'L', 'L'): ('cross_l_scale', 'same_l_switch'),
-            ('R', 'switch_and_scale', 'R', 'L'): ('same_r_switch', 'cross_l_scale'),
-            ('R', 'switch_and_scale', 'R', 'R'): ('same_r_switch', 'same_r_scale'),
-            # Switch and scale with left start
-            ('L', 'switch_and_scale', 'R', 'L'): ('same_l_scale', 'cross_r_switch'),
-            ('L', 'switch_and_scale', 'R', 'R'): ('cross_r_scale', 'same_r_switch'),
-            ('L', 'switch_and_scale', 'L', 'R'): ('same_l_switch', 'cross_r_scale'),
-            ('L', 'switch_and_scale', 'L', 'L'): ('same_l_switch', 'same_l_scale')
-        }
-        return objective_calculation[(self.start_side, self.strategy, self.fms_switch,
-                                      self.fms_scale)] '''
-
     @state
     def navigating(self, initial_call):
         """The robot navigates to one of two nav-points, if the one it is at is the wrong one,
@@ -125,7 +83,7 @@ class OverallBase(AutonomousStateMachine):
             if not self.picking_up_cube:
                 if self.opposite:
                     # go to other navigation point
-                    self.navpoint = self.invert_co_ordinates(self.navpoint)
+                    self.navigation_point = self.invert_co_ordinates(self.navigation_point)
                     # invert the y-co-ordinates of the navpoint
                     self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
                                                self.navigation_point])
@@ -163,13 +121,13 @@ class OverallBase(AutonomousStateMachine):
             self.picking_up_cube = True
             # toggles the navpoint to cube pickup mode
             if self.chassis.odometry_y < 0:
-                self.navpoint[2] = 5 * math.pi / 4
+                self.navigation_point[2] = 5 * math.pi / 4
             else:  # changes the facing of the navpoint based on which side the
                 # robot is on TODO test this!
-                self.navpoint[2] = 3 * math.pi / 4
+                self.navigation_point[2] = 3 * math.pi / 4
         self.lifter_automation.engage()
         # Release cube
-        if self.lifter_automation.is_executing():
+        if self.lifter_automation.is_executing:
             self.next_state("navigating")
 
     @state
@@ -263,17 +221,17 @@ class VisionTest(OverallBase):
         intake statemachine and the cube microswitch. if the colection is
         successful, toggles the wapoint to objective mode"""
         self.intake_automation.engage()
-        if not self.intake_automation.is_executing() and not self.cube_switch.get():
+        if not self.intake_automation.is_executing and not self.cube_switch.get():
             # intake stops running
             # TODO add current spike measurement
             self.picking_up_cube = False
             # sets the navpoint to objective mode
             self.next_state("go_to_scale")
-        elif not self.intake_automation.is_executing() and self.cube_switch.get():
+        elif not self.intake_automation.is_executing and self.cube_switch.get():
             # After completing the intake cycle there is no cube
             self.next_state("search_for_cube")
 
-    @state(first=True)
+    @state
     def go_to_scale(self, initial_call):
         """The robot travels to the scale"""
         if initial_call:

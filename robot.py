@@ -89,6 +89,8 @@ class Robot(magicbot.MagicRobot):
         # This is the limit switch in the containment mechanism.
         self.limit_switch = wpilib.DigitalInput(1)
         self.lift_motor = WPI_TalonSRX(0)
+        # This is the analogue infrared sensor
+        self.infrared = wpilib.AnalogInput(2)
 
     def teleopInit(self):
         """Called when teleop starts; optional"""
