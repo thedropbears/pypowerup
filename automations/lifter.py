@@ -30,4 +30,5 @@ class LifterAutomation(StateMachine):
     def reset(self):
         """Resets the rest of the intake mechanism(Kicker)"""
         self.intake.intake_push(False)
-        self.lifter.reset_pos()
+        self.lifter.reset()
+        self.done()
