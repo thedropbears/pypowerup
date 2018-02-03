@@ -117,6 +117,8 @@ class ChassisMotion:
             if over:
                 print("Motion over")
                 self.enabled = False
+                if self.waypoints[-1][3] == 0:
+                    self.chassis.set_inputs(0, 0, 0)
 
     @property
     def waypoint_idx(self):
