@@ -35,7 +35,7 @@ class Robot(magicbot.MagicRobot):
     intake: Intake
     lifter: Lifter
 
-    module_drive_free_speed: float = 780.
+    module_drive_free_speed: float = 7800.  # encoder ticks / 100 ms
     length: float = 0.88
 
     def createObjects(self):
@@ -99,7 +99,7 @@ class Robot(magicbot.MagicRobot):
         # TODO: Tune these constants forvwhatever robot they are on
         vx = -rescale_js(self.joystick.getY(), deadzone=0.05, exponential=1.2, rate=4)
         vy = -rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2, rate=4)
-        vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=15.0, rate=self.spin_rate)
+        vz = -rescale_js(self.joystick.getZ(), deadzone=0.4, exponential=15.0, rate=self.spin_rate)
         self.chassis.set_inputs(vx, vy, vz)
 
 

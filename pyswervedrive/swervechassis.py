@@ -28,12 +28,12 @@ class SwerveChassis:
     def setup(self):
         # Heading PID controller
         self.heading_pid_out = ChassisPIDOutput()
-        self.heading_pid = PIDController(Kp=6.0, Ki=0.0, Kd=0.2,
+        self.heading_pid = PIDController(Kp=6.0, Ki=0.0, Kd=1.0,
                                          source=self.bno055.getAngle,
                                          output=self.heading_pid_out,
                                          period=1/50)
         self.heading_pid.setInputRange(-math.pi, math.pi)
-        self.heading_pid.setOutputRange(-3, 3)
+        self.heading_pid.setOutputRange(-2, 2)
         self.heading_pid.setContinuous()
         self.heading_pid.enable()
         self.modules = [self.module_a, self.module_b, self.module_c, self.module_d]
@@ -51,7 +51,6 @@ class SwerveChassis:
     def set_heading_sp(self, setpoint):
         self.heading_pid.setSetpoint(setpoint)
         self.heading_pid.enable()
-        self.momentum = False
 
     def heading_hold_on(self):
         self.set_heading_sp_current()
@@ -101,15 +100,15 @@ class SwerveChassis:
         if self.hold_heading:
             if self.momentum and abs(self.bno055.getHeadingRate()) < 0.005:
                 self.momentum = False
+
             if self.vz not in [0.0, None]:
                 self.momentum = True
-            if self.vz is None:
-                self.momentum = False
 
             if not self.momentum:
-                pid_z = self.heading_pid.get()
+                pid_z = self.heading_pid_out.output
             else:
                 self.set_heading_sp_current()
+
         input_vz = 0
         if self.vz is not None:
             input_vz = self.vz
