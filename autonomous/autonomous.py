@@ -33,7 +33,7 @@ class OverallBase(AutonomousStateMachine):
     def on_enable(self):
         # self.lifter.reset() do we need this?
         self.game_data_message = self.ds.getGameSpecificMessage()
-        self.picking_up_cube = True  # is the robot trying to pickup a cube or deposit?
+        self.picking_up_cube = False  # is the robot trying to pickup a cube or deposit?
         # make y +ve or -ve depending on where we start
         self.navigation_point = [5.6, 2.4, 0, 0]
         self.switch_point = [4.3, 2.1, 3*math.pi/2, 0]
@@ -58,7 +58,7 @@ class OverallBase(AutonomousStateMachine):
     def setup(self):
         """Do robot initilisation specific to the statemachine in here."""
         print('Odometry_x: %s Odometry_y: %s' % (self.chassis.odometry_x, self.chassis.odometry_y))
-        if self.start_side == self.fms_switch and not self.double_scale_strategy:
+        if not self.double_scale_strategy and self.start_side == self.fms_switch:
             self.scale_objective = False
             self.next_state("go_to_switch")
             #change switch postion one off
@@ -81,8 +81,9 @@ class OverallBase(AutonomousStateMachine):
     def navigating(self, initial_call):
         """The robot navigates to one of two nav-points, if the one it is at is the wrong one,
         it swaps to the opposite side."""
-        print('Odometry_x: %s Odometry_y: %s' % (self.chassis.odometry_x, self.chassis.odometry_y))
+        # print('Odometry_x: %s Odometry_y: %s' % (self.chassis.odometry_x, self.chassis.odometry_y))
         if initial_call:
+            print(self.picking_up_cube)
             angle = self.bno055.getAngle()
             #seraching for objective
             if not self.picking_up_cube:
@@ -98,17 +99,18 @@ class OverallBase(AutonomousStateMachine):
                                                self.navigation_point])
 
             else:
-                #serach for cube , nav  point close to us
+                # serach for cube , nav  point close to us
                 self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
                                            self.navigation_point])
                 if not self.motion.enabled:
-                    self.next_state("lifting")
+                    self.next_state("intake")
         if not self.motion.enabled and not self.picking_up_cube:
             if self.scale_objective:
                 self.next_state('go_to_scale')
             else:
                 self.next_state('go_to_switch')
-            #self.picking_up_cube=not(picking_up_cube)
+        elif not self.motion.enabled and self.picking_up_cube:
+                    self.next_state("intake_cube")
 
     @state
     def lifting(self, initial_call):
