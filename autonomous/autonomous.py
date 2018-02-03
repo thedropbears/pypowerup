@@ -14,7 +14,8 @@ from robot import Robot
 
 class OverallBase(AutonomousStateMachine):
     """statemachine designed to intelegently respond to possible situations in auto"""
-
+    DEFAULT = True
+    MODE_NAME = 'Autonomous'
     vision: Vision
     lifter: Lifter
     lifter_automation: LifterAutomation
@@ -35,6 +36,8 @@ class OverallBase(AutonomousStateMachine):
         self.picking_up_cube = True  # is the robot trying to pickup a cube or deposit?
         # make y +ve or -ve depending on where we start
         self.navigation_point = [5.6, 2.4, 0, 1]
+        self.switch_point = [4.3, 2.1, 3*math.pi/2, 1]
+        self.scale_point = [7.5, 2, 0, 1]
         self.switch_enabled = True
         self.double_scale_strategy = True  # this will be set by the dashboard
         self.start_side = 'R'  # set by the dashboard
@@ -54,7 +57,7 @@ class OverallBase(AutonomousStateMachine):
     @state(first=True)
     def setup(self):
         """Do robot initilisation specific to the statemachine in here."""
-        if self.start_side == self.fms_switch:
+        if self.start_side == self.fms_switch and not self.double_scale_strategy:
             self.scale_objective = False
             self.next_state("go_to_switch")
             #change switch postion one off
@@ -70,7 +73,7 @@ class OverallBase(AutonomousStateMachine):
     def invert_co_ordinates(self, co_ordinate):
         """Inverts the y-coordinates of the input annd returns the output"""
         for i in co_ordinate:
-            co_ordinate[i][1] *= -1
+            co_ordinate[1] *= -1
         return co_ordinate
 
     @state
@@ -92,26 +95,18 @@ class OverallBase(AutonomousStateMachine):
                     self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
                                                self.navigation_point])
 
-                if self.scale_objective:
-                    self.next_state('go_to_scale')
-                else:
-                    self.next_state('go_to_switch')
             else:
                 #serach for cube , nav  point close to us
                 self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
                                            self.navigation_point])
-                self.next_state("go_to_cube")
+                if not self.motion.enabled:
+                    self.next_state("lifting")
+        if not self.motion.enabled and not self.picking_up_cube:
+            if self.scale_objective:
+                self.next_state('go_to_scale')
+            else:
+                self.next_state('go_to_switch')
             #self.picking_up_cube=not(picking_up_cube)
-
-    @state
-    def go_to_cube(self, initial_call):
-        """The robot drives towards where the next cube should be"""
-        if initial_call:
-            angle = self.bno055.getAngle()
-            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y,
-                                       angle, 0]])
-        if not self.motion.enabled:
-            self.next_state("lifting")
 
     @state
     def lifting(self, initial_call):
@@ -149,6 +144,8 @@ class OverallBase(AutonomousStateMachine):
         self.chassis.set_velocity_heading(math.cos(absolute_cube_direction),
                                           math.sin(absolute_cube_direction),
                                           new_heading)
+        if not self.motion.enabled or not self.cube_switch.get():
+            self.next_state("intake_cube")
 
     @state
     def search_for_cube(self):
@@ -163,57 +160,39 @@ class OverallBase(AutonomousStateMachine):
     def go_to_switch(self, initial_call):
         """The robot travels to the switch"""
         if initial_call:
+            angle = self.bno055.getAngle()
             self.switch_enabled = False
             self.scale_objective = True
             if self.start_side == self.fms_scale:
                 self.opposite = False
             else:
                 self.opposite = True
-        if self.fms_switch == 'L':
-            # go to left switch
-            pass
-        if self.fms_switch == 'R':
-            # go to right switch
-            pass
-        self.next_state("lifting")
+            if self.fms_switch == 'R':
+                # go to right switch
+                self.switch_point = self.invert_co_ordinates(self.switch_point)
+            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0], self.switch_point])
+        if not self.motion.enabled:
+            self.next_state("lifting")
 
     @state
     def go_to_scale(self, initial_call):
         """The robot travels to the scale"""
         if initial_call:
-            # change switch position
+            angle = self.bno055.getAngle()
+            self.switch_point = [5.2, 1.3, math.pi, 1]
+            # set the switch point to the back of the switch
             if self.switch_enabled:
                 self.scale_objective = False
                 if self.start_side == self.fms_scale:
                     self.opposite = 1
             else:
                 self.opposite = 0
-        if self.fms_scale == 'L':
-            # go to left scale
-            pass
-        if self.fms_scale == 'R':
-            # go to right scale
-            pass
-        self.next_state("lifting")
-
-
-class VisionTest(OverallBase):
-    """To test the vision system"""
-    DEFAULT = True
-    MODE_NAME = 'Vision Test'
-
-    @state
-    def go_to_cube(self, initial_call):
-        """The robot drives towards where the next cube should be"""
-        if initial_call:
-            angle = self.bno055.getAngle()
-            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
-                                       [2.5, 0, math.pi/2, 1.5],
-                                       [2.5, 1, math.pi/2, 1.5]])
+            if self.fms_scale == 'R':
+                # go to right scale
+                self.scale_point = self.invert_co_ordinates(self.scale_point)
+            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0], self.scale_point])
         if not self.motion.enabled:
-            print("going to 'intake cube'")
-            # self.next_state("search_for_cube")
-            self.next_state_now("lifting")
+            self.next_state("lifting")
 
     @state
     def intake_cube(self):
@@ -230,14 +209,3 @@ class VisionTest(OverallBase):
         elif not self.intake_automation.is_executing and self.cube_switch.get():
             # After completing the intake cycle there is no cube
             self.next_state("search_for_cube")
-
-    @state
-    def go_to_scale(self, initial_call):
-        """The robot travels to the scale"""
-        if initial_call:
-            angle = self.bno055.getAngle()
-            self.motion.set_waypoints([[self.chassis.odometry_x, self.chassis.odometry_y, angle, 0],
-                                       [6, 0, 0, 0]])
-        if not self.motion.enabled:
-            print("================= At scale ======================")
-            self.next_state("go_to_cube")
