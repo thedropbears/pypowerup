@@ -42,19 +42,19 @@ class Robot(magicbot.MagicRobot):
         """Create non-components here."""
 
         self.module_a = SwerveModule(  # top left module
-            "a", steer_talon=ctre.WPI_TalonSRX(2), drive_talon=ctre.WPI_TalonSRX(9),
+            "a", steer_talon=ctre.WPI_TalonSRX(48), drive_talon=ctre.WPI_TalonSRX(49),
             x_pos=0.31, y_pos=0.26,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_b = SwerveModule(  # bottom left modulet
-            "b", steer_talon=ctre.WPI_TalonSRX(11), drive_talon=ctre.WPI_TalonSRX(13),
+            "b", steer_talon=ctre.WPI_TalonSRX(46), drive_talon=ctre.WPI_TalonSRX(47),
             x_pos=-0.31, y_pos=0.26,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_c = SwerveModule(  # bottom right modulet
-            "c", steer_talon=ctre.WPI_TalonSRX(8), drive_talon=ctre.WPI_TalonSRX(6),
+            "c", steer_talon=ctre.WPI_TalonSRX(44), drive_talon=ctre.WPI_TalonSRX(45),
             x_pos=-0.31, y_pos=-0.26,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_d = SwerveModule(  # top right modulet
-            "d", steer_talon=ctre.WPI_TalonSRX(4), drive_talon=ctre.WPI_TalonSRX(14),
+            "d", steer_talon=ctre.WPI_TalonSRX(42), drive_talon=ctre.WPI_TalonSRX(43),
             x_pos=0.31, y_pos=-0.26,
             drive_free_speed=Robot.module_drive_free_speed)
 
