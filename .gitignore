@@ -134,3 +134,4 @@ jsconfig.json
 
 ### RobotPy ###
 .deploy_cfg
+networktables.ini
