@@ -12,6 +12,7 @@ class Intake:
     extension_arm_left: wpilib.Solenoid
     extension_arm_right: wpilib.Solenoid
     infrared: wpilib.AnalogInput
+    limit_switch: wpilib.DigitalInput
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
@@ -63,6 +64,19 @@ class Intake:
     def cube_inside(self):
         """Run when the limit switch is pressed and when the current
         output is above a threshold, which stops the motors."""
-        if 10 <= self.cube_distance <= 15:
+        if self.limit_switch.get():
+            print("Cube is inside")
             return True
         return False
+
+        # if 10 <= self.cube_distance <= 15:
+            # return True
+        # return False
+
+    def button_press(self):
+        if self.joystick.getButton(2):
+            return True
+        return False
+
+    def switch(self):
+        print(self.limit_switch.getPWMInput(4))

@@ -3,7 +3,7 @@ from magicbot import StateMachine, state, timed_state
 from components.lifter import Lifter
 from components.intake import Intake
 
- 
+
 class LifterAutomation(StateMachine):
     lifter: Lifter
     intake: Intake

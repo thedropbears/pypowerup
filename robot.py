@@ -3,11 +3,11 @@
 import magicbot
 import wpilib
 import ctre
-from automations.lifter import LifterAutomation
+# from automations.lifter import LifterAutomation
 from automations.intake import IntakeAutomation
 from components.intake import Intake
-from components.lifter import Lifter
-from networktables import NetworkTables
+# from components.lifter import Lifter
+# from networktables import NetworkTables
 
 
 class Robot(magicbot.MagicRobot):
@@ -17,10 +17,10 @@ class Robot(magicbot.MagicRobot):
 
     # Automations
     intake_automation: IntakeAutomation
-    lifter_automation: LifterAutomation
+    # lifter_automation: LifterAutomation
     # Actuators
     intake: Intake
-    lifter: Lifter
+    # lifter: Lifter
 
     def createObjects(self):
         """Create non-components here."""
@@ -42,9 +42,10 @@ class Robot(magicbot.MagicRobot):
         containment mechanism."""
         self.infrared = wpilib.AnalogInput(0)
         """This is the lift motor"""
-        self.lift_motor = ctre.WPI_TalonSRX(3)
-
-        self.sd = NetworkTables.getTable("SmartDashboard")
+        # self.lift_motor = ctre.WPI_TalonSRX(3)
+        self.limit_switch = wpilib.DigitalInput(0)
+        # self.sd = NetworkTables.getTable("SmartDashboard")
+        self.joystick = wpilib.Joystick(0)
 
     def teleopInit(self):
         """Called when teleop starts"""
@@ -57,17 +58,17 @@ class Robot(magicbot.MagicRobot):
         This is run each iteration of the control loop before magicbot
         components are executed."""
 
-        self.put_dashboard()
+        # self.put_dashboard()
 
         # self.intake.intake_arm(self.xbox.getBButton())
-        if self.xbox.getPOV() != -1:
-            self.lifter.pov_change(self.xbox.getPOV())
+        # if self.xbox.getPOV() != -1:
+        #    self.lifter.pov_change(self.xbox.getPOV())
 
-        if self.xbox.getXButtonReleased():
+        if self.joystick.getTriggerReleased():
             self.intake_automation.engage()
 
-    def put_dashboard(self):
-        self.sd.putString("default_height", self.lifter.default_height)
+    # def put_dashboard(self):
+    #    self.sd.putString("default_height", self.lifter.default_height)
 
 
 if __name__ == '__main__':
