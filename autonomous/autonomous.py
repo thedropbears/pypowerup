@@ -35,9 +35,9 @@ class OverallBase(AutonomousStateMachine):
         self.game_data_message = self.ds.getGameSpecificMessage()
         self.picking_up_cube = True  # is the robot trying to pickup a cube or deposit?
         # make y +ve or -ve depending on where we start
-        self.navigation_point = [5.6, 2.4, 0, 1]
-        self.switch_point = [4.3, 2.1, 3*math.pi/2, 1]
-        self.scale_point = [7.5, 2, 0, 1]
+        self.navigation_point = [5.6, 2.4, 0, 0]
+        self.switch_point = [4.3, 2.1, 3*math.pi/2, 0]
+        self.scale_point = [7.5, 2, 0, 0]
         self.switch_enabled = True
         self.double_scale_strategy = True  # this will be set by the dashboard
         self.start_side = 'R'  # set by the dashboard
@@ -51,12 +51,13 @@ class OverallBase(AutonomousStateMachine):
             self.fms_scale = 'R'
             self.fms_switch = 'R'
         self.chassis.odometry_x = Robot.length / 2
-        self.chassis.odometry_y = 0
+        self.chassis.odometry_y = 3
         super().on_enable()
 
     @state(first=True)
     def setup(self):
         """Do robot initilisation specific to the statemachine in here."""
+        print('Odometry_x: %s Odometry_y: %s' % (self.chassis.odometry_x, self.chassis.odometry_y))
         if self.start_side == self.fms_switch and not self.double_scale_strategy:
             self.scale_objective = False
             self.next_state("go_to_switch")
@@ -64,7 +65,7 @@ class OverallBase(AutonomousStateMachine):
         else:
             if self.double_scale_strategy:
                 self.scale_objective = True
-            if self.start_side == self.fms_switch:
+            if self.start_side == self.fms_scale:
                 self.opposite = True
             else:
                 self.opposite = False
@@ -80,6 +81,7 @@ class OverallBase(AutonomousStateMachine):
     def navigating(self, initial_call):
         """The robot navigates to one of two nav-points, if the one it is at is the wrong one,
         it swaps to the opposite side."""
+        print('Odometry_x: %s Odometry_y: %s' % (self.chassis.odometry_x, self.chassis.odometry_y))
         if initial_call:
             angle = self.bno055.getAngle()
             #seraching for objective
@@ -179,7 +181,7 @@ class OverallBase(AutonomousStateMachine):
         """The robot travels to the scale"""
         if initial_call:
             angle = self.bno055.getAngle()
-            self.switch_point = [5.2, 1.3, math.pi, 1]
+            self.switch_point = [5.2, 1.3, math.pi, 0]
             # set the switch point to the back of the switch
             if self.switch_enabled:
                 self.scale_objective = False
