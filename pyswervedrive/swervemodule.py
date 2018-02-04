@@ -136,6 +136,11 @@ class SwerveModule:
 
         avg_azimuth = self.current_measured_azimuth - (azimuth_delta / 2)
 
+        if abs(azimuth_delta) > 0.0001:
+            # correct for the fact that when we are rotating the modules move in
+            # arcs when we are rotating, not straight lines
+            drive_delta = 2*math.sin(azimuth_delta/2) * (drive_delta/azimuth_delta)
+
         drive_x_delta = drive_delta * math.cos(avg_azimuth)
         drive_y_delta = drive_delta * math.sin(avg_azimuth)
 
