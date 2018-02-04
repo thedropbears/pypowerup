@@ -3,7 +3,7 @@ import numpy as np
 from pyswervedrive.swervechassis import SwerveChassis
 from utilities.bno055 import BNO055
 from utilities.vector_pursuit import VectorPursuit
-from utilities.profile_generator import generate_interpolation_function
+from utilities.profile_generator import generate_trapezoidal_trajectory
 from wpilib import SmartDashboard
 from networktables import NetworkTables
 
@@ -18,8 +18,6 @@ class ChassisMotion:
     kVh = 1  # feedforward gain
     kIh = 0  # integral gain
     kDh = 10  # derivative gain
-
-    heading_adjustment_proportion = 0.6
 
     def __init__(self):
         self.enabled = False
@@ -45,10 +43,9 @@ class ChassisMotion:
 
     def update_heading_profile(self):
         self.current_seg_distance = np.linalg.norm(self.pursuit.segment)
-        heading_start = self.bno055.getAngle()
         heading_end = self.waypoints[self.waypoint_idx+1][2]
-        self.heading_profile_function = generate_interpolation_function(
-                heading_start, heading_end, self.current_seg_distance*self.heading_adjustment_proportion)
+        self.heading_profile = generate_trapezoidal_trajectory(self.bno055.getAngle(), self.bno055.getHeadingRate(),
+                                                               heading_end, 0, 3, 3, -3, 50)
         self.last_heading_error = 0
 
     def disable(self):
@@ -78,8 +75,8 @@ class ChassisMotion:
             if seg_end_dist < 0:
                 seg_end_dist = 0
 
-            if seg_end_dist < self.current_seg_distance*self.heading_adjustment_proportion:
-                heading_seg = self.heading_profile_function(seg_end_dist, speed)
+            if self.heading_profile:
+                heading_seg = self.heading_profile.pop(0)
             else:
                 heading_seg = (self.waypoints[self.waypoint_idx+1][2], 0, 0)
 
