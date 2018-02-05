@@ -134,7 +134,9 @@ class SwerveChassis:
 
         heading = self.bno055.getAngle()
         heading_delta = constrain_angle(heading - self.last_heading)
-        timestep_average_heading = heading - heading_delta / 2
+        heading_adjustment_factor = 1
+        adjusted_heading = heading - heading_adjustment_factor * heading_delta
+        timestep_average_heading = adjusted_heading - heading_delta / 2
 
         for i, module in enumerate(self.modules):
             odometry_x, odometry_y = module.get_cartesian_delta()
