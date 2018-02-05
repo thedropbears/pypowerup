@@ -43,19 +43,19 @@ class Robot(magicbot.MagicRobot):
 
         self.module_a = SwerveModule(  # top left module
             "a", steer_talon=ctre.WPI_TalonSRX(48), drive_talon=ctre.WPI_TalonSRX(49),
-            x_pos=0.31, y_pos=0.26,
+            x_pos=0.25, y_pos=0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_b = SwerveModule(  # bottom left modulet
             "b", steer_talon=ctre.WPI_TalonSRX(46), drive_talon=ctre.WPI_TalonSRX(47),
-            x_pos=-0.31, y_pos=0.26,
+            x_pos=-0.25, y_pos=0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_c = SwerveModule(  # bottom right modulet
             "c", steer_talon=ctre.WPI_TalonSRX(44), drive_talon=ctre.WPI_TalonSRX(45),
-            x_pos=-0.31, y_pos=-0.26,
+            x_pos=-0.25, y_pos=-0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_d = SwerveModule(  # top right modulet
             "d", steer_talon=ctre.WPI_TalonSRX(42), drive_talon=ctre.WPI_TalonSRX(43),
-            x_pos=0.31, y_pos=-0.26,
+            x_pos=0.25, y_pos=-0.31,
             drive_free_speed=Robot.module_drive_free_speed)
 
         self.intake_left = ctre.WPI_TalonSRX(0)
