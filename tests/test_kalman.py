@@ -2,7 +2,7 @@ from utilities.kalman import Kalman
 import numpy as np
 
 
-def test_KF_converge():
+def run_filter_convergence():
     dt = 0.1
     F = np.identity(2)
     F[0, 1] = dt
@@ -31,6 +31,13 @@ def test_KF_converge():
         # we are testing filter covergence, not performance, so give it
         # perfect measurements
         kf.update(x, H, R)
+
+    return kf
+
+
+def test_KF_converge():
+
+    kf = run_filter_convergence()
 
     x_confidence = np.sqrt(kf.P[0, 0]) * 5
     x_dot_confidence = np.sqrt(kf.P[1, 1]) * 5
@@ -86,3 +93,8 @@ def test_UKF_converge():
     x_dot_confidence = np.sqrt(kf.P[1, 1]) * 5
     assert kf.x_hat[0, 0] - x_confidence <= kf.x_hat[0, 0] < kf.x_hat[0, 0] + x_confidence
     assert kf.x_hat[1, 0] - x_dot_confidence <= kf.x_hat[1, 0] < kf.x_hat[1, 0] + x_dot_confidence
+
+    # test to see that UKF reduces to linear filter when state-transition and
+    # observation functions are linear
+    linear_kf = run_filter_convergence()
+    assert np.allclose(kf.x_hat, linear_kf.x_hat)
