@@ -153,6 +153,7 @@ class SwerveChassis:
         self.odometry_y += delta_y
         self.odometry_x_vel = v_x
         self.odometry_y_vel = v_y
+        self.odometry_z_vel = v_z
 
         SmartDashboard.putNumber('module_a_speed', self.modules[0].current_speed)
         SmartDashboard.putNumber('module_b_speed', self.modules[1].current_speed)
@@ -168,6 +169,7 @@ class SwerveChassis:
         SmartDashboard.putNumber('odometry_delta_y', delta_y)
         SmartDashboard.putNumber('odometry_x_vel', self.odometry_x_vel)
         SmartDashboard.putNumber('odometry_y_vel', self.odometry_y_vel)
+        SmartDashboard.putNumber('odometry_z_vel', self.odometry_z_vel)
         SmartDashboard.putNumber('imu_heading', heading)
         SmartDashboard.putNumber('heading_delta', heading_delta)
         SmartDashboard.putNumber('average_heading', timestep_average_heading)
