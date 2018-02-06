@@ -6,14 +6,14 @@ import numpy as np
 
 class PhysicsEngine:
 
-    X_WHEELBASE = 0.62
-    Y_WHEELBASE = 0.52
+    X_WHEELBASE = 0.50
+    Y_WHEELBASE = 0.62
 
     def __init__(self, controller):
         self.controller = controller
 
         self.drive_counts_per_rev = \
-            SwerveModule.CIMCODER_COUNTS_PER_REV*SwerveModule.DRIVE_ENCODER_GEAR_REDUCTION
+            SwerveModule.SRX_MAG_COUNTS_PER_REV*SwerveModule.DRIVE_ENCODER_GEAR_REDUCTION
         self.drive_counts_per_meter = \
             self.drive_counts_per_rev / (math.pi * SwerveModule.WHEEL_DIAMETER)
 
@@ -22,11 +22,13 @@ class PhysicsEngine:
         self.drive_velocity_to_native_units = self.drive_counts_per_meter*0.1
 
         # for modules [a, b, c, d]. used to iterate over them
-        self.module_steer_can_ids = [2, 11, 8, 4]
-        self.module_drive_can_ids = [9, 13, 6, 14]
-        self.module_steer_offsets = [-2055, -2583, -1665, -286]
-        self.module_x_offsets = [0.31, -0.31, -0.31, 0.31]
-        self.module_y_offsets = [0.26, 0.26, -0.26, -0.26]
+        self.module_steer_can_ids = [48, 46, 44, 42]
+        self.module_drive_can_ids = [49, 47, 45, 43]
+        self.module_steer_offsets = [0] * 4
+        x_off = self.X_WHEELBASE / 2
+        y_off = self.Y_WHEELBASE / 2
+        self.module_x_offsets = [x_off, -x_off, -x_off, x_off]
+        self.module_y_offsets = [y_off, y_off, -y_off, -y_off]
 
         self.controller.add_device_gyro_channel('bno055')
 
@@ -34,11 +36,11 @@ class PhysicsEngine:
         pass
 
     def update_sim(self, hal_data, now, tm_diff):
-        """
-        Update pyfrc simulator.
-        :param hal_data: Data about motors and other components
-        :param now: Current time in ms
-        :param tm_diff: Difference between current time and time when last checked
+        """Update pyfrc simulator.
+        Args:
+            hal_data: Data about motors and other components
+            now: Current time in ms
+            tm_diff: Difference between current time and time when last checked
         """
 
         steer_positions = []
@@ -96,7 +98,7 @@ def better_four_motor_swerve_drivetrain(module_speeds, module_angles, module_x_o
         [1, 0, 1],
         [0, 1, 1]
     ], dtype=float)
-    module_states = np.zeros((8, 1))
+    module_states = np.zeros((8, 1), dtype=float)
     for i in range(4):
         module_dist = math.hypot(module_x_offsets[i], module_y_offsets[i])
         module_angle = math.atan2(module_y_offsets[i], module_x_offsets[i])
@@ -109,7 +111,7 @@ def better_four_motor_swerve_drivetrain(module_speeds, module_angles, module_x_o
         module_states[i*2+1, 0] = y_vel
 
     lstsq_ret = np.linalg.lstsq(A, module_states,
-                                rcond=-1)
+                                rcond=None)
     vx, vy, vz = lstsq_ret[0].reshape(3)
 
     return vx, vy, vz

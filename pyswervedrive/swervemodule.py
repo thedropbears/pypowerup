@@ -1,19 +1,21 @@
 import math
 import ctre
+from networktables import NetworkTables
 from utilities.functions import constrain_angle
 
 
 class SwerveModule:
 
-    CIMCODER_COUNTS_PER_REV: int = 80
+    SRX_MAG_COUNTS_PER_REV: int = 4096
     WHEEL_DIAMETER: float = 0.0254 * 3
-    DRIVE_ENCODER_GEAR_REDUCTION: float = 66/14*30/26
+    DRIVE_ENCODER_GEAR_REDUCTION: float = 30/26
     STEER_COUNTS_PER_RADIAN = 4096 / math.tau
 
-    drive_counts_per_rev = CIMCODER_COUNTS_PER_REV*DRIVE_ENCODER_GEAR_REDUCTION
+    drive_counts_per_rev = SRX_MAG_COUNTS_PER_REV*DRIVE_ENCODER_GEAR_REDUCTION
     drive_counts_per_radian = drive_counts_per_rev / math.tau
     # odometry is consistently slightly off, need a fudge factor to compensate
-    drive_odometry_fudge_factor = 1 / 1.08
+    # TODO: Tune the fudge factor
+    drive_odometry_fudge_factor = 1  # / 1.08
     drive_counts_per_metre = (drive_counts_per_rev / (math.pi * WHEEL_DIAMETER)
                               * drive_odometry_fudge_factor)
 
@@ -21,19 +23,24 @@ class SwerveModule:
     # 0.1 is because SRX velocities are measured in ticks/100ms
     drive_velocity_to_native_units = drive_counts_per_metre*0.1
 
-    def __init__(self, steer_talon: ctre.WPI_TalonSRX, drive_talon: ctre.WPI_TalonSRX,
-                 steer_enc_offset: float, x_pos: float, y_pos: float,
+    def __init__(self, name: str,
+                 steer_talon: ctre.WPI_TalonSRX, drive_talon: ctre.WPI_TalonSRX,
+                 x_pos: float, y_pos: float,
                  drive_free_speed: float,
                  reverse_steer_direction: bool = True,
                  reverse_steer_encoder: bool = False,
                  reverse_drive_direction: bool = False,
                  reverse_drive_encoder: bool = False):
 
+        nt = NetworkTables.getTable("SwerveConfig").getSubTable(name)
+        self.steer_enc_offset_entry = nt.getEntry("steer_enc_offset")
+        self.steer_enc_offset_entry.setDefaultDouble(0)
+        self.steer_enc_offset_entry.setPersistent()
+
         self.steer_motor = steer_talon
         self.drive_motor = drive_talon
         self.x_pos = x_pos
         self.y_pos = y_pos
-        self.steer_enc_offset = steer_enc_offset
         self.reverse_steer_direction = reverse_steer_direction
         self.reverse_steer_encoder = reverse_steer_encoder
         self.reverse_drive_direction = reverse_drive_direction
@@ -55,7 +62,7 @@ class SwerveModule:
         # changes sign of motor throttle vilues
         self.steer_motor.setInverted(self.reverse_steer_direction)
 
-        self.steer_motor.config_kP(0, 1.5, 10)
+        self.steer_motor.config_kP(0, 3.0, 10)
         self.steer_motor.config_kI(0, 0.0, 10)
         self.steer_motor.config_kD(0, 5.0, 10)
         self.steer_motor.selectProfileSlot(0, 0)
@@ -69,10 +76,11 @@ class SwerveModule:
         self.drive_motor.setSensorPhase(self.reverse_drive_encoder)
         # changes sign of motor throttle values
         self.drive_motor.setInverted(self.reverse_drive_direction)
-        self.drive_motor.config_kP(0, 3.0, 10)
-        self.drive_motor.config_kI(0, 0.02, 10)
-        self.drive_motor.config_kD(0, 0.1, 10)
+        self.drive_motor.config_kP(0, 0.3, 10)
+        self.drive_motor.config_kI(0, 0.001, 10)
+        self.drive_motor.config_kD(0, 0.0, 10)
         self.drive_motor.config_kF(0, 1024.0/self.drive_free_speed, 10)
+        self.drive_motor.configClosedLoopRamp(0.3, 10)
         self.drive_motor.selectProfileSlot(0, 0)
 
         self.drive_motor.setNeutralMode(ctre.WPI_TalonSRX.NeutralMode.Brake)
@@ -128,6 +136,11 @@ class SwerveModule:
 
         avg_azimuth = self.current_measured_azimuth - (azimuth_delta / 2)
 
+        if abs(azimuth_delta) > 0.0001:
+            # correct for the fact that when we are rotating the modules move in
+            # arcs when we are rotating, not straight lines
+            drive_delta = 2*math.sin(azimuth_delta/2) * (drive_delta/azimuth_delta)
+
         drive_x_delta = drive_delta * math.cos(avg_azimuth)
         drive_y_delta = drive_delta * math.sin(avg_azimuth)
 
@@ -159,6 +172,7 @@ class SwerveModule:
         # prevent stuff like joystick whipping back and changing the module
         # azimuth
         if velocity < 0.1:
+            self.drive_motor.setIntegralAccumulator(0, 0, 10)
             self.drive_motor.stopMotor()
             self.steer_motor.stopMotor()
             return
@@ -201,6 +215,10 @@ class SwerveModule:
         else:
             self.drive_motor.set(ctre.ControlMode.Velocity,
                                  velocity*self.drive_velocity_to_native_units)
+
+    @property
+    def steer_enc_offset(self):
+        return int(self.steer_enc_offset_entry.getDouble(0))
 
     @property
     def current_azimuth(self):

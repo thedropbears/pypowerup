@@ -35,36 +35,45 @@ class Robot(magicbot.MagicRobot):
     intake: Intake
     lifter: Lifter
 
-    module_drive_free_speed: float = 780.
+    module_drive_free_speed: float = 7800.  # encoder ticks / 100 ms
     length: float = 0.88
 
     def createObjects(self):
         """Create non-components here."""
 
         self.module_a = SwerveModule(  # top left module
-            steer_talon=ctre.WPI_TalonSRX(2), drive_talon=ctre.WPI_TalonSRX(9),
-            steer_enc_offset=-2055, x_pos=0.31, y_pos=0.26,
+            "a", steer_talon=ctre.WPI_TalonSRX(48), drive_talon=ctre.WPI_TalonSRX(49),
+            x_pos=0.25, y_pos=0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_b = SwerveModule(  # bottom left modulet
-            steer_talon=ctre.WPI_TalonSRX(11), drive_talon=ctre.WPI_TalonSRX(13),
-            steer_enc_offset=-2583, x_pos=-0.31, y_pos=0.26,
+            "b", steer_talon=ctre.WPI_TalonSRX(46), drive_talon=ctre.WPI_TalonSRX(47),
+            x_pos=-0.25, y_pos=0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_c = SwerveModule(  # bottom right modulet
-            steer_talon=ctre.WPI_TalonSRX(8), drive_talon=ctre.WPI_TalonSRX(6),
-            steer_enc_offset=-1665, x_pos=-0.31, y_pos=-0.26,
+            "c", steer_talon=ctre.WPI_TalonSRX(44), drive_talon=ctre.WPI_TalonSRX(45),
+            x_pos=-0.25, y_pos=-0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_d = SwerveModule(  # top right modulet
-            steer_talon=ctre.WPI_TalonSRX(4), drive_talon=ctre.WPI_TalonSRX(14),
-            steer_enc_offset=-286, x_pos=0.31, y_pos=-0.26,
+            "d", steer_talon=ctre.WPI_TalonSRX(42), drive_talon=ctre.WPI_TalonSRX(43),
+            x_pos=0.25, y_pos=-0.31,
             drive_free_speed=Robot.module_drive_free_speed)
+
+        self.intake_left = ctre.WPI_TalonSRX(0)
+        self.intake_right = ctre.WPI_TalonSRX(1)
+        self.clamp_arm = wpilib.Solenoid(0)
+        self.intake_kicker = wpilib.Solenoid(1)
+        self.extension_arm_left = wpilib.Solenoid(2)
+        self.extension_arm_right = wpilib.Solenoid(3)
+        self.infrared = wpilib.AnalogInput(0)
+        self.lift_motor = ctre.WPI_TalonSRX(3)
+        self.cube_switch = wpilib.DigitalInput(0)
 
         # create the imu object
         self.bno055 = BNO055()
 
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)
-
-        self.cube_switch = wpilib.DigitalInput(0)
+        self.gamepad = wpilib.XboxController(1)
 
         self.spin_rate = 5
 
@@ -73,12 +82,19 @@ class Robot(magicbot.MagicRobot):
         self.motion.enabled = False
         self.chassis.set_inputs(0, 0, 0)
 
+        self.intake.intake_clamp(False)
+        self.intake.intake_push(False)
+        self.intake.extension(True)
+
     def teleopPeriodic(self):
         """
         Process inputs from the driver station here.
 
         This is run each iteration of the control loop before magicbot components are executed.
         """
+        if self.joystick.getTriggerPressed():
+            self.intake_automation.engage()
+
         if self.joystick.getRawButtonPressed(10):
             self.chassis.odometry_x = 0.0
             self.chassis.odometry_y = 0.0
@@ -99,7 +115,7 @@ class Robot(magicbot.MagicRobot):
         # TODO: Tune these constants forvwhatever robot they are on
         vx = -rescale_js(self.joystick.getY(), deadzone=0.05, exponential=1.2, rate=4)
         vy = -rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2, rate=4)
-        vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=15.0, rate=self.spin_rate)
+        vz = -rescale_js(self.joystick.getZ(), deadzone=0.4, exponential=15.0, rate=self.spin_rate)
         self.chassis.set_inputs(vx, vy, vz)
 
 

@@ -28,12 +28,12 @@ class SwerveChassis:
     def setup(self):
         # Heading PID controller
         self.heading_pid_out = ChassisPIDOutput()
-        self.heading_pid = PIDController(Kp=6.0, Ki=0.0, Kd=0.2,
+        self.heading_pid = PIDController(Kp=6.0, Ki=0.0, Kd=1.0,
                                          source=self.bno055.getAngle,
                                          output=self.heading_pid_out,
                                          period=1/50)
         self.heading_pid.setInputRange(-math.pi, math.pi)
-        self.heading_pid.setOutputRange(-3, 3)
+        self.heading_pid.setOutputRange(-2, 2)
         self.heading_pid.setContinuous()
         self.heading_pid.enable()
         self.modules = [self.module_a, self.module_b, self.module_c, self.module_d]
@@ -51,7 +51,6 @@ class SwerveChassis:
     def set_heading_sp(self, setpoint):
         self.heading_pid.setSetpoint(setpoint)
         self.heading_pid.enable()
-        self.momentum = False
 
     def heading_hold_on(self):
         self.set_heading_sp_current()
@@ -90,6 +89,7 @@ class SwerveChassis:
             self.z_axis_adjustment[i*2+1, 0] = module_dist*math.cos(module_angle)
 
         for module in self.modules:
+            module.reset_encoder_delta()
             module.reset_steer_setpoint()
 
         self.last_heading = self.bno055.getAngle()
@@ -100,15 +100,15 @@ class SwerveChassis:
         if self.hold_heading:
             if self.momentum and abs(self.bno055.getHeadingRate()) < 0.005:
                 self.momentum = False
+
             if self.vz not in [0.0, None]:
                 self.momentum = True
-            if self.vz is None:
-                self.momentum = False
 
             if not self.momentum:
-                pid_z = self.heading_pid.get()
+                pid_z = self.heading_pid_out.output
             else:
                 self.set_heading_sp_current()
+
         input_vz = 0
         if self.vz is not None:
             input_vz = self.vz
@@ -134,7 +134,9 @@ class SwerveChassis:
 
         heading = self.bno055.getAngle()
         heading_delta = constrain_angle(heading - self.last_heading)
-        timestep_average_heading = heading - heading_delta / 2
+        heading_adjustment_factor = 1
+        adjusted_heading = heading - heading_adjustment_factor * heading_delta
+        timestep_average_heading = adjusted_heading - heading_delta / 2
 
         for i, module in enumerate(self.modules):
             odometry_x, odometry_y = module.get_cartesian_delta()
@@ -253,3 +255,9 @@ class SwerveChassis:
 class ChassisPIDOutput(PIDOutput):
     def pidWrite(self, output):
         self.output = output
+
+    def reset_odometry(self):
+        """Reset all 3 odometry variables to a value of 0."""
+        self.odometry_x = 0
+        self.odometry_y = 0
+        self.odometry_theta = 0
