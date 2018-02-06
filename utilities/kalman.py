@@ -13,26 +13,27 @@ class Kalman:
     def __init__(self, x_hat, P, Q, R=None, f=None, h=None,
                  residual_x=None, residual_z=None, history_len=50):
         """
-        :param x_hat: the initial state of the system
-        :param P: the covariance matrix of the initial state of the system
-        :param Q: the covariance matrix that represents additional
-                  uncertainty added each prediction step (this
-                  implementation assumes that Q is constant)
-        :param f: the state transition function applied between each time
-                  for nonlinear systems. Takes the form:
-                      f(x_k-1, u) -> x_k
-                  where x and k are numpy arrays of shape (n, 1)
-        :param h: the observation function applied where the observation
-                  model is nonlinear. Takes the form:
-                      h(x) -> z
-                  where x and z are numpy arrays of shape (n, 1)
+        Args:
+            x_hat: the initial state of the system
+            P: the covariance matrix of the initial state of the system
+            Q: the covariance matrix that represents additional
+                uncertainty added each prediction step (this
+                implementation assumes that Q is constant)
+            f: the state transition function applied between each time
+                for nonlinear systems. Takes the form:
+                f(x_k-1, u) -> x_k
+                where x and k are numpy arrays of shape (n, 1)
+            h: the observation function applied where the observation
+                model is nonlinear. Takes the form:
+                h(x) -> z
+                where x and z are numpy arrays of shape (n, 1)
 
-        :param residual_x: for non subtraction supported systems, function to calculate
-            difference between one state and another. (e.g. when calculating
-            difference between angle of 0 and 2pi radians)
-        :param residual_z: for non subtraction supported systems, function to calculate
-            difference between one measurement and another. (e.g. when calculating
-            difference between angle of 0 and 2pi radians)
+            param residual_x: for non subtraction supported systems, function to calculate
+                difference between one state and another. (e.g. when calculating
+                difference between angle of 0 and 2pi radians)
+            residual_z: for non subtraction supported systems, function to calculate
+                difference between one measurement and another. (e.g. when calculating
+                difference between angle of 0 and 2pi radians)
         """
         self.x_hat = x_hat
         self.P = P
@@ -58,10 +59,11 @@ class Kalman:
 
     def predict(self, F, u, B):
         """
-        :param F: the state prediciton matrix for this timestep
-        :param u: the control inputs (or other known influences on the
-                  system state)
-        :param B: the matrix that applies the control inputs to the state vector
+        Args:
+            F: the state prediciton matrix for this timestep
+            u: the control inputs (or other known influences on the
+                system state)
+            B: the matrix that applies the control inputs to the state vector
         """
         self.history.append((self.x_hat, self.P))
 
@@ -77,11 +79,12 @@ class Kalman:
 
     def update(self, z, H, R=None):
         """
-        :param z: the sensor readings in this timestep
-        :param H: the matrix that translates x_hat (the state vector)
-                  into the sensor space (z)
-        :param R: the covariance matrix representing the noise in the sensor
-                  reading. If not supplied, defaults to member variable R.
+        Args:
+            z: the sensor readings in this timestep
+            H: the matrix that translates x_hat (the state vector)
+                into the sensor space (z)
+            R: the covariance matrix representing the noise in the sensor
+                reading. If not supplied, defaults to member variable R.
         """
         R = self.R if R is None else R
         if R is None:
@@ -102,11 +105,12 @@ class Kalman:
 
     def unscented_predict(self, u=None, f=None, Q=None):
         """
-        :param u: known control inputs if required for f.
-        :param f: state transition function (see constructor). Defaults to one
-                  provided in constructor. f: R
-        :param Q: covariance matrix of the process noise, defaults to
-                  provided in constructor.
+        Args:
+            u: known control inputs if required for f.
+            f: state transition function (see constructor). Defaults to one
+                provided in constructor. f: R
+            Q: covariance matrix of the process noise, defaults to
+                provided in constructor.
         """
         f = f or self.f
         if f is None:
@@ -120,13 +124,14 @@ class Kalman:
 
     def unscented_update(self, z, z_dim=None, R=None, h=None):
         """
-        :param z: the measurement
-        :param z_dim: the dimension of the measurement vector, f, and of the
-        vector returned from the observation model, h. Defaults to dim(z)
-        :param R: the noise around the measurement. Defaults to one provided
-                  in constructor.
-        :param h: the observation model function. Defaults to one provided
-                  in constructor.
+        Args:
+            z: the measurement
+            z_dim: the dimension of the measurement vector, f, and of the
+                vector returned from the observation model, h. Defaults to dim(z)
+            R: the noise around the measurement. Defaults to one provided
+                in constructor.
+            h: the observation model function. Defaults to one provided
+                in constructor.
         """
         h = h or self.h
         if h is None:
@@ -161,11 +166,12 @@ class Kalman:
     @staticmethod
     def unscented_transform(x, P_x, f, f_n=None, u=None, noise_cov=None, alpha=1e-3, beta=2, kappa=0, update=False):
         """
-        :param x: the mean of the distribution to be transformed
-        :param P_x: the covariance matrix of the distribution to be transformed
-        :param f: the vector-valued function to be applied to the distribution.
-                  Must accept a numpy array of the same dimension as x.
-        :prama f_n: the dimension of the column vector returned from f. Defaults to dim(x)
+        Args:
+            x: the mean of the distribution to be transformed
+            P_x: the covariance matrix of the distribution to be transformed
+            f: the vector-valued function to be applied to the distribution.
+                Must accept a numpy array of the same dimension as x.
+            f_n: the dimension of the column vector returned from f. Defaults to dim(x)
         """
         if f_n is None:
             f_n = x.size
