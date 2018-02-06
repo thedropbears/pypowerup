@@ -10,15 +10,14 @@ def m_dot(m, *args, dot=np.dot):
 
 
 class Kalman:
-    def __init__(self, x_hat, P, Q, R=None, f=None, h=None,
+    def __init__(self, x_hat, P, Q=None, R=None, f=None, h=None,
                  residual_x=None, residual_z=None, history_len=50):
         """
         Args:
             x_hat: the initial state of the system
             P: the covariance matrix of the initial state of the system
             Q: the covariance matrix that represents additional
-                uncertainty added each prediction step (this
-                implementation assumes that Q is constant)
+                uncertainty added each prediction step
             f: the state transition function applied between each time
                 for nonlinear systems. Takes the form:
                 f(x_k-1, u) -> x_k
@@ -57,14 +56,21 @@ class Kalman:
             history.pop()
         self.x_hat, self.P = history.pop()
 
-    def predict(self, F, u, B):
+    def predict(self, F, u, B, Q=None):
         """
         Args:
             F: the state prediciton matrix for this timestep
-            u: the control inputs (or other known influences on the
-                system state)
+            u: the control inputs (or other known influences on the system
+                state)
             B: the matrix that applies the control inputs to the state vector
+            Q: covariance matrix of process noise. Defaults to member variable
+                Q.
         """
+
+        Q = self.Q if Q is None else Q
+        if Q is None:
+            raise ValueError("process noise covariance not supplied, cannot predict")
+
         self.history.append((self.x_hat, self.P))
 
         # evolve the state according to the last state, control inputs, and
@@ -88,7 +94,7 @@ class Kalman:
         """
         R = self.R if R is None else R
         if R is None:
-            raise ValueError("sensor covariance not supplied, cannot predict")
+            raise ValueError("sensor covariance not supplied, cannot update")
 
         # the difference between the means of the estimated state (x_hat)
         # and the state given by the sensors (z)
