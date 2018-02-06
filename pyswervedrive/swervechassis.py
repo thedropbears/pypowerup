@@ -246,6 +246,10 @@ class SwerveChassis:
         oriented_vy = vx * math.sin(heading) + vy * math.cos(heading)
         return oriented_vx, oriented_vy
 
+    @property
+    def position(self):
+        return np.array([[self.odometry_x], [self.odometry_y]])
+
 
 class ChassisPIDOutput(PIDOutput):
     def pidWrite(self, output):
