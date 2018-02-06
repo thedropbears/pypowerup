@@ -65,30 +65,29 @@ class SwerveChassis:
         self.bno055.resetHeading()
         self.heading_hold_on()
 
-        # matrix which translates column vector of [x, y] in robot frame of
-        # reference to module [x, y] movement
-        self.A_matrix = np.array([
-            [1, 0],
-            [0, 1],
-            [1, 0],
-            [0, 1],
-            [1, 0],
-            [0, 1],
-            [1, 0],
-            [0, 1]
-            ])
+        self.A = np.array([
+            [1, 0, 1],
+            [0, 1, 1],
+            [1, 0, 1],
+            [0, 1, 1],
+            [1, 0, 1],
+            [0, 1, 1],
+            [1, 0, 1],
+            [0, 1, 1]
+        ], dtype=float)
 
         # figure out the contribution of the robot's overall rotation about the
         # z axis to each module's movement, and encode that information in a
         # column vector
-        self.z_axis_adjustment = np.zeros((8, 1))
+        # self.z_axis_adjustment = np.zeros((8, 1))
         for i, module in enumerate(self.modules):
             module_dist = math.hypot(module.x_pos, module.y_pos)
             module_angle = math.atan2(module.y_pos, module.x_pos)
-            self.z_axis_adjustment[i*2, 0] = -module_dist*math.sin(module_angle)
-            self.z_axis_adjustment[i*2+1, 0] = module_dist*math.cos(module_angle)
+            # self.z_axis_adjustment[i*2, 0] = -module_dist*math.sin(module_angle)
+            # self.z_axis_adjustment[i*2+1, 0] = module_dist*math.cos(module_angle)
+            self.A[i*2, 2] = -module_dist*math.sin(module_angle)
+            self.A[i*2+1, 2] = module_dist*math.cos(module_angle)
 
-        for module in self.modules:
             module.reset_encoder_delta()
             module.reset_steer_setpoint()
 
@@ -147,14 +146,8 @@ class SwerveChassis:
             velocity_outputs[i*2+1, 0] = velocity_y
             module.reset_encoder_delta()
 
-        z_adj_delta = self.z_axis_adjustment * heading_delta
-        z_adj_vel = self.z_axis_adjustment * self.bno055.getHeadingRate()
-
-        odometry_outputs = odometry_outputs - z_adj_delta
-        velocity_outputs = velocity_outputs - z_adj_vel
-
-        delta_x, delta_y = self.robot_movement_from_odometry(odometry_outputs, timestep_average_heading)
-        v_x, v_y = self.robot_movement_from_odometry(velocity_outputs, heading)
+        v_x, v_y, v_z = self.robot_movement_from_odometry(velocity_outputs, heading)
+        delta_x, delta_y, delta_z = self.robot_movement_from_odometry(odometry_outputs, heading, z_vel=v_z)
 
         self.odometry_x += delta_x
         self.odometry_y += delta_y
@@ -182,12 +175,12 @@ class SwerveChassis:
 
         self.last_heading = heading
 
-    def robot_movement_from_odometry(self, odometry_outputs, angle):
-        lstsq_ret = np.linalg.lstsq(self.A_matrix, odometry_outputs,
-                                    rcond=-1)
-        x, y = lstsq_ret[0].reshape(2)
-        x_field, y_field = self.field_orient(x, y, angle)
-        return x_field, y_field
+    def robot_movement_from_odometry(self, odometry_outputs, angle, z_vel=0):
+        lstsq_ret = np.linalg.lstsq(self.A, odometry_outputs,
+                                    rcond=None)
+        x, y, theta = lstsq_ret[0].reshape(3)
+        x_field, y_field = self.field_orient(x, y, angle + z_vel*(1/50)/2)
+        return x_field, y_field, theta
 
     def set_velocity_heading(self, vx, vy, heading):
         """Set a translational velocity and a rotational orientation to achieve.
