@@ -81,7 +81,7 @@ class Kalman:
         # evolve the state's covariance matrix (uncertainty surronding the
         # state) by scaling by the prodiction matrix and adding the unknown
         # process noise
-        self.P = m_dot(F, self.P, F.T) + self.Q
+        self.P = m_dot(F, self.P, F.T) + Q
 
     def update(self, z, H, R=None):
         """
