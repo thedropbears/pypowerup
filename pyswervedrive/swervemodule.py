@@ -15,7 +15,7 @@ class SwerveModule:
     drive_counts_per_radian = drive_counts_per_rev / math.tau
     # odometry is consistently slightly off, need a fudge factor to compensate
     # TODO: Tune the fudge factor
-    drive_odometry_fudge_factor = 1  # / 1.08
+    drive_odometry_fudge_factor = 1 / 1.04
     drive_counts_per_metre = (drive_counts_per_rev / (math.pi * WHEEL_DIAMETER)
                               * drive_odometry_fudge_factor)
 
@@ -76,8 +76,8 @@ class SwerveModule:
         self.drive_motor.setSensorPhase(self.reverse_drive_encoder)
         # changes sign of motor throttle values
         self.drive_motor.setInverted(self.reverse_drive_direction)
-        self.drive_motor.config_kP(0, 0.3, 10)
-        self.drive_motor.config_kI(0, 0.001, 10)
+        self.drive_motor.config_kP(0, 0.5, 10)
+        self.drive_motor.config_kI(0, 0.002, 10)
         self.drive_motor.config_kD(0, 0.0, 10)
         self.drive_motor.config_kF(0, 1024.0/self.drive_free_speed, 10)
         self.drive_motor.configClosedLoopRamp(0.3, 10)

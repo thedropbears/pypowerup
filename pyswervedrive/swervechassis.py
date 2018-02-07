@@ -181,7 +181,7 @@ class SwerveChassis:
         lstsq_ret = np.linalg.lstsq(self.A, odometry_outputs,
                                     rcond=None)
         x, y, theta = lstsq_ret[0].reshape(3)
-        x_field, y_field = self.field_orient(x, y, angle + z_vel*(1/50)/2)
+        x_field, y_field = self.field_orient(x, y, angle + z_vel*(2.5/50))
         return x_field, y_field, theta
 
     def set_velocity_heading(self, vx, vy, heading):
