@@ -7,6 +7,7 @@ import numpy as np
 from automations.intake import IntakeAutomation
 from automations.lifter import LifterAutomation
 from automations.motion import ChassisMotion
+from automations.position_filter import PositionFilter
 from components.intake import Intake
 from components.lifter import Lifter
 from components.vision import Vision
@@ -26,6 +27,7 @@ class Robot(magicbot.MagicRobot):
     vision: Vision
 
     # Automations
+    position_filter: PositionFilter
     motion: ChassisMotion
     intake_automation: IntakeAutomation
     lifter_automation: LifterAutomation
