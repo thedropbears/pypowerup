@@ -9,6 +9,7 @@ as well as holding our heading.
 
 import enum
 import math
+import time
 
 import hal
 import wpilib
@@ -244,6 +245,12 @@ class BNO055(wpilib.GyroBase):
         self.i2c.write(self.Register.UNIT_SEL, current_units)
         self.setOperationMode(self.OperationMode.IMUPLUS)  # accelerometer and gyro
         self.reverse_axis(False, False, False)
+        self.cache_heading()
+
+    def cache_heading(self):
+        """Cache the heading for the current timestep to prevent continually polling I2C."""
+        self.timestep_cached_heading = self.getRawHeading()
+        self.timestep_cached_heading_tm = time.monotonic()
 
     def reverse_axis(self, x: bool, y: bool, z: bool) -> None:
         """Reverse the specified axis directions."""
@@ -275,8 +282,14 @@ class BNO055(wpilib.GyroBase):
         return self.getHeading(), self.getPitch(), self.getRoll()
 
     def getHeading(self) -> float:
-        angle = self.getRawHeading() - self.offset
+        if time.monotonic() - self.timestep_cached_heading_tm > 1/100:
+            self.cache_heading()
+        angle = self.timestep_cached_heading - self.offset
         return math.atan2(math.sin(angle), math.cos(angle))
+
+    def getHeadingTime(self) -> float:
+        """Get the time that the heading as returned by getHeading was cached at."""
+        return self.timestep_cached_heading_tm
 
     def getRawHeading(self) -> float:
         return -self.getEuler(self.Register.EULER_H_LSB)
