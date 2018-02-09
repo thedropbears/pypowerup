@@ -56,7 +56,7 @@ class PositionFilter:
                             Q=self.Q)
 
     def update(self, steps_since_vision, vision_data):
-        print("update")
+        # print("update")
         if not self.imu_deque:
             return
         imu_rollback = min(steps_since_vision, len(self.imu_deque)-1)
@@ -68,7 +68,7 @@ class PositionFilter:
             azimuth = constrain_angle(field_azimuth - theta_imu)
             zenith = math.atan2(np.linalg.norm(cube_from_robot),
                                 -self.vision.CAMERA_HEIGHT+self.CUBE_HEIGHT/2)
-            print("state obs az %s zen %s" % (azimuth, zenith))
+            # print("state obs az %s zen %s" % (azimuth, zenith))
             return np.array([[azimuth], [zenith]], dtype=float)
 
         measurement = np.array([[vision_data[0]], [vision_data[1]]], dtype=float)
@@ -86,14 +86,14 @@ class PositionFilter:
             steps_since_vision = int(since_vision * 50)
             if steps_since_vision > len(self.odometry_deque)-1:
                 return
-            print("steps since %s" % since_vision)
+            # print("steps since %s" % since_vision)
             self.kalman.roll_back(steps_since_vision)
             self.update(steps_since_vision, vision_data)
             for i in range(steps_since_vision, 0, -1):
                 self.predict(timesteps_ago=steps_since_vision-1)
             self.last_vision_tm = vision_tm
-        print("Chassis odom %s" % self.chassis.position)
-        print("Filter %s" % self.position)
+        # print("Chassis odom %s" % self.chassis.position)
+        # print("Filter %s" % self.position)
 
     @property
     def position(self):

@@ -259,6 +259,10 @@ class SwerveChassis:
     def position(self):
         return np.array([[self.odometry_x], [self.odometry_y]], dtype=float)
 
+    @property
+    def speed(self):
+        return math.hypot(self.odometry_x_vel, self.odometry_y_vel)
+
 
 class ChassisPIDOutput(PIDOutput):
     def pidWrite(self, output):
