@@ -17,8 +17,6 @@ from utilities.bno055 import BNO055
 
 class OverallBase(AutonomousStateMachine):
     """statemachine designed to intelegently respond to possible situations in auto"""
-    DEFAULT = True
-    MODE_NAME = 'Autonomous'
     vision: Vision
     lifter: Lifter
     bno055: BNO055
@@ -34,19 +32,22 @@ class OverallBase(AutonomousStateMachine):
 
     START_Y_COORDINATE = 3
 
+    CROSS_POINT_SPEED = 3
+
     # Coordinates of various objectives no the field
+    # Default to those for LEFT HAND SIDE of the field
     SCALE_DEPOSIT = [7.6-Robot.length / 2, 1.8]
     SWITCH_DEPOSIT = [4.2, 1.9+Robot.length / 2]
     SWITCH_DEPOSIT_ORIENTATION = math.pi/2
-    NAVIGATION_POINT = [5.4, 1.8]
-    CUBE_PICKUP_ORIENTATION = math.pi/2
+    CROSS_POINT = [5.4, 1.8]
+    OPP_CROSS_POINT = [5.4, -1.8]
+    CUBE_PICKUP_ORIENTATION = 0
     CUBE_PICKUP_1 = [0, 0]
     CUBE_PICKUP_2 = [0, 0]
 
     def on_enable(self):
         # self.lifter.reset() do we need this?
         self.game_data_message = self.ds.getGameSpecificMessage()
-        self.start_side = 'L'  # set by the dashboard
 
         if len(self.game_data_message) == 3:
             self.fms_scale = self.game_data_message[1]  # L or R
@@ -57,10 +58,7 @@ class OverallBase(AutonomousStateMachine):
             self.fms_switch = 'R'
 
         self.chassis.odometry_x = Robot.length / 2
-        if self.start_side == 'R':
-            self.chassis.odometry_y = -self.START_Y_COORDINATE
-        else:  # Sets the rotation of the switch point based on start side
-            self.chassis.odometry_y = self.START_Y_COORDINATE
+
         super().on_enable()
 
     @state
@@ -116,21 +114,27 @@ class OverallBase(AutonomousStateMachine):
             self.next_state("next_objective")
 
 
-class DoubleScale:
-
-    @state(first=True)
-    def setup(self):
-        """Set up the state machine in the first timestep."""
-        pass
-
-    @state
-    def go_to_scale(self, initial_call):
-        """Navigate to the scale. Raise the lift"""
-        pass
+class DoubleScaleBase(OverallBase):
 
     @state
     def cross_field(self, initial_call):
         """Cross the field."""
+        if initial_call:
+            if self.start_side == self.fms_scale:
+                self.next_state_now("go_to_scale")
+                return
+            else:
+                self.motion.set_waypoints([
+                    self.current_waypoint,
+                    self.CROSS_POINT+[0, self.CROSS_POINT_SPEED],
+                    self.OPP_CROSS_POINT+[0, self.CROSS_POINT_SPEED]
+                    ])
+        if not self.motion.enabled:
+            self.next_state_now("go_to_scale")
+
+    @state
+    def go_to_scale(self, initial_call):
+        """Navigate to the scale. Raise the lift"""
         pass
 
     @state
@@ -147,3 +151,26 @@ class DoubleScale:
     def deposit(self, initial_call):
         """Deposit the cube"""
         pass
+
+
+class LeftDoubleScale(DoubleScaleBase):
+    DEFAULT = True
+    MODE_NAME = 'Left Double Scale'
+
+    def on_enable(self):
+        self.start_side = 'L'
+
+
+class RightDoubleScale():
+    MODE_NAME = 'Right Double Scale'
+
+    def on_enable(self):
+        super().on_enable()
+        self.CROSS_POINT, self.OPP_CROSS_POINT = self.CROSS_POINT, self.OPP_CROSS_POINT
+        self.chassis.odometry_y = -self.START_Y_COORDINATE
+
+        self.SCALE_DEPOSIT[1] *= -1
+        self.CUBE_PICKUP_1[1] *= -1
+        self.CUBE_PICKUP_2[1] *= -1
+        self.CUBE_PICKUP_ORIENTATION *= -1
+        self.start_side = 'R'
