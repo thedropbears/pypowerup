@@ -67,34 +67,6 @@ class OverallBase(AutonomousStateMachine):
         super().on_enable()
 
     @state
-    def lifting(self, initial_call):
-        """The robot lifts then releases its cube into either the scale or switch.
-        Makes use of the external lifting statemachine"""
-        if initial_call:
-            self.picking_up_cube = True
-            # toggles the navpoint to cube pickup mode
-            self.navigation_point[3] = 0
-            if self.chassis.odometry_y < 0:
-                self.navigation_point[2] = 2.5 * math.pi / 4
-            else:  # changes the facing of the navpoint based on which side the
-                # robot is on TODO test this!
-                self.navigation_point[2] = - 2.5 * math.pi / 4
-            self.intake_automation.engage(initial_state="deposit")
-        # TODO replace lifter statemachine
-        # Release cube
-        # if not self.intake_automation.is_executing:
-        self.next_state("depositing")
-
-    @state
-    def depositing(self, state_tm, initial_call):
-        if initial_call:
-            state_tm = 0
-        self.chassis.set_inputs(-1, 0, 0)
-        if state_tm >= 0.25:
-            self.chassis.set_inputs(0, 0, 0)
-            self.next_state("navigating")
-
-    @state
     def pick_up_cube(self, initial_call):
         """The robot rotates in the direction specified by the vision
         system while moving towards the cube. Combines two angles to find the absolute
@@ -117,6 +89,29 @@ class OverallBase(AutonomousStateMachine):
                                           new_heading)
         if not self.motion.enabled:
             self.next_state("next_objective")
+
+    @state
+    def go_to_scale(self, initial_call):
+        """Navigate to the scale. Raise the lift"""
+        if initial_call:
+            self.done_switch = True
+            self.motion.set_waypoints([
+                self.current_waypoint,
+                self.SCALE_DEPOSIT+[0, 0]
+                ])
+        if not self.motion.enabled:
+            self.next_state_now('deposit_scale')
+
+    @state
+    def deposit_scale(self, initial_call):
+        """Deposit the cube on the scale."""
+        if initial_call:
+            self.chassis.set_inputs(0, 0, 0)
+            self.cube_number += 1
+            self.cube_inside = False
+        # if not self.intake_automation.is_executing:
+        if True:
+            self.next_state_now('nav_to_cube')
 
     @property
     def current_waypoint(self):
@@ -143,31 +138,30 @@ class DoubleScaleBase(OverallBase):
             self.next_state_now("go_to_scale")
 
     @state
-    def go_to_scale(self, initial_call):
-        """Navigate to the scale. Raise the lift"""
-        pass
-
-    @state
     def nav_to_cube(self, initial_call):
         """Navigate on Dead Reckoning to the correct cube."""
-        pass
-
-    @state
-    def next_objective(self, initial_call):
-        """Go directly to the go_to_scale state. Called by the super class."""
-        pass
-
-    @state
-    def deposit(self, initial_call):
-        """Deposit the cube"""
-        pass
+        if initial_call:
+            if self.cube_number == 1:
+                cube = self.CUBE_PICKUP_1
+            elif self.cube_number >= 2:
+                cube = self.CUBE_PICKUP_2
+            self.motion.set_waypoints(([
+                self.current_waypoint,
+                self.PICKUP_WAYPOINT,
+                cube
+                ]))
+        if not self.motion.enabled:
+            self.next_state('go_to_scale')
 
 
 class LeftDoubleScale(DoubleScaleBase):
     MODE_NAME = 'Left Double Scale'
 
     def on_enable(self):
+        super().on_enable()
         self.start_side = 'L'
+        self.current_side = self.start_side
+        self.cube_inside = True
 
         if self.fms_scale == 'R':
             self.SCALE_DEPOSIT[1] *= -1
@@ -182,6 +176,10 @@ class RightDoubleScale(DoubleScaleBase):
 
     def on_enable(self):
         super().on_enable()
+        self.start_side = 'R'
+        self.current_side = self.start_side
+        self.cube_inside = True
+
         self.CROSS_POINT, self.OPP_CROSS_POINT = self.CROSS_POINT, self.OPP_CROSS_POINT
         self.chassis.odometry_y = -self.START_Y_COORDINATE
 
@@ -191,7 +189,6 @@ class RightDoubleScale(DoubleScaleBase):
             self.CUBE_PICKUP_2[1] *= -1
             self.CUBE_PICKUP_ORIENTATION *= -1
             self.PICKUP_WAYPOINT[1] *= -1
-        self.start_side = 'R'
 
 
 class SwitchScaleBase(OverallBase):
@@ -224,18 +221,6 @@ class SwitchScaleBase(OverallBase):
             self.current_side = 'R' if self.current_side == 'L' else 'L'
             self.decide_objective()
             return
-
-    @state
-    def go_to_scale(self, initial_call):
-        """Navigate to the scale. Raise the lift"""
-        if initial_call:
-            self.done_switch = True
-            self.motion.set_waypoints([
-                self.current_waypoint,
-                self.SCALE_DEPOSIT+[0, 0]
-                ])
-        if not self.motion.enabled:
-            self.next_state_now('deposit_scale')
 
     @state
     def go_to_switch(self, initial_call):
@@ -287,17 +272,6 @@ class SwitchScaleBase(OverallBase):
                 self.next_state_now('cross_field')
             return
 
-    @state
-    def deposit_scale(self, initial_call):
-        """Deposit the cube on the scale."""
-        if initial_call:
-            self.chassis.set_inputs(0, 0, 0)
-            self.cube_number += 1
-            self.cube_inside = False
-        # if not self.intake_automation.is_executing:
-        if True:
-            self.next_state_now('nav_to_cube')
-
 
 class LeftSwitchScale(SwitchScaleBase):
     MODE_NAME = 'Left Switch & Scale'
@@ -307,6 +281,7 @@ class LeftSwitchScale(SwitchScaleBase):
         self.start_side = 'L'
         self.current_side = self.start_side
         self.done_switch = False
+        self.cube_inside = True
 
         if self.fms_switch == 'R':
             self.SWITCH_DEPOSIT[1] *= -1
@@ -336,7 +311,7 @@ class RightSwitchScale(SwitchScaleBase):
         if self.fms_scale == 'R':
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
-            self.CUBE_PICKUP_ORIENTATION *= -1
+            # self.CUBE_PICKUP_ORIENTATION *= -1
             self.PICKUP_WAYPOINT[1] *= -1
             self.SCALE_DEPOSIT[1] *= -1
         self.start_side = 'R'
