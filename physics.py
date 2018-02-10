@@ -30,7 +30,7 @@ class PhysicsEngine:
         self.module_x_offsets = [x_off, -x_off, -x_off, x_off]
         self.module_y_offsets = [y_off, y_off, -y_off, -y_off]
 
-        self.controller.add_device_gyro_channel('bno055')
+        self.controller.add_device_gyro_channel('navxmxp_spi_4_angle')
 
     def initialize(self, hal_data):
         pass

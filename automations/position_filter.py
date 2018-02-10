@@ -1,6 +1,6 @@
 from components.vision import Vision
 from pyswervedrive.swervechassis import SwerveChassis
-from utilities.bno055 import BNO055
+from utilities.navx import NavX
 from utilities.functions import constrain_angle
 from utilities.kalman import Kalman
 
@@ -12,7 +12,7 @@ import time
 
 class PositionFilter:
 
-    bno055: BNO055
+    imu: NavX
     chassis: SwerveChassis
     vision: Vision
 
@@ -43,8 +43,8 @@ class PositionFilter:
     def predict(self, timesteps_ago=None):
         if timesteps_ago is None:
             self.odometry_deque.append(self.chassis.position)
-            # theta_imu = (self.bno055.getAngle() + self.chassis.odometry_z_vel+(1/50)/2)
-            theta_imu = self.bno055.getAngle()
+            # theta_imu = (self.imu.getAngle() + self.chassis.odometry_z_vel+(1/50)/2)
+            theta_imu = self.imu.getAngle()
             self.imu_deque.append(theta_imu)
             timesteps_ago = 0
         pos = self.odometry_deque[-timesteps_ago-1]

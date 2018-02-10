@@ -13,7 +13,7 @@ from components.lifter import Lifter
 from components.vision import Vision
 from pyswervedrive.swervechassis import SwerveChassis
 from pyswervedrive.swervemodule import SwerveModule
-from utilities.bno055 import BNO055
+from utilities.navx import NavX
 from utilities.functions import rescale_js
 
 import math
@@ -71,7 +71,7 @@ class Robot(magicbot.MagicRobot):
         self.cube_switch = wpilib.DigitalInput(0)
 
         # create the imu object
-        self.bno055 = BNO055()
+        self.imu = NavX.create_spi()
 
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)
@@ -108,7 +108,7 @@ class Robot(magicbot.MagicRobot):
 
         if self.joystick.getRawButtonPressed(8):
             print("Heading sp set")
-            self.chassis.set_heading_sp(self.bno055.getAngle() + math.pi)
+            self.chassis.set_heading_sp(self.imu.getAngle() + math.pi)
 
         # this is where the joystick inputs get converted to numbers that are sent
         # to the chassis component. we rescale them using the rescale_js function,
