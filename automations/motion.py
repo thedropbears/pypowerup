@@ -11,7 +11,7 @@ from networktables import NetworkTables
 class ChassisMotion:
 
     chassis: SwerveChassis
-    gyro: NavX
+    imu: NavX
 
     # heading motion feedforward/back gains
     kPh = 3  # proportional gain
@@ -44,7 +44,7 @@ class ChassisMotion:
     def update_heading_profile(self):
         self.current_seg_distance = np.linalg.norm(self.pursuit.segment)
         heading_end = self.waypoints[self.waypoint_idx+1][2]
-        self.heading_profile = generate_trapezoidal_trajectory(self.gyro.getAngle(), self.gyro.getHeadingRate(),
+        self.heading_profile = generate_trapezoidal_trajectory(self.imu.getAngle(), self.imu.getHeadingRate(),
                                                                heading_end, 0, 3, 3, -3, 50)
         self.last_heading_error = 0
 
@@ -82,10 +82,10 @@ class ChassisMotion:
 
             # get the current heading of the robot since last reset
             # getRawHeading has been swapped for getAngle
-            heading = self.gyro.getAngle()
+            heading = self.imu.getAngle()
             # calculate the heading error
             heading_error = heading_seg[0] - heading
-            # wrap heading error, stops jumping by 2 pi from the gyro
+            # wrap heading error, stops jumping by 2 pi from the imu
             heading_error = math.atan2(math.sin(heading_error),
                                        math.cos(heading_error))
             # sum the heading error over the timestep

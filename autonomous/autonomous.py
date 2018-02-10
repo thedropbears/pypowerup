@@ -21,7 +21,7 @@ class OverallBase(AutonomousStateMachine):
     vision: Vision
     lifter: Lifter
     intake: Intake
-    gyro: NavX
+    imu: NavX
     chassis: SwerveChassis
     ds: wpilib.DriverStation
 
@@ -72,7 +72,7 @@ class OverallBase(AutonomousStateMachine):
         system while moving towards the cube. Combines two angles to find the absolute
         angle towards the cube"""
         vision_angle = self.vision.largest_cube()
-        angle = self.gyro.getAngle()
+        angle = self.imu.getAngle()
         if initial_call:
             # print(vision_angle)
             self.intake_automation.engage()
@@ -116,7 +116,7 @@ class OverallBase(AutonomousStateMachine):
     @property
     def current_waypoint(self):
         return [self.chassis.odometry_x, self.chassis.odometry_y,
-                self.gyro.getAngle(), self.chassis.speed]
+                self.imu.getAngle(), self.chassis.speed]
 
 
 class DoubleScaleBase(OverallBase):
