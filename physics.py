@@ -46,7 +46,7 @@ class PhysicsEngine:
         steer_positions = []
         for can_id, offset in zip(self.module_steer_can_ids, self.module_steer_offsets):
             value = hal_data['CAN'][can_id]['value']
-            hal_data['CAN'][can_id]['pulse_width_position'] = value
+            hal_data['CAN'][can_id]['pulse_width_position'] = int(value)
             position = constrain_angle(
                     (hal_data['CAN'][can_id]['pulse_width_position']-offset)
                     / SwerveModule.STEER_COUNTS_PER_RADIAN)
