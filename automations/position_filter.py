@@ -27,6 +27,8 @@ class PositionFilter:
 
     CUBE_HEIGHT = 0.3
 
+    VISION_TOLERANCE = 0.4  # m
+
     def on_enable(self):
         self.reset()
 
@@ -39,6 +41,7 @@ class PositionFilter:
         self.odometry_deque = deque([], maxlen=50)
         self.imu_deque = deque([], maxlen=50)
         self.last_vision_tm = self.vision.time
+        self.disable_update()
 
     def predict(self, timesteps_ago=None):
         if timesteps_ago is None:
@@ -84,7 +87,9 @@ class PositionFilter:
             since_vision_recieved = time.monotonic()-vision_tm
             since_vision = since_vision_recieved + vision_data[-1]
             steps_since_vision = int(since_vision * 50)
-            if steps_since_vision > len(self.odometry_deque)-1:
+            cube_vision_pos = self.vision_to_field(vision_data[0], vision_data[1])
+            if (steps_since_vision > len(self.odometry_deque)-1 or
+               not np.allclose(cube_vision_pos, self.cube, rtol=0, atol=self.VISION_TOLERANCE)):
                 return
             # print("steps since %s" % since_vision)
             self.kalman.roll_back(steps_since_vision)
@@ -94,6 +99,27 @@ class PositionFilter:
             self.last_vision_tm = vision_tm
         # print("Chassis odom %s" % self.chassis.position)
         # print("Filter %s" % self.position)
+
+    def set_cube_pos(self, pos):
+        self.cube = np.array(pos).reshape((2, 1))
+
+    def enable_update(self):
+        self.update_enabled = True
+
+    def disable_update(self):
+        self.update_enabled = False
+
+    def vision_to_field(self, azimuth, zenith):
+        cube_z = -self.vision.CAMERA_HEIGHT + 0.15
+
+        x = -cube_z*math.tan(math.pi-zenith)*math.cos(azimuth)
+        y = x*math.tan(azimuth)
+        oriented_x = x * math.cos(self.imu.getAngle()) - y * math.sin(self.imu.getAngle())
+        oriented_y = x * math.sin(self.imu.getAngle()) + y * math.cos(self.imu.getAngle())
+
+        cube_rel = np.array([[oriented_x], [oriented_y]])
+        cube_derived_pos = cube_rel + self.position
+        return cube_derived_pos
 
     @property
     def position(self):
