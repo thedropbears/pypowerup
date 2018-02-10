@@ -20,14 +20,10 @@ class Lifter:
         self.set_pos = self.GROUND_HEIGHT
         self.default_height = self.UPPER_SCALE
 
-        # motion profile stuff does not work yet in simulation
-        return
-
         self.lift_motor.overrideLimitSwitchesEnable(True)
         #  TODO tune motion profiling
         self.lift_motor.configMotionAcceleration(100, 10)
         self.lift_motor.configMotionCruiseVelocity(775, 10)
-        self.lift_motor.configMotionProfileTrajectoryPeriod(1, 10)
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
