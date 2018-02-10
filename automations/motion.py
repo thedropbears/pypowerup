@@ -1,7 +1,7 @@
 import math
 import numpy as np
 from pyswervedrive.swervechassis import SwerveChassis
-from utilities.bno055 import BNO055
+from utilities.navx import NavX
 from utilities.vector_pursuit import VectorPursuit
 from utilities.profile_generator import generate_trapezoidal_trajectory
 from wpilib import SmartDashboard
@@ -11,7 +11,7 @@ from networktables import NetworkTables
 class ChassisMotion:
 
     chassis: SwerveChassis
-    bno055: BNO055
+    gyro: NavX
 
     # heading motion feedforward/back gains
     kPh = 3  # proportional gain
@@ -44,7 +44,7 @@ class ChassisMotion:
     def update_heading_profile(self):
         self.current_seg_distance = np.linalg.norm(self.pursuit.segment)
         heading_end = self.waypoints[self.waypoint_idx+1][2]
-        self.heading_profile = generate_trapezoidal_trajectory(self.bno055.getAngle(), self.bno055.getHeadingRate(),
+        self.heading_profile = generate_trapezoidal_trajectory(self.gyro.getAngle(), self.gyro.getHeadingRate(),
                                                                heading_end, 0, 3, 3, -3, 50)
         self.last_heading_error = 0
 
@@ -81,7 +81,8 @@ class ChassisMotion:
                 heading_seg = (self.waypoints[self.waypoint_idx+1][2], 0, 0)
 
             # get the current heading of the robot since last reset
-            heading = self.bno055.getRawHeading() - self.bno055.offset
+            # getRawHeading has been swapped for getAngle
+            heading = self.gyro.getAngle()
             # calculate the heading error
             heading_error = heading_seg[0] - heading
             # wrap heading error, stops jumping by 2 pi from the gyro

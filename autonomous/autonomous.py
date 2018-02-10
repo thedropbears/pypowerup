@@ -13,7 +13,7 @@ from components.lifter import Lifter
 from components.vision import Vision
 from pyswervedrive.swervechassis import SwerveChassis
 from robot import Robot
-from utilities.bno055 import BNO055
+from utilities.navx import NavX
 
 
 class OverallBase(AutonomousStateMachine):
@@ -21,7 +21,7 @@ class OverallBase(AutonomousStateMachine):
     vision: Vision
     lifter: Lifter
     intake: Intake
-    bno055: BNO055
+    gyro: NavX
     chassis: SwerveChassis
     ds: wpilib.DriverStation
 
@@ -72,7 +72,7 @@ class OverallBase(AutonomousStateMachine):
         system while moving towards the cube. Combines two angles to find the absolute
         angle towards the cube"""
         vision_angle = self.vision.largest_cube()
-        angle = self.bno055.getAngle()
+        angle = self.gyro.getAngle()
         if initial_call:
             # print(vision_angle)
             self.intake_automation.engage()
@@ -116,7 +116,7 @@ class OverallBase(AutonomousStateMachine):
     @property
     def current_waypoint(self):
         return [self.chassis.odometry_x, self.chassis.odometry_y,
-                self.bno055.getAngle(), self.chassis.speed]
+                self.gyro.getAngle(), self.chassis.speed]
 
 
 class DoubleScaleBase(OverallBase):

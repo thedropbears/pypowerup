@@ -2,7 +2,7 @@ import math
 import numpy as np
 from wpilib import PIDController
 from wpilib.interfaces import PIDOutput
-from utilities.bno055 import BNO055
+from utilities.navx import NavX
 from pyswervedrive.swervemodule import SwerveModule
 from wpilib import SmartDashboard
 from networktables import NetworkTables
@@ -11,7 +11,7 @@ from utilities.functions import constrain_angle
 
 class SwerveChassis:
 
-    bno055: BNO055
+    gyro: NavX
     module_a: SwerveModule
     module_b: SwerveModule
     module_c: SwerveModule
@@ -29,7 +29,7 @@ class SwerveChassis:
         # Heading PID controller
         self.heading_pid_out = ChassisPIDOutput()
         self.heading_pid = PIDController(Kp=6.0, Ki=0.0, Kd=1.0,
-                                         source=self.bno055.getAngle,
+                                         source=self.gyro.getAngle,
                                          output=self.heading_pid_out,
                                          period=1/50)
         self.heading_pid.setInputRange(-math.pi, math.pi)
@@ -46,7 +46,7 @@ class SwerveChassis:
         self.odometry_z_vel = 0
 
     def set_heading_sp_current(self):
-        self.set_heading_sp(self.bno055.getAngle())
+        self.set_heading_sp(self.gyro.getAngle())
 
     def set_heading_sp(self, setpoint):
         self.heading_pid.setSetpoint(setpoint)
@@ -62,7 +62,7 @@ class SwerveChassis:
         self.hold_heading = False
 
     def on_enable(self):
-        self.bno055.resetHeading()
+        self.gyro.resetHeading()
         self.heading_hold_on()
 
         self.A = np.array([
@@ -91,14 +91,14 @@ class SwerveChassis:
             module.reset_encoder_delta()
             module.reset_steer_setpoint()
 
-        self.last_heading = self.bno055.getAngle()
+        self.last_heading = self.gyro.getAngle()
         self.odometry_updated = False
 
     def execute(self):
 
         pid_z = 0
         if self.hold_heading:
-            if self.momentum and abs(self.bno055.getHeadingRate()) < 0.005:
+            if self.momentum and abs(self.gyro.getHeadingRate()) < 0.005:
                 self.momentum = False
 
             if self.vz not in [0.0, None]:
@@ -123,7 +123,7 @@ class SwerveChassis:
             vz_y = module_dist*vz*math.cos(module_angle)
             # TODO: re enable this and test field-oriented mode
             if self.field_oriented:
-                angle = self.bno055.getAngle()
+                angle = self.gyro.getAngle()
                 vx, vy = self.robot_orient(self.vx, self.vy, angle)
             else:
                 vx, vy = self.vx, self.vy
@@ -150,7 +150,7 @@ class SwerveChassis:
     def update_odometry(self):
         if self.odometry_updated:
             return
-        heading = self.bno055.getAngle()
+        heading = self.gyro.getAngle()
         heading_delta = constrain_angle(heading - self.last_heading)
         heading_adjustment_factor = 1
         adjusted_heading = heading - heading_adjustment_factor * heading_delta
