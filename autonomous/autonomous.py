@@ -180,7 +180,7 @@ class RightDoubleScale(DoubleScaleBase):
         self.current_side = self.start_side
         self.cube_inside = True
 
-        self.CROSS_POINT, self.OPP_CROSS_POINT = self.CROSS_POINT, self.OPP_CROSS_POINT
+        self.CROSS_POINT, self.OPP_CROSS_POINT = self.OPP_CROSS_POINT, self.CROSS_POINT
         self.chassis.odometry_y = -self.START_Y_COORDINATE
 
         if self.fms_scale == 'R':
@@ -300,7 +300,7 @@ class RightSwitchScale(SwitchScaleBase):
 
     def on_enable(self):
         super().on_enable()
-        self.CROSS_POINT, self.OPP_CROSS_POINT = self.CROSS_POINT, self.OPP_CROSS_POINT
+        self.CROSS_POINT, self.OPP_CROSS_POINT = self.OPP_CROSS_POINT, self.CROSS_POINT
         self.chassis.odometry_y = -self.START_Y_COORDINATE
 
         print("FMS Switch %s" % self.fms_switch)
