@@ -92,6 +92,7 @@ class SwerveChassis:
             module.reset_steer_setpoint()
 
         self.last_heading = self.bno055.getAngle()
+        self.odometry_updated = False
 
     def execute(self):
 
@@ -128,14 +129,35 @@ class SwerveChassis:
                 vx, vy = self.vx, self.vy
             module.set_velocity(vx+vz_x, vy+vz_y)
 
-        odometry_outputs = np.zeros((8, 1))
-        velocity_outputs = np.zeros((8, 1))
+        self.update_odometry()
+        self.odometry_updated = False  # reset for next timestep
 
+        SmartDashboard.putNumber('module_a_speed', self.modules[0].current_speed)
+        SmartDashboard.putNumber('module_b_speed', self.modules[1].current_speed)
+        SmartDashboard.putNumber('module_c_speed', self.modules[2].current_speed)
+        SmartDashboard.putNumber('module_d_speed', self.modules[3].current_speed)
+        SmartDashboard.putNumber('module_a_pos', self.modules[0].current_measured_azimuth)
+        SmartDashboard.putNumber('module_b_pos', self.modules[1].current_measured_azimuth)
+        SmartDashboard.putNumber('module_c_pos', self.modules[2].current_measured_azimuth)
+        SmartDashboard.putNumber('module_d_pos', self.modules[3].current_measured_azimuth)
+        SmartDashboard.putNumber('odometry_x', self.odometry_x)
+        SmartDashboard.putNumber('odometry_y', self.odometry_y)
+        SmartDashboard.putNumber('odometry_x_vel', self.odometry_x_vel)
+        SmartDashboard.putNumber('odometry_y_vel', self.odometry_y_vel)
+        SmartDashboard.putNumber('odometry_z_vel', self.odometry_z_vel)
+        NetworkTables.flush()
+
+    def update_odometry(self):
+        if self.odometry_updated:
+            return
         heading = self.bno055.getAngle()
         heading_delta = constrain_angle(heading - self.last_heading)
         heading_adjustment_factor = 1
         adjusted_heading = heading - heading_adjustment_factor * heading_delta
         timestep_average_heading = adjusted_heading - heading_delta / 2
+
+        odometry_outputs = np.zeros((8, 1))
+        velocity_outputs = np.zeros((8, 1))
 
         for i, module in enumerate(self.modules):
             odometry_x, odometry_y = module.get_cartesian_delta()
@@ -155,27 +177,14 @@ class SwerveChassis:
         self.odometry_y_vel = v_y
         self.odometry_z_vel = v_z
 
-        SmartDashboard.putNumber('module_a_speed', self.modules[0].current_speed)
-        SmartDashboard.putNumber('module_b_speed', self.modules[1].current_speed)
-        SmartDashboard.putNumber('module_c_speed', self.modules[2].current_speed)
-        SmartDashboard.putNumber('module_d_speed', self.modules[3].current_speed)
-        SmartDashboard.putNumber('module_a_pos', self.modules[0].current_measured_azimuth)
-        SmartDashboard.putNumber('module_b_pos', self.modules[1].current_measured_azimuth)
-        SmartDashboard.putNumber('module_c_pos', self.modules[2].current_measured_azimuth)
-        SmartDashboard.putNumber('module_d_pos', self.modules[3].current_measured_azimuth)
-        SmartDashboard.putNumber('odometry_x', self.odometry_x)
-        SmartDashboard.putNumber('odometry_y', self.odometry_y)
+        self.last_heading = heading
+
         SmartDashboard.putNumber('odometry_delta_x', delta_x)
         SmartDashboard.putNumber('odometry_delta_y', delta_y)
-        SmartDashboard.putNumber('odometry_x_vel', self.odometry_x_vel)
-        SmartDashboard.putNumber('odometry_y_vel', self.odometry_y_vel)
-        SmartDashboard.putNumber('odometry_z_vel', self.odometry_z_vel)
         SmartDashboard.putNumber('imu_heading', heading)
         SmartDashboard.putNumber('heading_delta', heading_delta)
         SmartDashboard.putNumber('average_heading', timestep_average_heading)
-        NetworkTables.flush()
-
-        self.last_heading = heading
+        self.odometry_updated = True
 
     def robot_movement_from_odometry(self, odometry_outputs, angle, z_vel=0):
         lstsq_ret = np.linalg.lstsq(self.A, odometry_outputs,
@@ -245,6 +254,14 @@ class SwerveChassis:
         oriented_vx = vx * math.cos(heading) - vy * math.sin(heading)
         oriented_vy = vx * math.sin(heading) + vy * math.cos(heading)
         return oriented_vx, oriented_vy
+
+    @property
+    def position(self):
+        return np.array([[self.odometry_x], [self.odometry_y]], dtype=float)
+
+    @property
+    def speed(self):
+        return math.hypot(self.odometry_x_vel, self.odometry_y_vel)
 
 
 class ChassisPIDOutput(PIDOutput):

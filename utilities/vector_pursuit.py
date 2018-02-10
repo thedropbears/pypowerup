@@ -34,9 +34,11 @@ class VectorPursuit:
         self.top_accel = top_accel
         self.top_decel = top_decel
 
-    def increment_segment(self):
+    def increment_segment(self, segment=None):
         if self.segment_idx is None:
             self.segment_idx = 0
+        elif segment is not None:
+            self.segment_idx = segment
         else:
             self.segment_idx += 1
         self.segment = (self.waypoints_xy[self.segment_idx+1]
@@ -77,7 +79,7 @@ class VectorPursuit:
         speed_sp = self.speed_function(dist_to_end)
 
         # define look ahead distance
-        look_ahead_distance = 0.1 + 0.3 * speed
+        look_ahead_distance = 0.1 + 0.1 * speed
 
         # iterate over the segments from our current projected position until
         # we exhaust the lookahead distance
@@ -98,12 +100,15 @@ class VectorPursuit:
             # take away from the remaining look ahead the amount we have travelled
             # along the segment
             look_ahead_remaining -= np.linalg.norm(segment_end-projected_point)
-            if look_ahead_waypoint == len(self.waypoints)-2:
+            if (look_ahead_waypoint == len(self.waypoints)-2 or
+                    look_ahead_remaining <= 0):
                 break
 
             # projected point is now the start of the next segment
             projected_point = segment_end
             look_ahead_waypoint += 1
+
+        self.increment_segment(look_ahead_waypoint)
 
         segment_normalised = self.segment / np.linalg.norm(self.segment)
 
@@ -113,11 +118,12 @@ class VectorPursuit:
 
         next_seg = False
         over = False
-        if scale > 1 and self.segment_idx < len(self.waypoints)-2:
-            self.increment_segment()
-            next_seg = True
-        elif (np.linalg.norm(position - self.waypoints_xy[-1]) < 0.1
-              or (scale >= 0.95 and self.segment_idx == len(self.waypoints)-2)):
+
+        # if scale > 1 and self.segment_idx < len(self.waypoints)-2:
+        #     self.increment_segment()
+        #     next_seg = True
+        if (np.linalg.norm(position - self.waypoints_xy[-1]) < 0.1
+           or (scale >= 0.95 and self.segment_idx == len(self.waypoints)-2)):
             over = True
 
         return theta, speed_sp, next_seg, over

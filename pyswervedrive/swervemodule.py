@@ -171,7 +171,7 @@ class SwerveModule:
         # if we have a really low velocity, don't do anything. This is to
         # prevent stuff like joystick whipping back and changing the module
         # azimuth
-        if velocity < 0.1:
+        if velocity == 0:
             self.drive_motor.setIntegralAccumulator(0, 0, 10)
             self.drive_motor.stopMotor()
             self.steer_motor.stopMotor()
