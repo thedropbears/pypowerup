@@ -15,6 +15,7 @@ from pyswervedrive.swervechassis import SwerveChassis
 from pyswervedrive.swervemodule import SwerveModule
 from utilities.navx import NavX
 from utilities.functions import rescale_js
+from robotpy_ext.common_drivers.distance_sensors import SharpIRGP2Y0A41SK0F
 
 import math
 
@@ -66,7 +67,7 @@ class Robot(magicbot.MagicRobot):
         self.intake_kicker = wpilib.Solenoid(1)
         self.extension_arm_left = wpilib.Solenoid(2)
         self.extension_arm_right = wpilib.Solenoid(3)
-        self.infrared = wpilib.AnalogInput(0)
+        self.infrared = SharpIRGP2Y0A41SK0F(0)
         self.lift_motor = ctre.WPI_TalonSRX(3)
         self.cube_switch = wpilib.DigitalInput(0)
 
@@ -94,8 +95,34 @@ class Robot(magicbot.MagicRobot):
 
         This is run each iteration of the control loop before magicbot components are executed.
         """
+        if self.joystick.getTrigger():
+            self.intake_automation.engage()
+
+        if self.joystick.getRawButtonPressed(2):
+            self.intake_automation.engage(initial_state="deposit")
+
+        if self.joystick.getRawButtonPressed(4):
+            self.intake_automation.engage(initial_state="stop")
+
         if self.joystick.getTriggerPressed():
             self.intake_automation.engage()
+
+        if self.gamepad.getBButtonPressed():
+            self.intake_automation.engage(initial_state="clamp")
+
+        if self.gamepad.getAButtonPressed():
+            self.lifter_automation.engage(initial_state="eject")
+
+        if self.gamepad.getXButtonPressed():
+            self.intake.extension(True)
+            self.intake.rotate(1)
+
+        if self.gamepad.getXButtonReleased():
+            self.intake.extension(False)
+            self.intake.rotate(0)
+
+        if self.gamepad.getYButtonPressed():
+                self.intake_automation.engage(initial_state="clamp")
 
         if self.joystick.getRawButtonPressed(10):
             self.chassis.odometry_x = 0.0
