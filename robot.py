@@ -15,6 +15,7 @@ from pyswervedrive.swervechassis import SwerveChassis
 from pyswervedrive.swervemodule import SwerveModule
 from utilities.navx import NavX
 from utilities.functions import rescale_js
+from robotpy_ext.common_drivers.distance_sensors import SharpIRGP2Y0A41SK0F
 
 import math
 
@@ -60,13 +61,12 @@ class Robot(magicbot.MagicRobot):
             x_pos=0.25, y_pos=-0.31,
             drive_free_speed=Robot.module_drive_free_speed)
 
-        self.intake_left = ctre.WPI_TalonSRX(0)
-        self.intake_right = ctre.WPI_TalonSRX(1)
+        self.intake_left = ctre.WPI_TalonSRX(14)
+        self.intake_right = ctre.WPI_TalonSRX(2)
         self.clamp_arm = wpilib.Solenoid(0)
         self.intake_kicker = wpilib.Solenoid(1)
-        self.extension_arm_left = wpilib.Solenoid(2)
-        self.extension_arm_right = wpilib.Solenoid(3)
-        self.infrared = wpilib.AnalogInput(0)
+        self.extension_arms = wpilib.Solenoid(3)
+        self.infrared = SharpIRGP2Y0A41SK0F(0)
         self.lift_motor = ctre.WPI_TalonSRX(3)
         self.cube_switch = wpilib.DigitalInput(0)
 
@@ -94,8 +94,12 @@ class Robot(magicbot.MagicRobot):
 
         This is run each iteration of the control loop before magicbot components are executed.
         """
-        if self.joystick.getTriggerPressed():
-            self.intake_automation.engage()
+
+        if self.gamepad.getBButtonPressed():
+            self.intake_automation.engage(initial_state="intake_cube")
+
+        if self.gamepad.getAButtonPressed():
+            self.intake_automation.engage(initial_state="deposit")
 
         if self.joystick.getRawButtonPressed(10):
             self.chassis.odometry_x = 0.0
@@ -114,7 +118,7 @@ class Robot(magicbot.MagicRobot):
         # to the chassis component. we rescale them using the rescale_js function,
         # in order to make their response exponential, and to set a dead zone -
         # which just means if it is under a certain value a 0 will be sent
-        # TODO: Tune these constants forvwhatever robot they are on
+        # TODO: Tune these constants for whatever robot they are on
         vx = -rescale_js(self.joystick.getY(), deadzone=0.05, exponential=1.2, rate=4)
         vy = -rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2, rate=4)
         vz = -rescale_js(self.joystick.getZ(), deadzone=0.4, exponential=15.0, rate=self.spin_rate)

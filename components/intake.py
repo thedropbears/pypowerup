@@ -1,6 +1,6 @@
 from ctre import WPI_TalonSRX
 import wpilib
-import math
+from robotpy_ext.common_drivers.distance_sensors import SharpIRGP2Y0A41SK0F
 
 
 class Intake:
@@ -8,14 +8,19 @@ class Intake:
     intake_right: WPI_TalonSRX
     clamp_arm: wpilib.Solenoid
     intake_kicker: wpilib.Solenoid
-    extension_arm_left: wpilib.Solenoid
-    extension_arm_right: wpilib.Solenoid
-    infrared: wpilib.AnalogInput
+    extension_arms: wpilib.Solenoid
+    infrared: SharpIRGP2Y0A41SK0F
     cube_switch: wpilib.DigitalInput
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
-        pass
+        self.intake_right.follow(self.intake_left)
+        self.intake_right.setInverted(True)
+        self.motor_on = 0
+        self.clamp_on = False
+        self.push_on = False
+        self.extension_on = False
+        self.arms_out = False
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
@@ -27,50 +32,62 @@ class Intake:
 
     def execute(self):
         """Run at the end of every control loop iteration."""
-        pass
+        if self.motor_on == 1:
+            self.intake_left.set(1)
+        elif self.motor_on == -1:
+            self.intake_left.set(-1)
+        else:
+            self.intake_left.stopMotor()
 
-    def intake_rotate(self, value):
+        if self.clamp_on:
+            self.clamp_arm.set(True)
+        else:
+            self.clamp_arm.set(False)
+
+        if self.push_on:
+            self.intake_kicker.set(True)
+        else:
+            self.intake_kicker.set(False)
+
+        if self.extension_on:
+            self.extension_arms.set(True)
+        else:
+            self.extension_arms.set(False)
+
+    def rotate(self, value):
         """Turns intake mechanism on."""
-        self.intake_left.set(value)
-        self.intake_right.set(value)
-
-    def intake_disable(self):
-        """Turns intake mechanism off."""
-        self.intake_left.stopMotor()
-        self.intake_right.stopMotor()
+        self.motor_on = value
 
     def intake_clamp(self, value):
         """Turns intake arm on or off"""
-        self.clamp_arm.set(value)
+        self.clamp_on = value
 
     def intake_push(self, value):
         """Turns the pushing pneumatic on or off"""
-        self.intake_kicker.set(value)
+        self.push_on = value
 
     def extension(self, value):
         """Turns both pneumatic extensions on or off"""
-        self.extension_arm_left.set(value)
-        self.extension_arm_right.set(value)
+        self.extension_on = value
 
-    def infraredDistance(self):
-        infrared_voltage = self.infrared.getVoltage()
-        """Makes sure that the voltage is above 0.00001"""
-        voltage = max(infrared_voltage, 0.00001)
-        distance = 12.84*math.pow(voltage, -0.9824)
-        """This makes sure that the distance is above 4.5 and below 35"""
-        self.cube_distance = max(min(distance, 35.0), 4.5)
+    def infrared_distance(self):
+        """Gets the distance of the infrared sensor in mm"""
+        self.cube_distance = self.infrared.getDistance()
+        self.cube_distance * 10
 
     def cube_inside(self):
         """Run when the limit switch is pressed and when the current
         output is above a threshold, which stops the motors."""
-        if self.cube_switch.get():
-            print("Cube is inside")
-            return True
-        # if 10 <= self.cube_distance <= 15:
-        #     return True
-        return False
+        # if not self.cube_switch.get():
+        # print("limit switch pressed")
+        # return True
+        # if 100 <= self.cube_distance <= 150:
+        # return True
+        # return False
 
-    def button_press(self):
-        if self.joystick.getButton(2):
+    def contacting_cube(self):
+        """Returns True of the current output of the motor is above 3"""
+        if self.intake_left.getOutputCurrent() >= 3:
             return True
-        return False
+        else:
+            return False
