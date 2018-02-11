@@ -75,6 +75,7 @@ class IntakeAutomation(StateMachine):
     def push_out_cube(self):
         self.intake.rotate(1)
         self.intake.intake_clamp(False)
+        self.intake.extension(False)
 
     @timed_state(must_finish=True, duration=0.3, next_state="reset_containment")
     def eject_cube(self):
