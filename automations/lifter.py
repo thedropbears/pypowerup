@@ -31,7 +31,7 @@ class LifterAutomation(StateMachine):
     @state(must_finish=True)
     def move_complete(self):
         """Move to lifter height according to default height"""
-        if self.lifter.at_pos() and self.lifter.at_pos_switch_pressed():
+        if self.lifter.at_pos():
             self.lifter.stop()
             self.done()
 

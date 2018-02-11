@@ -29,10 +29,15 @@ class Lifter:
     BALANCED_SCALE = 1.524 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE
     LOWER_SCALE = 1.2192 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE
     SWITCH = 0.47625 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE
+    #  TODO find switch pos
+    CENTER_SWITCH_POS = 0
+    TOP_SWITCH_POS = 0
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
         self.set_pos = None
+
+
 
         self.motor.setInverted(True)
         self.motor.setNeutralMode(ctre.WPI_TalonSRX.NeutralMode.Brake)
@@ -75,6 +80,13 @@ class Lifter:
                 self.stop()
         else:
             self.motor.stopMotor()
+
+        if not self.center_switch.get():
+            self.motor.setQuadraturePosition(self.CENTER_SWITCH_POS, timeoutMs=10)
+        if not self.top_switch.get():
+            self.motor.setQuadraturePosition(self.TOP_SWITCH_POS, timeoutMs=10)
+        if self.motor.isRevLimitSwitchClosed():
+            self.motor.setQuadraturePosition(self.BOTTOM_HEIGHT, timeoutMs=10)
 
     def meters_to_counts(self, meters):
         return int(meters * self.COUNTS_PER_METER)
