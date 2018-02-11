@@ -84,5 +84,5 @@ class IntakeAutomation(StateMachine):
     @state(must_finish=True)
     def reset_containment(self):
         self.intake.clamp_on(False)
-        self.intake.intake_push(False)  
+        self.intake.intake_push(False)
         self.done()
