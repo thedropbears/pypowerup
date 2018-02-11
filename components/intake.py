@@ -8,8 +8,7 @@ class Intake:
     intake_right: WPI_TalonSRX
     clamp_arm: wpilib.Solenoid
     intake_kicker: wpilib.Solenoid
-    extension_arm_left: wpilib.Solenoid
-    extension_arm_right: wpilib.Solenoid
+    extension_arms: wpilib.Solenoid
     infrared: SharpIRGP2Y0A41SK0F
     cube_switch: wpilib.DigitalInput
 
@@ -20,7 +19,8 @@ class Intake:
         self.motor_on = 0
         self.clamp_on = False
         self.push_on = False
-        self.extension_on = True
+        self.extension_on = False
+        self.arms_out = False
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
@@ -50,11 +50,9 @@ class Intake:
             self.intake_kicker.set(False)
 
         if self.extension_on:
-            self.extension_arm_left.set(True)
-            self.extension_arm_right.set(True)
+            self.extension_arms.set(True)
         else:
-            self.extension_arm_left.set(False)
-            self.extension_arm_right.set(False)
+            self.extension_arms.set(False)
 
     def rotate(self, value):
         """Turns intake mechanism on."""
@@ -73,16 +71,23 @@ class Intake:
         self.extension_on = value
 
     def infrared_distance(self):
+        """Gets the distance of the infrared sensor in mm"""
         self.cube_distance = self.infrared.getDistance()
         self.cube_distance * 10
 
     def cube_inside(self):
         """Run when the limit switch is pressed and when the current
         output is above a threshold, which stops the motors."""
-
-        if not self.cube_switch.get():
-            print("limit switch pressed")
-        return True
+        # if not self.cube_switch.get():
+        # print("limit switch pressed")
+        # return True
         # if 100 <= self.cube_distance <= 150:
-            # return True
+        # return True
         # return False
+
+    def contacting_cube(self):
+        """Returns True of the current output of the motor is above 3"""
+        if self.intake_left.getOutputCurrent() >= 3:
+            return True
+        else:
+            return False
