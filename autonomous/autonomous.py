@@ -2,6 +2,7 @@
 """The autonomous controls for the robot."""
 import math
 
+import numpy as np
 import wpilib
 from magicbot.state_machine import AutonomousStateMachine, state
 
@@ -34,6 +35,8 @@ class OverallBase(AutonomousStateMachine):
 
     CROSS_POINT_SPEED = 3
 
+    PICKUP_SPEED = 2
+
     # Coordinates of various objectives no the field
     # Default to those for LEFT HAND SIDE of the field
     SCALE_DEPOSIT = [7.6-Robot.length / 2, 1.8]
@@ -65,28 +68,63 @@ class OverallBase(AutonomousStateMachine):
         super().on_enable()
 
     @state
+    def nav_to_cube(self, initial_call):
+        """Navigate on Dead Reckoning to the correct cube."""
+        if initial_call:
+            if self.cube_number == 1:
+                self.cube = np.array(self.CUBE_PICKUP_1)
+            elif self.cube_number >= 2:
+                self.cube = np.array(self.CUBE_PICKUP_2)
+            pickup_waypoint = self.PICKUP_WAYPOINT+[self.CUBE_PICKUP_ORIENTATION,
+                                                    self.PICKUP_SPEED]
+            # position we transition to the vision system at
+            self.pickup_pos = pickup_waypoint
+            self.pickup_pos[0] = (self.pickup_pos[0]+self.cube[0])/2
+            self.pickup_pos[1] = (self.pickup_pos[1]+self.cube[1])/2
+            self.motion.set_waypoints(([
+                self.current_waypoint,
+                pickup_waypoint,
+                self.pickup_pos
+                ]))
+            self.intake_automation.engage(initial_state='intake_cube')
+        if not self.motion.enabled:
+            self.next_state_now('pick_up_cube')
+
+    @state
     def pick_up_cube(self, initial_call):
         """The robot rotates in the direction specified by the vision
         system while moving towards the cube. Combines two angles to find the absolute
         angle towards the cube"""
-        vision_angle = self.vision.largest_cube()
-        angle = self.imu.getAngle()
+
         if initial_call:
-            # print(vision_angle)
-            self.intake_automation.engage()
-            self.navigation_point[3] = 3
+            self.intake_automation.engage(initial_state='intake_cube')
+
+        vision_angle = self.vision.largest_cube()
+        heading = self.imu.getAngle()
         if vision_angle is None:
-            self.next_state("search_for_cube")
-            print("========searching for cube========")
+            print("Don't see cube in vision")
             return
-        absolute_cube_direction = angle + vision_angle
-        new_heading = angle + 0.2 * vision_angle
+        absolute_cube_direction = heading + vision_angle
+        # new_heading = heading + 0.2 * vision_angle
         self.chassis.field_oriented = True
-        self.chassis.set_velocity_heading(math.cos(absolute_cube_direction),
-                                          math.sin(absolute_cube_direction),
-                                          new_heading)
-        if not self.motion.enabled:
-            self.next_state("next_objective")
+
+        # speed controller
+        segment = self.cube - self.pickup_pos
+        displacement = self.cube - self.chassis.position.reshape(2)
+        total_dist = np.linalg.norm(segment)
+        dist_along_segment = total_dist - np.linalg.norm(displacement)
+        if dist_along_segment < 0:
+            dist_along_segment = 0
+        percent_along = dist_along_segment / total_dist
+        # slowly ramp down the speed as we approach the cube
+
+        speed = (self.PICKUP_SPEED - percent_along*(self.PICKUP_SPEED-0.5))
+
+        vx = speed*math.cos(absolute_cube_direction)
+        vy = speed*math.sin(absolute_cube_direction)
+        self.chassis.set_velocity_heading(vx, vy, absolute_cube_direction)
+        if not self.intake_automation.is_executing:
+            self.next_state_now('next_objective')
 
     @state
     def go_to_scale(self, initial_call):
@@ -136,20 +174,8 @@ class DoubleScaleBase(OverallBase):
             self.next_state_now("go_to_scale")
 
     @state
-    def nav_to_cube(self, initial_call):
-        """Navigate on Dead Reckoning to the correct cube."""
-        if initial_call:
-            if self.cube_number == 1:
-                cube = self.CUBE_PICKUP_1
-            elif self.cube_number >= 2:
-                cube = self.CUBE_PICKUP_2
-            self.motion.set_waypoints(([
-                self.current_waypoint,
-                self.PICKUP_WAYPOINT,
-                cube
-                ]))
-        if not self.motion.enabled:
-            self.next_state('go_to_scale')
+    def next_objective(self):
+        self.next_state_now('go_to_scale')
 
 
 class LeftDoubleScale(DoubleScaleBase):
@@ -233,26 +259,12 @@ class SwitchScaleBase(OverallBase):
             self.next_state_now('deposit_switch')
 
     @state
-    def nav_to_cube(self, initial_call):
-        """Navigate on Dead Reckoning to the correct cube."""
-        if initial_call:
-            if self.cube_number == 1:
-                cube = self.CUBE_PICKUP_1
-            if self.cube_number >= 2:
-                cube = self.CUBE_PICKUP_2
-            self.motion.set_waypoints([
-                self.current_waypoint,
-                self.PICKUP_WAYPOINT+[self.CUBE_PICKUP_ORIENTATION, 3],
-                cube+[self.CUBE_PICKUP_ORIENTATION, 3]
-                ])
-            self.intake_automation.engage(initial_state='intake_cube')
-        # if self.intake.cube_inside():
-        if not self.motion.enabled:
-            self.cube_inside = True
-            if self.done_switch:
-                self.next_state_now('go_to_scale')
-            else:
-                self.next_state_now('cross_field')
+    def next_objective(self):
+        self.cube_inside = True
+        if self.done_switch:
+            self.next_state_now('go_to_scale')
+        else:
+            self.next_state_now('cross_field')
 
     @state
     def deposit_switch(self, initial_call):
