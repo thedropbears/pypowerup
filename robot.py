@@ -107,6 +107,9 @@ class Robot(magicbot.MagicRobot):
         if self.gamepad.getAButtonPressed():
             self.intake_automation.engage(initial_state="deposit")
 
+        if self.gamepad.getYButtonPressed():
+            self.intake_automation.engage(initial_state='eject_cube')
+
         if self.joystick.getRawButtonPressed(10):
             self.chassis.odometry_x = 0.0
             self.chassis.odometry_y = 0.0
