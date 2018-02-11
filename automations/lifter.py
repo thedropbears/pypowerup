@@ -8,32 +8,29 @@ class LifterAutomation(StateMachine):
     lifter: Lifter
     intake: Intake
 
-    @state(must_finish=True)
+    @state(first=True, must_finish=True)
     def move_upper_scale(self):
-        self.lifter.default_height = self.lifter.UPPER_SCALE
-        self.next_state("move")
+        self.lifter.move(self.lifter.UPPER_SCALE)
+        self.next_state("move_complete")
 
     @state(must_finish=True)
     def move_balanced_scale(self):
-        self.lifter.default_height = self.lifter.BALANCED_SCALE
-        self.next_state("move")
+        self.lifter.move(self.lifter.BALANCED_SCALE)
+        self.next_state("move_complete")
 
     @state(must_finish=True)
     def move_lower_scale(self):
-        self.lifter.default_height = self.lifter.LOWER_SCALE
-        self.next_state("move")
+        self.lifter.move(self.lifter.LOWER_SCALE)
+        self.next_state("move_complete")
 
     @state(must_finish=True)
     def move_switch(self):
-        self.lifter.default_height = self.lifter.SWITCH_HEIGHT
-        self.next_state("move")
+        self.lifter.move(self.lifter.SWITCH)
+        self.next_state("move_complete")
 
-    @state(first=True, must_finish=True)
-    def move(self, initial_call):
+    @state(must_finish=True)
+    def move_complete(self):
         """Move to lifter height according to default height"""
-        if initial_call:
-            self.lifter.move()
-
         if self.lifter.at_pos() and self.lifter.at_pos_switch_pressed():
             self.lifter.stop()
             self.done()
