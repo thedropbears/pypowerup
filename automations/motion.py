@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from automations.position_filter import PositionFilter
 from pyswervedrive.swervechassis import SwerveChassis
 from utilities.navx import NavX
 from utilities.vector_pursuit import VectorPursuit
@@ -10,6 +11,7 @@ from networktables import NetworkTables
 
 class ChassisMotion:
 
+    position_filter: PositionFilter
     chassis: SwerveChassis
     imu: NavX
 
@@ -59,7 +61,7 @@ class ChassisMotion:
             self.chassis.field_oriented = True
             self.chassis.hold_heading = False
 
-            odom_pos = np.array([self.chassis.odometry_x, self.chassis.odometry_y])
+            odom_pos = self.position_filter.position
             odom_vel = np.array([self.chassis.odometry_x_vel, self.chassis.odometry_y_vel])
 
             speed = np.linalg.norm(odom_vel)

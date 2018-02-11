@@ -8,6 +8,7 @@ from magicbot.state_machine import AutonomousStateMachine, state
 from automations.intake import IntakeAutomation
 from automations.lifter import LifterAutomation
 from automations.motion import ChassisMotion
+from automations.position_filter import PositionFilter
 from components.intake import Intake
 from components.lifter import Lifter
 from components.vision import Vision
@@ -17,11 +18,11 @@ from utilities.navx import NavX
 
 
 class OverallBase(AutonomousStateMachine):
-    """statemachine designed to intelegently respond to possible situations in auto"""
     vision: Vision
     lifter: Lifter
     intake: Intake
     imu: NavX
+    position_filter: PositionFilter
     chassis: SwerveChassis
     ds: wpilib.DriverStation
 
@@ -145,12 +146,15 @@ class DoubleScaleBase(OverallBase):
                 cube = self.CUBE_PICKUP_1
             elif self.cube_number >= 2:
                 cube = self.CUBE_PICKUP_2
+            self.position_filter.set_cube_pos(cube)
+            self.position_filter.enable_update()
             self.motion.set_waypoints(([
                 self.current_waypoint,
                 self.PICKUP_WAYPOINT,
                 cube
                 ]))
         if not self.motion.enabled:
+            self.position_filter.disable_update()
             self.next_state('go_to_scale')
 
 
@@ -169,6 +173,7 @@ class LeftDoubleScale(DoubleScaleBase):
             self.CUBE_PICKUP_2[1] *= -1
             self.CUBE_PICKUP_ORIENTATION *= -1
             self.PICKUP_WAYPOINT[1] *= -1
+        self.position_filter.reset()
 
 
 class RightDoubleScale(DoubleScaleBase):
@@ -189,6 +194,7 @@ class RightDoubleScale(DoubleScaleBase):
             self.CUBE_PICKUP_2[1] *= -1
             self.CUBE_PICKUP_ORIENTATION *= -1
             self.PICKUP_WAYPOINT[1] *= -1
+        self.position_filter.reset()
 
 
 class SwitchScaleBase(OverallBase):
@@ -242,6 +248,8 @@ class SwitchScaleBase(OverallBase):
                 cube = self.CUBE_PICKUP_1
             if self.cube_number >= 2:
                 cube = self.CUBE_PICKUP_2
+            self.position_filter.set_cube_pos(cube)
+            self.position_filter.enable_update()
             self.motion.set_waypoints([
                 self.current_waypoint,
                 self.PICKUP_WAYPOINT+[self.CUBE_PICKUP_ORIENTATION, 3],
@@ -250,6 +258,7 @@ class SwitchScaleBase(OverallBase):
             self.intake_automation.engage(initial_state='intake_cube')
         # if self.intake.cube_inside():
         if not self.motion.enabled:
+            self.position_filter.disable_update()
             self.cube_inside = True
             if self.done_switch:
                 self.next_state_now('go_to_scale')
@@ -292,6 +301,7 @@ class LeftSwitchScale(SwitchScaleBase):
             self.CUBE_PICKUP_ORIENTATION *= -1
             self.PICKUP_WAYPOINT[1] *= -1
             self.SCALE_DEPOSIT[1] *= -1
+        self.position_filter.reset()
 
 
 class RightSwitchScale(SwitchScaleBase):
@@ -318,3 +328,4 @@ class RightSwitchScale(SwitchScaleBase):
         self.current_side = self.start_side
         self.done_switch = False
         self.cube_inside = True
+        self.position_filter.reset()
