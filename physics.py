@@ -1,7 +1,11 @@
+
 import math
+
+import numpy as np
+
+from robot import Robot
 from pyswervedrive.swervemodule import SwerveModule
 from utilities.functions import constrain_angle
-import numpy as np
 
 
 class PhysicsEngine:
@@ -55,9 +59,10 @@ class PhysicsEngine:
         motor_speeds = []
         for i, can_id in enumerate(self.module_drive_can_ids):
             speed_sp = hal_data['CAN'][can_id]['value']
-            speed = speed_sp / SwerveModule.drive_velocity_to_native_units
-            hal_data['CAN'][can_id]['quad_position'] += int(speed_sp*10*tm_diff)
-            hal_data['CAN'][can_id]['quad_velocity'] = int(speed_sp)
+            enc_speed = speed_sp * Robot.module_drive_free_speed
+            speed = enc_speed / SwerveModule.drive_velocity_to_native_units
+            hal_data['CAN'][can_id]['quad_position'] += int(enc_speed*10*tm_diff)
+            hal_data['CAN'][can_id]['quad_velocity'] = int(enc_speed)
             motor_speeds.append(speed)
 
         lf_speed, lr_speed, rr_speed, rf_speed = motor_speeds
