@@ -38,3 +38,6 @@ class NavX(AHRS):
 
         io = RegisterIO_SPI(port, spi_bitrate)
         return cls(io, update_rate_hz)
+
+    def getYaw(self):
+        return -math.radians(super().getYaw())
