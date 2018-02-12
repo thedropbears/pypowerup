@@ -18,11 +18,6 @@ class IntakeAutomation(StateMachine):
         infrared sensor"""
 
         if self.intake.contacting_cube() and state_tm > 0.5:
-            # self.intake.rotate(0.0)
-            # self.intake.extension(False)
-            # self.intake.intake_clamp(False)
-            # self.intake.intake_push(False)
-            # self.done()
             self.intake.clamp_on(False)
             self.next_state("pulling_in_cube")
         else:

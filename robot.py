@@ -104,10 +104,10 @@ class Robot(magicbot.MagicRobot):
         if self.joystick.getRawButtonPressed(3):
             self.intake_automation.engage(initial_state="intake_cube")
 
-        if self.joystick.getRawButtonPressed(4):
+        if self.joystick.getRawButtonPressed(6):
             self.intake_automation.engage(initial_state="deposit")
 
-        if self.joystick.getRawButtonPressed(5):
+        if self.joystick.getRawButtonPressed(4):
             self.intake_automation.engage(initial_state='eject_cube')
 
         if self.joystick.getRawButtonPressed(10):
