@@ -87,6 +87,14 @@ class SwerveModule:
 
         self.reset_encoder_delta()
 
+        self.steer_motor.configPeakCurrentLimit(50, timeoutMs=10)
+        self.steer_motor.configContinuousCurrentLimit(40, timeoutMs=10)
+        self.steer_motor.enableCurrentLimit(True)
+
+        self.drive_motor.configPeakCurrentLimit(50, timeoutMs=10)
+        self.drive_motor.configContinuousCurrentLimit(40, timeoutMs=10)
+        self.drive_motor.enableCurrentLimit(True)
+
     def set_rotation_mode(self, rotation_mode):
         """Set whether we want the modules to rotate to the nearest possible
         direction to get to the required angle (and sometimes face backwards),
