@@ -71,7 +71,7 @@ class Robot(magicbot.MagicRobot):
         self.cube_switch = wpilib.DigitalInput(0)
 
         self.lifter_motor = ctre.WPI_TalonSRX(3)
-        self.center_switch = wpilib.DigitalInput(1)
+        self.centre_switch = wpilib.DigitalInput(1)
         self.top_switch = wpilib.DigitalInput(2)
 
         # create the imu object

@@ -4,7 +4,7 @@ import wpilib
 
 class Lifter:
     motor: ctre.WPI_TalonSRX
-    center_switch: wpilib.DigitalInput
+    centre_switch: wpilib.DigitalInput
     top_switch: wpilib.DigitalInput
 
     #  TODO find encoder values, tune height values to include robot height and cube
@@ -33,7 +33,7 @@ class Lifter:
         """This is called after variables are injected by magicbot."""
         self.set_pos = None
 
-        self.lifter_motor.setQuadraturePosition(0, timeoutMs=10)
+        self.motor.setQuadraturePosition(0, timeoutMs=10)
         self.motor.setInverted(True)
         self.motor.setNeutralMode(ctre.WPI_TalonSRX.NeutralMode.Brake)
 
@@ -73,7 +73,7 @@ class Lifter:
     def execute(self):
         """Run at the end of every control loop iteration."""
 
-        if not self.center_switch.get():
+        if not self.centre_switch.get():
             self.motor.setSelectedSensorPosition(self.meters_to_counts(self.SWITCH), 0, timeoutMs=10)
         if not self.top_switch.get():
             self.motor.setSelectedSensorPosition(self.meters_to_counts(self.BALANCED_SCALE), 0, timeoutMs=10)
