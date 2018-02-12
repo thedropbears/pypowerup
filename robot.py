@@ -75,7 +75,7 @@ class Robot(magicbot.MagicRobot):
         self.top_switch = wpilib.DigitalInput(2)
 
         # create the imu object
-        self.imu = NavX.create_spi()
+        self.imu = NavX()
 
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)
