@@ -12,7 +12,7 @@ class IntakeAutomation(StateMachine):
         if not self.intake.arms_out:
             self.engage(initial_state="start")
 
-    @timed_state(must_finish=True, duration=1, next_state="holding")
+    @timed_state(must_finish=True, duration=1, next_state="stop")
     def start(self, state_tm):
         if state_tm < 0.5:
             self.intake.extension(True)
@@ -20,38 +20,29 @@ class IntakeAutomation(StateMachine):
             self.intake.arms_out = True
         else:
             self.intake.extension(False)
+            self.intake.intake_clamp(False)
+            self.intake.intake_push(False)
 
     @state(first=True, must_finish=True)
     def intake_cube(self, state_tm):
         """Starts the intake motors while waiting for the cube be seen by the
         infrared sensor"""
-
         if self.intake.contacting_cube() and state_tm > 0.5:
             self.intake.intake_clamp(False)
-            self.intake.extension(False)
             self.next_state("pulling_in_cube")
         else:
             self.intake.rotate(-1)
             self.intake.extension(True)
 
-    @timed_state(must_finish=True, duration=1, next_state="stop")
+    @timed_state(must_finish=True, duration=1, next_state="grab_cube")
     def pulling_in_cube(self):
         self.intake.extension(False)
         self.intake.rotate(-1)
 
     @state(must_finish=True)
-    def clamp(self):
-        """Grabs cube and starts lifter state machine"""
+    def grab_cube(self):
         self.intake.intake_clamp(True)
         self.intake.intake_push(False)
-        self.lifter_automation.engage(initial_state="eject")
-        self.done()
-
-    @state(must_finish=True)
-    def holding(self):
-        self.intake.intake_clamp(True)
-        self.intake.intake_push(False)
-        self.intake.extension(False)
         self.next_state("stop")
 
     @state(must_finish=True)
@@ -61,12 +52,14 @@ class IntakeAutomation(StateMachine):
             self.next_state("push_out_cube")
         else:
             self.intake.rotate(1)
+            self.intake.intake_push(True)
+            self.intake.intake_clamp(False)
 
     @timed_state(must_finish=True, duration=1, next_state="stop")
     def push_out_cube(self):
         self.intake.rotate(1)
-        self.intake.intake_clamp(False)
         self.intake.extension(False)
+        self.intake.intake_push(False)
 
     @timed_state(must_finish=True, duration=0.3, next_state="reset_containment")
     def eject_cube(self):
