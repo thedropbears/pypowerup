@@ -33,6 +33,7 @@ class Lifter:
         """This is called after variables are injected by magicbot."""
         self.set_pos = None
 
+        self.lifter_motor.setQuadraturePosition(0, timeoutMs=10)
         self.motor.setInverted(True)
         self.motor.setNeutralMode(ctre.WPI_TalonSRX.NeutralMode.Brake)
 

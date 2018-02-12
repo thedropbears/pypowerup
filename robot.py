@@ -71,7 +71,6 @@ class Robot(magicbot.MagicRobot):
         self.cube_switch = wpilib.DigitalInput(0)
 
         self.lifter_motor = ctre.WPI_TalonSRX(3)
-        self.lifter_motor.setQuadraturePosition(0, timeoutMs=10)
         self.center_switch = wpilib.DigitalInput(1)
         self.top_switch = wpilib.DigitalInput(2)
 
