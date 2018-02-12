@@ -71,9 +71,6 @@ class Lifter:
 
     def execute(self):
         """Run at the end of every control loop iteration."""
-        current_pos = self.get_pos()
-        if self.is_almost_at_pos(current_pos):
-            self.move(current_pos)
 
         if not self.center_switch.get():
             self.motor.setSelectedSensorPosition(self.meters_to_counts(self.SWITCH), 0, timeoutMs=10)
@@ -119,6 +116,3 @@ class Lifter:
         if self.set_pos is None:
             return False
         return abs(self.set_pos - self.get_pos()) < self.THRESHOLD
-
-    def is_almost_at_pos(self, current_pos):
-        return self.at_pos() and current_pos != self.set_pos
