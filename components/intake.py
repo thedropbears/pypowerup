@@ -87,7 +87,7 @@ class Intake:
 
     def contacting_cube(self):
         """Returns True of the current output of the motor is above 3"""
-        if self.intake_left.getOutputCurrent() >= 3:
+        if self.intake_left.getOutputCurrent() >= 5:
             return True
         else:
             return False

@@ -98,7 +98,7 @@ class SwerveChassis:
 
         pid_z = 0
         if self.hold_heading:
-            if self.momentum and abs(self.imu.getHeadingRate()) < 0.005:
+            if self.momentum and abs(self.imu.getHeadingRate()) < 0.0001:
                 self.momentum = False
 
             if self.vz not in [0.0, None]:
