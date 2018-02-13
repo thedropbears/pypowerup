@@ -85,7 +85,7 @@ class PhysicsEngine:
 
         lift_srx = hal_data["CAN"][3]
 
-        GRAVITY = self.GRAVITY * tm_diff**2 * Lifter.COUNTS_PER_METER
+        GRAVITY = self.GRAVITY * tm_diff**2 * Lifter.COUNTS_PER_METRE
         MAX_SPEED = Lifter.FREE_SPEED * 10 * tm_diff
 
         speed = lift_srx["value"]
@@ -95,19 +95,19 @@ class PhysicsEngine:
         lift_srx['quad_position'] = int(pos + speed - GRAVITY)
         lift_srx['quad_velocity'] = int(speed)
 
-        if lift_srx['quad_position'] < Lifter.BOTTOM_HEIGHT * Lifter.COUNTS_PER_METER:
+        if lift_srx['quad_position'] < Lifter.BOTTOM_HEIGHT * Lifter.COUNTS_PER_METRE:
             lift_srx['limit_switch_closed_rev'] = True
-            lift_srx['quad_position'] = int(Lifter.BOTTOM_HEIGHT * Lifter.COUNTS_PER_METER)
+            lift_srx['quad_position'] = int(Lifter.BOTTOM_HEIGHT * Lifter.COUNTS_PER_METRE)
         else:
             lift_srx['limit_switch_closed_rev'] = False
 
-        if lift_srx['quad_position'] == Lifter.SWITCH * Lifter.COUNTS_PER_METER:
+        if lift_srx['quad_position'] == Lifter.SWITCH * Lifter.COUNTS_PER_METRE:
             center_switch["value"] = False
 
-        if lift_srx['quad_position'] == Lifter.BALANCED_SCALE * Lifter.COUNTS_PER_METER:
+        if lift_srx['quad_position'] == Lifter.BALANCED_SCALE * Lifter.COUNTS_PER_METRE:
             top_switch["value"] = False
 
-        lift_srx['quad_position'] = int(min(lift_srx['quad_position'], Lifter.TOP_HEIGHT*Lifter.COUNTS_PER_METER))
+        lift_srx['quad_position'] = int(min(lift_srx['quad_position'], Lifter.TOP_HEIGHT*Lifter.COUNTS_PER_METRE))
 
 
 def better_four_motor_swerve_drivetrain(module_speeds, module_angles, module_x_offsets, module_y_offsets):

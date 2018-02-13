@@ -134,7 +134,7 @@ class Robot(magicbot.MagicRobot):
         if self.lifter.set_pos is not None:
             self.sd.putNumber("lift/set_pos", self.lifter.set_pos)
         self.sd.putNumber("lift/pos", self.lifter.get_pos())
-        self.sd.putNumber("lift/velocity", self.lifter.motor.getSelectedSensorVelocity(0) / self.lifter.COUNTS_PER_METER)
+        self.sd.putNumber("lift/velocity", self.lifter.motor.getSelectedSensorVelocity(0) / self.lifter.COUNTS_PER_METRE)
         self.sd.putNumber("lift/current", self.lifter.motor.getOutputCurrent())
 
 
