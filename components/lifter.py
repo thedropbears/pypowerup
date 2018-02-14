@@ -13,8 +13,8 @@ class Lifter:
     TEETH_DISTANCE = 0.005
     COUNTS_PER_METRE = COUNTS_PER_REV / (NUM_TEETH * TEETH_DISTANCE) / 2  # for height of dolly
 
-    MOTOR_FREE_SPEED = 5310 / 600  # RPM to rotations/100ms
-    GEAR_RATIO = 1 / 6
+    MOTOR_FREE_SPEED = 5840 / 600  # RPM to rotations/100ms
+    GEAR_RATIO = 1 / 14
     FREE_SPEED = int(MOTOR_FREE_SPEED * GEAR_RATIO * COUNTS_PER_REV)  # counts/100ms
 
     TOP_HEIGHT = 2  # in m
@@ -56,11 +56,11 @@ class Lifter:
         # TODO tune motion profiling
         self.motor.selectProfileSlot(0, 0)
         self.motor.config_kF(0, 1023/self.FREE_SPEED, timeoutMs=10)
-        self.motor.config_kP(0, 0.5, timeoutMs=10)
-        self.motor.config_kI(0, 0.0005, timeoutMs=10)
-        self.motor.config_kD(0, 0.05, timeoutMs=10)
+        self.motor.config_kP(0, 0.7, timeoutMs=10)
+        self.motor.config_kI(0, 0, timeoutMs=10)
+        self.motor.config_kD(0, 0.1, timeoutMs=10)
 
-        self.motor.configMotionAcceleration(self.FREE_SPEED // 5, timeoutMs=10)
+        self.motor.configMotionAcceleration(int(self.FREE_SPEED*0.75), timeoutMs=10)
         self.motor.configMotionCruiseVelocity(self.FREE_SPEED, timeoutMs=10)
 
     def on_enable(self):
