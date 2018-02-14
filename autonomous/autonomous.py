@@ -30,8 +30,6 @@ class OverallBase(AutonomousStateMachine):
     intake_automation: IntakeAutomation
     lifter_automation: LifterAutomation
 
-    cube_switch: wpilib.DigitalInput  # the switch used to confirm cube capture during early testing
-
     START_Y_COORDINATE = 3
 
     CROSS_POINT_SPEED = 3
