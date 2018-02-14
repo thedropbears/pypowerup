@@ -1,43 +1,42 @@
 import math
 
-import wpilib
 from robotpy_ext.common_drivers.navx.ahrs import AHRS
-from robotpy_ext.common_drivers.navx.registerio_spi import RegisterIO_SPI
-
-from utilities.functions import constrain_angle
+from wpilib.interfaces import PIDSource
 
 
-class NavX(AHRS):
+class NavX:
+    """Wrapper around RobotPy NavX to be compatible with our BNO055 driver."""
 
-    def getAngle(self):
-        raw = super().getAngle()
-        return constrain_angle(-math.radians(raw))
+    PIDSourceType = PIDSource.PIDSourceType
+
+    def __init__(self):
+        self.ahrs = AHRS.create_spi(update_rate_hz=100)
+        self.pidsource = self.PIDSourceType.kDisplacement
+
+    def getAngle(self) -> float:
+        """Get NavX angle.
+
+        Returns:
+            Angle in radians between -pi and +pi.
+        """
+        raw = self.ahrs.getYaw()
+        return -math.radians(raw)
 
     def resetHeading(self):
-        self.reset()
+        self.ahrs.reset()
 
     def getHeadingRate(self):
-        return math.radians(-self.getRate())
+        # multiply by 100 because NavX does not normalise per timestep
+        return math.radians(-self.ahrs.getRate()) * 100
 
-    # fix broken create_spi
-    @classmethod
-    def create_spi(cls, port=wpilib.SPI.Port.kMXP, spi_bitrate=None, update_rate_hz=None):
-        """Constructs the AHRS class using SPI communication, overriding the
-        default update rate with a custom rate which may be from 4 to 100,
-        representing the number of updates per second sent by the sensor.
+    def pidGet(self):
+        if self.pidsource == self.PIDSourceType.kDisplacement:
+            return self.getAngle()
+        else:
+            return self.getHeadingRate()
 
-        This constructor allows the specification of a custom SPI bitrate, in bits/second.
+    def setPIDSourceType(self, pidsourcetype):
+        self.pidsource = pidsourcetype
 
-        .. note:: Increasing the update rate may increase the CPU utilization.
-
-        :param port: SPI Port to use
-        :type port: :class:`.SPI.Port`
-        :param spi_bitrate: SPI bitrate (Maximum:  2,000,000)
-        :param update_rate_hz: Custom Update Rate (Hz)
-        """
-
-        io = RegisterIO_SPI(port, spi_bitrate)
-        return cls(io, update_rate_hz)
-
-    def getYaw(self):
-        return -math.radians(super().getYaw())
+    def getPIDSourceType(self):
+        return self.pidsource
