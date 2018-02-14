@@ -10,7 +10,6 @@ class Intake:
     intake_kicker: wpilib.Solenoid
     extension_arms: wpilib.Solenoid
     infrared: SharpIRGP2Y0A41SK0F
-    cube_switch: wpilib.DigitalInput
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
