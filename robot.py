@@ -68,7 +68,7 @@ class Robot(magicbot.MagicRobot):
         self.extension_arms = wpilib.Solenoid(3)
         self.infrared = SharpIRGP2Y0A41SK0F(0)
         self.lift_motor = ctre.WPI_TalonSRX(0)
-        self.cube_switch = wpilib.DigitalInput(1)
+        self.cube_switch = wpilib.DigitalInput(0)
 
         self.lifter_motor = ctre.WPI_TalonSRX(3)
         self.centre_switch = wpilib.DigitalInput(1)
