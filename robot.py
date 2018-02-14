@@ -16,7 +16,6 @@ from pyswervedrive.swervemodule import SwerveModule
 from utilities.navx import NavX
 from utilities.functions import rescale_js
 from robotpy_ext.common_drivers.distance_sensors import SharpIRGP2Y0A41SK0F
-
 from networktables import NetworkTables
 import math
 
@@ -68,7 +67,8 @@ class Robot(magicbot.MagicRobot):
         self.intake_kicker = wpilib.Solenoid(1)
         self.extension_arms = wpilib.Solenoid(3)
         self.infrared = SharpIRGP2Y0A41SK0F(0)
-        self.cube_switch = wpilib.DigitalInput(0)
+        self.lift_motor = ctre.WPI_TalonSRX(0)
+        self.cube_switch = wpilib.DigitalInput(1)
 
         self.lifter_motor = ctre.WPI_TalonSRX(3)
         self.centre_switch = wpilib.DigitalInput(1)
@@ -80,6 +80,8 @@ class Robot(magicbot.MagicRobot):
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)
         self.gamepad = wpilib.XboxController(1)
+
+        self.sd = NetworkTables.getTable("SmartDashboard")
 
         self.spin_rate = 5
 
@@ -142,6 +144,8 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("lift/pos", self.lifter.get_pos())
         self.sd.putNumber("lift/velocity", self.lifter.motor.getSelectedSensorVelocity(0) / self.lifter.COUNTS_PER_METRE)
         self.sd.putNumber("lift/current", self.lifter.motor.getOutputCurrent())
+        self.sd.putNumber("infrared_distance", self.intake.infrared_distance())
+        self.sd.putBoolean("seeing_cube", self.intake.seeing_cube())
 
 
 if __name__ == '__main__':

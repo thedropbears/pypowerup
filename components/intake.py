@@ -54,6 +54,8 @@ class Intake:
         else:
             self.extension_arms.set(False)
 
+        self.seeing_cube()
+
     def rotate(self, value):
         """Turns intake mechanism on."""
         self.motor_on = value
@@ -72,18 +74,16 @@ class Intake:
 
     def infrared_distance(self):
         """Gets the distance of the infrared sensor in mm"""
-        self.cube_distance = self.infrared.getDistance()
-        self.cube_distance * 10
+        self.cube_distance = self.infrared.getDistance() / 100
+        return self.cube_distance
 
-    def cube_inside(self):
+    def seeing_cube(self):
         """Run when the limit switch is pressed and when the current
         output is above a threshold, which stops the motors."""
-        # if not self.cube_switch.get():
-        # print("limit switch pressed")
-        # return True
-        # if 100 <= self.cube_distance <= 150:
-        # return True
-        # return False
+        if 0.1 <= self.cube_distance <= 0.15:
+            return True
+        else:
+            return False
 
     def contacting_cube(self):
         """Returns True of the current output of the motor is above 3"""

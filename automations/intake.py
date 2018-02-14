@@ -27,7 +27,7 @@ class IntakeAutomation(StateMachine):
     def intake_cube(self, state_tm):
         """Starts the intake motors while waiting for the cube be seen by the
         infrared sensor"""
-        if self.intake.contacting_cube() and state_tm > 0.5:
+        if self.intake.seeing_cube() and state_tm > 0.5:
             self.intake.intake_clamp(False)
             self.next_state("pulling_in_cube")
         else:
@@ -48,7 +48,7 @@ class IntakeAutomation(StateMachine):
     @state(must_finish=True)
     def deposit(self):
         """Deposit cube."""
-        if self.intake.contacting_cube():
+        if self.intake.seeing_cube():
             self.next_state("push_out_cube")
         else:
             self.intake.rotate(1)
@@ -61,7 +61,7 @@ class IntakeAutomation(StateMachine):
         self.intake.extension(False)
         self.intake.intake_push(False)
 
-    @timed_state(must_finish=True, duration=0.3, next_state="reset_containment")
+    @timed_state(must_finish=True, duration=0.4, next_state="reset_containment")
     def eject_cube(self):
         self.intake.intake_clamp(False)
         self.intake.intake_push(True)
