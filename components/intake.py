@@ -57,36 +57,35 @@ class Intake:
         self.seeing_cube()
 
     def rotate(self, value):
-        """Turns intake mechanism on."""
+        """Turns the intake motors on or off."""
         self.motor_on = value
 
     def intake_clamp(self, value):
-        """Turns intake arm on or off"""
+        """Turns intake clamp on or off."""
         self.clamp_on = value
 
     def intake_push(self, value):
-        """Turns the pushing pneumatic on or off"""
+        """Turns the pushing pneumatic on or off."""
         self.push_on = value
 
     def extension(self, value):
-        """Turns both pneumatic extensions on or off"""
+        """Turns the extension pneumatics on or off."""
         self.extension_on = value
 
     def infrared_distance(self):
-        """Gets the distance of the infrared sensor in mm"""
+        """Gets the distance of the infrared sensor in m."""
         self.cube_distance = self.infrared.getDistance() / 100
         return self.cube_distance
 
     def seeing_cube(self):
-        """Run when the limit switch is pressed and when the current
-        output is above a threshold, which stops the motors."""
+        """Returns True when the infrared sensor reads between 0.1m to 0.15m."""
         if 0.1 <= self.cube_distance <= 0.15:
             return True
         else:
             return False
 
     def contacting_cube(self):
-        """Returns True of the current output of the motor is above 3"""
+        """Returns True of the current output of the motor is above 5."""
         if self.intake_left.getOutputCurrent() >= 5:
             return True
         else:
