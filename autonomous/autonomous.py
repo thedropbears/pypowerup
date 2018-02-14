@@ -99,6 +99,11 @@ class OverallBase(AutonomousStateMachine):
         if initial_call:
             self.intake_automation.engage(initial_state='intake_cube')
 
+        if not self.intake_automation.is_executing:
+            print("Intaken cube, going to next objective")
+            self.next_state_now('next_objective')
+            return
+
         vision_angle = self.vision.largest_cube()
         heading = self.imu.getAngle()
         if vision_angle is None:
@@ -123,8 +128,6 @@ class OverallBase(AutonomousStateMachine):
         vx = speed*math.cos(absolute_cube_direction)
         vy = speed*math.sin(absolute_cube_direction)
         self.chassis.set_velocity_heading(vx, vy, absolute_cube_direction)
-        if not self.intake_automation.is_executing:
-            self.next_state_now('next_objective')
 
     @state
     def go_to_scale(self, initial_call):
@@ -135,6 +138,7 @@ class OverallBase(AutonomousStateMachine):
                 self.current_waypoint,
                 self.SCALE_DEPOSIT+[0, 0]
                 ])
+            self.lifter_automation.engage(initial_state='move_upper_scale')
         if not self.motion.enabled:
             self.next_state_now('deposit_scale')
 
@@ -145,8 +149,9 @@ class OverallBase(AutonomousStateMachine):
             self.chassis.set_inputs(0, 0, 0)
             self.cube_number += 1
             self.cube_inside = False
-        # if not self.intake_automation.is_executing:
-        if True:
+            self.intake_automation.engage(initial_state='eject_cube')
+        if not self.intake_automation.is_executing:
+            self.lifter.reset()
             self.next_state_now('nav_to_cube')
 
     @property
@@ -255,6 +260,7 @@ class SwitchScaleBase(OverallBase):
                 self.current_waypoint,
                 self.SWITCH_DEPOSIT+[self.SWITCH_DEPOSIT_ORIENTATION, 0]
                 ])
+            self.lifter_automation.engage(initial_state='move_switch')
         if not self.motion.enabled:
             self.next_state_now('deposit_switch')
 
@@ -274,8 +280,9 @@ class SwitchScaleBase(OverallBase):
             self.intake_automation.engage(initial_state='deposit')
             self.cube_number += 1
             self.cube_inside = False
-        # if not self.intake_automation.is_executing:
-        if True:
+            self.intake_automation.engage(initial_state='eject_cube')
+        if not self.intake_automation.is_executing:
+            self.lifter.reset()
             if self.current_side == self.fms_scale:
                 self.next_state_now('nav_to_cube')
             else:
