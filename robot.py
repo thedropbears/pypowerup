@@ -16,7 +16,6 @@ from pyswervedrive.swervemodule import SwerveModule
 from utilities.navx import NavX
 from utilities.functions import rescale_js
 from robotpy_ext.common_drivers.distance_sensors import SharpIRGP2Y0A41SK0F
-
 from networktables import NetworkTables
 import math
 
@@ -68,7 +67,6 @@ class Robot(magicbot.MagicRobot):
         self.intake_kicker = wpilib.Solenoid(1)
         self.extension_arms = wpilib.Solenoid(3)
         self.infrared = SharpIRGP2Y0A41SK0F(0)
-        self.cube_switch = wpilib.DigitalInput(0)
 
         self.lifter_motor = ctre.WPI_TalonSRX(3)
         self.centre_switch = wpilib.DigitalInput(1)
@@ -101,10 +99,16 @@ class Robot(magicbot.MagicRobot):
         This is run each iteration of the control loop before magicbot components are executed.
         """
 
-        if self.gamepad.getBButtonPressed():
+        if self.joystick.getRawButtonPressed(3):
             self.intake_automation.engage(initial_state="intake_cube")
 
-        if self.gamepad.getAButtonPressed():
+        if self.joystick.getRawButtonPressed(4):
+            self.intake_automation.engage(initial_state='eject_cube')
+
+        if self.joystick.getRawButtonPressed(5):
+            self.intake_automation.engage(initial_state="stop", force=True)
+
+        if self.joystick.getRawButtonPressed(6):
             self.intake_automation.engage(initial_state="deposit")
 
         if self.joystick.getRawButtonPressed(10):
@@ -136,6 +140,8 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("lift/pos", self.lifter.get_pos())
         self.sd.putNumber("lift/velocity", self.lifter.motor.getSelectedSensorVelocity(0) / self.lifter.COUNTS_PER_METRE)
         self.sd.putNumber("lift/current", self.lifter.motor.getOutputCurrent())
+        self.sd.putNumber("infrared_distance", self.intake.infrared_distance())
+        self.sd.putBoolean("seeing_cube", self.intake.seeing_cube())
 
 
 if __name__ == '__main__':
