@@ -3,4 +3,6 @@
     to test basic functionality of just about any robot.
 '''
 
-from pyfrc.tests import *
+# We deliberately avoid importing test_autonomous here,
+# because we already test all our autonomous modes (see auto_test.py).
+from pyfrc.tests import test_disabled, test_operator_control, test_practice, test_fuzz
