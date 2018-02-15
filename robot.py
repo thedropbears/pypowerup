@@ -61,8 +61,8 @@ class Robot(magicbot.MagicRobot):
             x_pos=0.25, y_pos=-0.31,
             drive_free_speed=Robot.module_drive_free_speed)
 
-        self.intake_left = ctre.WPI_TalonSRX(14)
-        self.intake_right = ctre.WPI_TalonSRX(2)
+        self.intake_left_motor = ctre.WPI_TalonSRX(14)
+        self.intake_right_motor = ctre.WPI_TalonSRX(2)
         self.clamp_arm = wpilib.Solenoid(0)
         self.intake_kicker = wpilib.Solenoid(1)
         self.extension_arms = wpilib.Solenoid(3)
@@ -87,10 +87,6 @@ class Robot(magicbot.MagicRobot):
         '''Called when teleop starts; optional'''
         self.motion.enabled = False
         self.chassis.set_inputs(0, 0, 0)
-
-        self.intake.intake_clamp(False)
-        self.intake.intake_push(False)
-        self.intake.extension(True)
 
     def teleopPeriodic(self):
         """
@@ -140,8 +136,8 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("lift/pos", self.lifter.get_pos())
         self.sd.putNumber("lift/velocity", self.lifter.motor.getSelectedSensorVelocity(0) / self.lifter.COUNTS_PER_METRE)
         self.sd.putNumber("lift/current", self.lifter.motor.getOutputCurrent())
-        self.sd.putNumber("infrared_distance", self.intake.infrared_distance())
-        self.sd.putBoolean("seeing_cube", self.intake.seeing_cube())
+        self.sd.putNumber("infrared_distance", self.intake.get_cube_distance())
+        self.sd.putBoolean("seeing_cube", self.intake.is_seeing_cube())
 
 
 if __name__ == '__main__':
