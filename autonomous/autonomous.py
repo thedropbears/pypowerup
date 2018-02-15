@@ -101,7 +101,7 @@ class OverallBase(AutonomousStateMachine):
 
         if not self.intake_automation.is_executing:
             print("Intaken cube, going to next objective")
-            self.next_state_now('next_objective')
+            self.next_objective()
             return
 
         vision_angle = self.vision.largest_cube()
@@ -178,7 +178,6 @@ class DoubleScaleBase(OverallBase):
         if not self.motion.enabled:
             self.next_state_now("go_to_scale")
 
-    @state
     def next_objective(self):
         self.next_state_now('go_to_scale')
 
@@ -264,7 +263,6 @@ class SwitchScaleBase(OverallBase):
         if not self.motion.enabled:
             self.next_state_now('deposit_switch')
 
-    @state
     def next_objective(self):
         self.cube_inside = True
         if self.done_switch:
