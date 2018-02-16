@@ -63,10 +63,10 @@ class Intake:
         """Get the distance of the infrared sensor in m."""
         return self.infrared.getDistance() / 100
 
-    def is_seeing_cube(self) -> bool:
-        """Check whether the infrared sensor reads between 0.1m to 0.15m."""
+    def is_cube_contained(self) -> bool:
+        """Check whether a cube is in the containment mechanism."""
         return 0.1 <= self.get_cube_distance() <= 0.15
 
-    def is_contacting_cube(self) -> bool:
+    def are_wheels_contacting_cube(self) -> bool:
         """Check whether the intake wheels are touching the cube."""
         return self.left_motor.getOutputCurrent() >= 5

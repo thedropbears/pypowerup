@@ -18,13 +18,13 @@ class IntakeAutomation(StateMachine):
 
     @state(first=True, must_finish=True)
     def intake_cube(self, state_tm):
-        """Start the intake motors and wait for the infrared sensor to see the cube."""
-        if self.intake.is_seeing_cube() and state_tm > 0.5:
-            self.intake.clamp(False)
+        """Start the intake motors and wait for the cube to fall into the containment mechanism."""
+        self.intake.rotate(-1)
+        self.intake.extend(True)
+        self.intake.clamp(False)
+        self.intake.push(False)
+        if self.intake.is_cube_contained() and state_tm > 0.5:
             self.next_state("pulling_in_cube")
-        else:
-            self.intake.rotate(-1)
-            self.intake.extend(True)
 
     @timed_state(must_finish=True, duration=1, next_state="grab_cube")
     def pulling_in_cube(self):
@@ -40,12 +40,11 @@ class IntakeAutomation(StateMachine):
     @state(must_finish=True)
     def deposit(self):
         """Deposit cube."""
-        if self.intake.is_seeing_cube():
+        self.intake.rotate(1)
+        self.intake.push(True)
+        self.intake.clamp(False)
+        if not self.intake.is_cube_contained():
             self.next_state("push_out_cube")
-        else:
-            self.intake.rotate(1)
-            self.intake.push(True)
-            self.intake.clamp(False)
 
     @timed_state(must_finish=True, duration=1, next_state="stop")
     def push_out_cube(self):
