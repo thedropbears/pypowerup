@@ -1,4 +1,5 @@
 import ctre
+import magicbot
 import wpilib
 from robotpy_ext.common_drivers.distance_sensors import SharpIRGP2Y0A41SK0F
 
@@ -11,12 +12,13 @@ class Intake:
     extension_arms: wpilib.Solenoid
     infrared: SharpIRGP2Y0A41SK0F
 
+    arms_out = magicbot.tunable(False, doc='Whether the arms are outside of the starting configuration.')
+
     def __init__(self):
         self.motor_output = 0
         self.clamp_on = False
         self.push_on = False
         self.extension_on = False
-        self.arms_out = False
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
