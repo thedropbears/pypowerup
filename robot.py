@@ -66,7 +66,7 @@ class Robot(magicbot.MagicRobot):
         self.clamp_arm = wpilib.Solenoid(2)
         self.intake_kicker = wpilib.Solenoid(3)
         self.left_extension = wpilib.Solenoid(6)
-        self.right_extension = wpilib.DoubleSolenoid(forwardChannel=4, reverseChannel=5)
+        self.right_extension = wpilib.DoubleSolenoid(forwardChannel=5, reverseChannel=4)
         self.left_infrared = SharpIRGP2Y0A41SK0F(0)
         self.right_infrared = SharpIRGP2Y0A41SK0F(1)
 
@@ -97,6 +97,12 @@ class Robot(magicbot.MagicRobot):
         This is run each iteration of the control loop before magicbot components are executed.
         """
 
+        if self.joystick.getRawButtonPressed(12):
+            self.intake.clamp_on = not self.intake.clamp_on
+
+        if self.joystick.getRawButtonPressed(11):
+            self.intake.push_on = not self.intake.push_on
+
         if self.joystick.getRawButtonPressed(3):
             self.intake_automation.engage(initial_state="intake_cube")
 
@@ -120,6 +126,9 @@ class Robot(magicbot.MagicRobot):
 
         if self.gamepad.getYButtonPressed():
             self.lifter_automation.engage(initial_state="move_switch", force=True)
+
+        if self.gamepad.getBackButtonPressed():
+            self.lifter.reset()
 
         if self.joystick.getRawButtonPressed(10):
             self.chassis.odometry_x = 0.0
