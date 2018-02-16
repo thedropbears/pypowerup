@@ -21,7 +21,7 @@ class Lifter:
     BOTTOM_HEIGHT = 0
     THRESHOLD = 0.005
 
-    HEIGHT_FROM_FLOOR = 0.2585  # height from floor to initial lift pos when reset in m
+    HEIGHT_FROM_FLOOR = 0.17  # height from floor to initial lift pos when reset in m
     CONTAINMENT_SIZE = 0  # height needed for the mechanism to work properly in m
 
     UPPER_SCALE = 1.8288 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE  # in m
@@ -60,7 +60,7 @@ class Lifter:
         self.motor.config_kI(0, 0, timeoutMs=10)
         self.motor.config_kD(0, 0.1, timeoutMs=10)
 
-        self.motor.configMotionAcceleration(int(self.FREE_SPEED*0.75), timeoutMs=10)
+        self.motor.configMotionAcceleration(int(self.FREE_SPEED)*2, timeoutMs=10)
         self.motor.configMotionCruiseVelocity(self.FREE_SPEED, timeoutMs=10)
 
     def on_enable(self):
