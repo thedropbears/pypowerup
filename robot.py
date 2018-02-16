@@ -136,8 +136,6 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("lift/pos", self.lifter.get_pos())
         self.sd.putNumber("lift/velocity", self.lifter.motor.getSelectedSensorVelocity(0) / self.lifter.COUNTS_PER_METRE)
         self.sd.putNumber("lift/current", self.lifter.motor.getOutputCurrent())
-        self.sd.putNumber("infrared_distance", self.intake.get_cube_distance())
-        self.sd.putBoolean("seeing_cube", self.intake.is_cube_contained())
 
 
 if __name__ == '__main__':

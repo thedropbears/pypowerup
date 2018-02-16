@@ -61,6 +61,7 @@ class Intake:
         """Turn the extension pneumatics on or off."""
         self.extension_on = value
 
+    @magicbot.feedback
     def get_cube_distance(self) -> float:
         """Get the distance of the infrared sensor in m."""
         return self.infrared.getDistance() / 100
