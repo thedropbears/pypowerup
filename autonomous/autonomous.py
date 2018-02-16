@@ -40,13 +40,16 @@ class OverallBase(AutonomousStateMachine):
     # Coordinates of various objectives no the field
     # Default to those for LEFT HAND SIDE of the field
     SCALE_DEPOSIT = [7.6-Robot.length / 2, 1.8]
+    CUBE_PICKUP_1 = [5+Robot.length / 2, 1.4]
+    CUBE_PICKUP_2 = [5+Robot.length / 2, 1.1]
+    SWITCH_DEPOSIT = [5+Robot.length / 2, 1.2]
 
-    SWITCH_DEPOSIT = [5+Robot.length / 2, 1.68]
+    # SWITCH_DEPOSIT = [5+Robot.length / 2, 1.68]
     SWITCH_DEPOSIT_ORIENTATION = math.pi
 
     CUBE_PICKUP_ORIENTATION = math.pi
-    CUBE_PICKUP_1 = [5+Robot.length / 2, 1.85]
-    CUBE_PICKUP_2 = [5+Robot.length / 2, 1.1]
+    # CUBE_PICKUP_1 = [5+Robot.length / 2, 1.85]
+    # CUBE_PICKUP_2 = [5+Robot.length / 2, 1.1]
 
     PICKUP_WAYPOINT = [5.4+Robot.length / 2, 1.8]
     CROSS_POINT = [5.4+Robot.length / 2, 1.8]
@@ -312,7 +315,6 @@ class LeftSwitchScale(SwitchScaleBase):
 
 
 class RightSwitchScale(SwitchScaleBase):
-    DEFAULT = True
     MODE_NAME = 'Right Switch & Scale'
 
     def on_enable(self):
