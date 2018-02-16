@@ -63,10 +63,12 @@ class Robot(magicbot.MagicRobot):
 
         self.intake_left_motor = ctre.WPI_TalonSRX(14)
         self.intake_right_motor = ctre.WPI_TalonSRX(2)
-        self.clamp_arm = wpilib.Solenoid(0)
-        self.intake_kicker = wpilib.Solenoid(1)
-        self.extension_arms = wpilib.Solenoid(3)
-        self.infrared = SharpIRGP2Y0A41SK0F(0)
+        self.clamp_arm = wpilib.Solenoid(2)
+        self.intake_kicker = wpilib.Solenoid(3)
+        self.left_extension = wpilib.Solenoid(6)
+        self.right_extension = wpilib.DoubleSolenoid(forwardChannel=4, reverseChannel=5)
+        self.left_infrared = SharpIRGP2Y0A41SK0F(0)
+        self.right_infrared = SharpIRGP2Y0A41SK0F(1)
 
         self.lifter_motor = ctre.WPI_TalonSRX(3)
         self.centre_switch = wpilib.DigitalInput(1)
@@ -99,13 +101,13 @@ class Robot(magicbot.MagicRobot):
             self.intake_automation.engage(initial_state="intake_cube")
 
         if self.joystick.getRawButtonPressed(4):
-            self.intake_automation.engage(initial_state='eject_cube')
+            self.intake_automation.engage(initial_state="eject_cube")
 
         if self.joystick.getRawButtonPressed(5):
             self.intake_automation.engage(initial_state="stop", force=True)
 
         if self.joystick.getRawButtonPressed(6):
-            self.intake_automation.engage(initial_state="deposit")
+            self.intake_automation.engage(initial_state="exchange")
 
         if self.joystick.getRawButtonPressed(10):
             self.chassis.odometry_x = 0.0

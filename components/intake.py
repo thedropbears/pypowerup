@@ -9,8 +9,10 @@ class Intake:
     right_motor: ctre.WPI_TalonSRX
     clamp_arm: wpilib.Solenoid
     intake_kicker: wpilib.Solenoid
-    extension_arms: wpilib.Solenoid
-    infrared: SharpIRGP2Y0A41SK0F
+    left_extension: wpilib.Solenoid
+    left_infrared: SharpIRGP2Y0A41SK0F
+    right_infrared: SharpIRGP2Y0A41SK0F
+    right_extension: wpilib.DoubleSolenoid
 
     arms_out = magicbot.tunable(False, doc='Whether the arms are outside of the starting configuration.')
 
@@ -19,6 +21,7 @@ class Intake:
         self.clamp_on = False
         self.push_on = False
         self.extension_on = False
+        self.extension_double = False
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
@@ -38,7 +41,9 @@ class Intake:
         self.left_motor.set(self.motor_output)
         self.clamp_arm.set(self.clamp_on)
         self.intake_kicker.set(self.push_on)
-        self.extension_arms.set(self.extension_on)
+        self.left_extension.set(self.extension_on)
+        self.extension_double = wpilib.DoubleSolenoid.Value.kForward if self.extension_on else wpilib.DoubleSolenoid.Value.kReverse
+        self.right_extension.set(self.extension_double)
 
         # Don't run the motors unless something else commands us to.
         self.motor_output = 0
@@ -64,11 +69,13 @@ class Intake:
     @magicbot.feedback
     def get_cube_distance(self) -> float:
         """Get the distance of the infrared sensor in m."""
-        return self.infrared.getDistance() / 100
+        return [self.left_infrared.getDistance() / 100,
+                self.right_infrared.getDistance() / 100]
 
     def is_cube_contained(self) -> bool:
         """Check whether a cube is in the containment mechanism."""
-        return 0.1 <= self.get_cube_distance() <= 0.15
+        cube_dist = self.get_cube_distance()
+        return 0.1 <= cube_dist[0] <= 0.15 or 0.1 <= cube_dist[1] <= 0.15
 
     def are_wheels_contacting_cube(self) -> bool:
         """Check whether the intake wheels are touching the cube."""

@@ -38,8 +38,7 @@ class IntakeAutomation(StateMachine):
         self.next_state("stop")
 
     @state(must_finish=True)
-    def deposit(self):
-        """Deposit cube."""
+    def exchange(self):
         self.intake.rotate(1)
         self.intake.push(True)
         self.intake.clamp(False)
