@@ -39,7 +39,7 @@ class Intake:
     def execute(self):
         """Run at the end of every control loop iteration."""
         self.left_motor.set(self.motor_output)
-        self.clamp_arm.set(self.clamp_on)
+        self.clamp_arm.set(not self.clamp_on)
         self.intake_kicker.set(self.push_on)
         self.left_extension.set(self.extension_on)
         self.extension_double = wpilib.DoubleSolenoid.Value.kForward if self.extension_on else wpilib.DoubleSolenoid.Value.kReverse
