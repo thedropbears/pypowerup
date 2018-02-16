@@ -1,25 +1,29 @@
-from ctre import WPI_TalonSRX
+import ctre
+import magicbot
 import wpilib
 from robotpy_ext.common_drivers.distance_sensors import SharpIRGP2Y0A41SK0F
 
 
 class Intake:
-    intake_left: WPI_TalonSRX
-    intake_right: WPI_TalonSRX
+    left_motor: ctre.WPI_TalonSRX
+    right_motor: ctre.WPI_TalonSRX
     clamp_arm: wpilib.Solenoid
     intake_kicker: wpilib.Solenoid
     extension_arms: wpilib.Solenoid
     infrared: SharpIRGP2Y0A41SK0F
 
-    def setup(self):
-        """This is called after variables are injected by magicbot."""
-        self.intake_right.follow(self.intake_left)
-        self.intake_right.setInverted(True)
-        self.motor_on = 0
+    arms_out = magicbot.tunable(False, doc='Whether the arms are outside of the starting configuration.')
+
+    def __init__(self):
+        self.motor_output = 0
         self.clamp_on = False
         self.push_on = False
         self.extension_on = False
-        self.arms_out = False
+
+    def setup(self):
+        """This is called after variables are injected by magicbot."""
+        self.right_motor.follow(self.left_motor)
+        self.right_motor.setInverted(True)
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
@@ -31,61 +35,41 @@ class Intake:
 
     def execute(self):
         """Run at the end of every control loop iteration."""
-        if self.motor_on == 1:
-            self.intake_left.set(1)
-        elif self.motor_on == -1:
-            self.intake_left.set(-1)
-        else:
-            self.intake_left.stopMotor()
+        self.left_motor.set(self.motor_output)
+        self.clamp_arm.set(self.clamp_on)
+        self.intake_kicker.set(self.push_on)
+        self.extension_arms.set(self.extension_on)
 
-        if self.clamp_on:
-            self.clamp_arm.set(True)
-        else:
-            self.clamp_arm.set(False)
+        # Don't run the motors unless something else commands us to.
+        self.motor_output = 0
+        # We're not resetting the pneumatics outputs here, as once they
+        # have actuated, they stay actuated without drawing power.
 
-        if self.push_on:
-            self.intake_kicker.set(True)
-        else:
-            self.intake_kicker.set(False)
+    def rotate(self, value: float):
+        """Set the output of the intake motors."""
+        self.motor_output = value
 
-        if self.extension_on:
-            self.extension_arms.set(True)
-        else:
-            self.extension_arms.set(False)
-
-        self.seeing_cube()
-
-    def rotate(self, value):
-        """Turns the intake motors on or off."""
-        self.motor_on = value
-
-    def intake_clamp(self, value):
-        """Turns intake clamp on or off."""
+    def clamp(self, value: bool):
+        """Turn the intake clamp on or off."""
         self.clamp_on = value
 
-    def intake_push(self, value):
-        """Turns the pushing pneumatic on or off."""
+    def push(self, value: bool):
+        """Turn the pushing pneumatic on or off."""
         self.push_on = value
 
-    def extension(self, value):
-        """Turns the extension pneumatics on or off."""
+    def extend(self, value: bool):
+        """Turn the extension pneumatics on or off."""
         self.extension_on = value
 
-    def infrared_distance(self):
-        """Gets the distance of the infrared sensor in m."""
-        self.cube_distance = self.infrared.getDistance() / 100
-        return self.cube_distance
+    @magicbot.feedback
+    def get_cube_distance(self) -> float:
+        """Get the distance of the infrared sensor in m."""
+        return self.infrared.getDistance() / 100
 
-    def seeing_cube(self):
-        """Returns True when the infrared sensor reads between 0.1m to 0.15m."""
-        if 0.1 <= self.cube_distance <= 0.15:
-            return True
-        else:
-            return False
+    def is_cube_contained(self) -> bool:
+        """Check whether a cube is in the containment mechanism."""
+        return 0.1 <= self.get_cube_distance() <= 0.15
 
-    def contacting_cube(self):
-        """Returns True of the current output of the motor is above 5."""
-        if self.intake_left.getOutputCurrent() >= 5:
-            return True
-        else:
-            return False
+    def are_wheels_contacting_cube(self) -> bool:
+        """Check whether the intake wheels are touching the cube."""
+        return self.left_motor.getOutputCurrent() >= 5

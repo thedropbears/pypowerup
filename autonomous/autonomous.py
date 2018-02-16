@@ -9,7 +9,6 @@ from magicbot.state_machine import AutonomousStateMachine, state
 from automations.intake import IntakeAutomation
 from automations.lifter import LifterAutomation
 from automations.motion import ChassisMotion
-from components.intake import Intake
 from components.lifter import Lifter
 from components.vision import Vision
 from pyswervedrive.swervechassis import SwerveChassis
@@ -21,7 +20,6 @@ class OverallBase(AutonomousStateMachine):
     """statemachine designed to intelegently respond to possible situations in auto"""
     vision: Vision
     lifter: Lifter
-    intake: Intake
     imu: NavX
     chassis: SwerveChassis
     ds: wpilib.DriverStation
