@@ -29,7 +29,9 @@ class OverallBase(AutonomousStateMachine):
     intake_automation: IntakeAutomation
     lifter_automation: LifterAutomation
 
-    START_Y_COORDINATE = 3
+    # START_Y_COORDINATE = 3
+    # Tempoary hack - reduce the start y coord so we can fit on our practice field
+    START_Y_COORDINATE = 1.5
 
     CROSS_POINT_SPEED = 3
 
@@ -38,14 +40,17 @@ class OverallBase(AutonomousStateMachine):
     # Coordinates of various objectives no the field
     # Default to those for LEFT HAND SIDE of the field
     SCALE_DEPOSIT = [7.6-Robot.length / 2, 1.8]
-    SWITCH_DEPOSIT = [4.2, 1.9+Robot.length / 2]
-    SWITCH_DEPOSIT_ORIENTATION = -math.pi/2
-    PICKUP_WAYPOINT = [5.4, 1.8]
-    CROSS_POINT = [5.4, 1.8]
-    OPP_CROSS_POINT = [5.4, -1.8]
-    CUBE_PICKUP_ORIENTATION = -math.pi
-    CUBE_PICKUP_1 = [5, 1.7]
-    CUBE_PICKUP_2 = [5, 1.4]
+
+    SWITCH_DEPOSIT = [5+Robot.length / 2, 1.68]
+    SWITCH_DEPOSIT_ORIENTATION = math.pi
+
+    CUBE_PICKUP_ORIENTATION = math.pi
+    CUBE_PICKUP_1 = [5+Robot.length / 2, 1.85]
+    CUBE_PICKUP_2 = [5+Robot.length / 2, 1.1]
+
+    PICKUP_WAYPOINT = [5.4+Robot.length / 2, 1.8]
+    CROSS_POINT = [5.4+Robot.length / 2, 1.8]
+    OPP_CROSS_POINT = [5.4+Robot.length / 2, -1.8]
 
     def on_enable(self):
         # self.lifter.reset() do we need this?
@@ -273,7 +278,6 @@ class SwitchScaleBase(OverallBase):
         """Deposit the cube on the switch."""
         if initial_call:
             self.chassis.set_inputs(0, 0, 0)
-            self.intake_automation.engage(initial_state='deposit')
             self.cube_number += 1
             self.cube_inside = False
             self.intake_automation.engage(initial_state='eject_cube')
