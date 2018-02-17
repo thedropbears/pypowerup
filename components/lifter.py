@@ -3,6 +3,7 @@ import wpilib
 
 
 class Lifter:
+    compressor: wpilib.Compressor
     motor: ctre.WPI_TalonSRX
     centre_switch: wpilib.DigitalInput
     top_switch: wpilib.DigitalInput
@@ -24,7 +25,7 @@ class Lifter:
     HEIGHT_FROM_FLOOR = 0.17  # height from floor to initial lift pos when reset in m
     CONTAINMENT_SIZE = 0  # height needed for the mechanism to work properly in m
 
-    CUBE_HEIGHT = 0.40
+    CUBE_HEIGHT = 0.5
 
     UPPER_SCALE = 1.8288 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE + CUBE_HEIGHT  # in m
     BALANCED_SCALE = 1.524 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE + CUBE_HEIGHT
@@ -80,6 +81,11 @@ class Lifter:
             self.motor.setSelectedSensorPosition(self.metres_to_counts(self.BALANCED_SCALE), 0, timeoutMs=10)
         if self.motor.isRevLimitSwitchClosed():
             self.motor.setSelectedSensorPosition(self.metres_to_counts(self.BOTTOM_HEIGHT), 0, timeoutMs=10)
+
+        if self.set_pos is None or self.at_pos():
+            self.compressor.start()
+        else:
+            self.compressor.stop()
 
     def metres_to_counts(self, metres):
         return int(metres * self.COUNTS_PER_METRE)
