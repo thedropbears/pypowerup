@@ -29,6 +29,9 @@ class Lifter:
     LOWER_SCALE = 1.2192 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE
     SWITCH = 0.47625 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE
 
+    UPWARD_ACCELERATION = FREE_SPEED * 5
+    DOWNWARD_ACCELERATION = FREE_SPEED // 2
+
     def setup(self):
         """This is called after variables are injected by magicbot."""
         self.set_pos = None
@@ -36,10 +39,6 @@ class Lifter:
         self.motor.setQuadraturePosition(0, timeoutMs=10)
         self.motor.setInverted(True)
         self.motor.setNeutralMode(ctre.WPI_TalonSRX.NeutralMode.Brake)
-
-        self.motor.configPeakCurrentLimit(50, timeoutMs=10)
-        self.motor.configContinuousCurrentLimit(40, timeoutMs=10)
-        self.motor.enableCurrentLimit(True)
 
         self.motor.overrideLimitSwitchesEnable(False)
         self.motor.configReverseLimitSwitchSource(ctre.WPI_TalonSRX.LimitSwitchSource.FeedbackConnector, ctre.WPI_TalonSRX.LimitSwitchNormal.NormallyOpen, deviceID=0, timeoutMs=10)
@@ -58,9 +57,9 @@ class Lifter:
         self.motor.config_kF(0, 1023/self.FREE_SPEED, timeoutMs=10)
         self.motor.config_kP(0, 0.7, timeoutMs=10)
         self.motor.config_kI(0, 0, timeoutMs=10)
-        self.motor.config_kD(0, 0.1, timeoutMs=10)
+        self.motor.config_kD(0, 1, timeoutMs=10)
 
-        self.motor.configMotionAcceleration(int(self.FREE_SPEED)*2, timeoutMs=10)
+        self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=10)
         self.motor.configMotionCruiseVelocity(self.FREE_SPEED, timeoutMs=10)
 
     def on_enable(self):
@@ -98,6 +97,11 @@ class Lifter:
             input_setpos (int): Encoder position to move lift to in m.
         """
         self.set_pos = input_setpos
+        if self.set_pos - self.get_pos() < 0:
+            self.motor.configMotionAcceleration(self.DOWNWARD_ACCELERATION, timeoutMs=10)
+        else:
+            self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=10)
+
         self.motor.set(self.motor.ControlMode.MotionMagic, self.metres_to_counts(self.set_pos))
 
     def get_pos(self):
