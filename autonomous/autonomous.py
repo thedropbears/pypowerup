@@ -10,6 +10,7 @@ from automations.intake import IntakeAutomation
 from automations.lifter import LifterAutomation
 from automations.motion import ChassisMotion
 from components.lifter import Lifter
+from components.intake import Intake
 from components.vision import Vision
 from pyswervedrive.swervechassis import SwerveChassis
 from robot import Robot
@@ -20,6 +21,7 @@ class OverallBase(AutonomousStateMachine):
     """statemachine designed to intelegently respond to possible situations in auto"""
     vision: Vision
     lifter: Lifter
+    intake: Intake
     imu: NavX
     chassis: SwerveChassis
     ds: wpilib.DriverStation
@@ -29,11 +31,9 @@ class OverallBase(AutonomousStateMachine):
     intake_automation: IntakeAutomation
     lifter_automation: LifterAutomation
 
-    # START_Y_COORDINATE = 3
-    # Tempoary hack - reduce the start y coord so we can fit on our practice field
-    START_Y_COORDINATE = 1.5
+    START_Y_COORDINATE = 3
 
-    CROSS_POINT_SPEED = 3
+    CROSS_POINT_SPEED = 2
 
     PICKUP_SPEED = 2
 
@@ -44,16 +44,19 @@ class OverallBase(AutonomousStateMachine):
     CUBE_PICKUP_2 = [5+Robot.length / 2, 1.1]
     SWITCH_DEPOSIT = [5+Robot.length / 2, 1.2]
 
-    # SWITCH_DEPOSIT = [5+Robot.length / 2, 1.68]
-    SWITCH_DEPOSIT_ORIENTATION = math.pi
+    SWITCH_DEPOSIT = [5+Robot.length / 2, 1.68]
+    SWITCH_DEPOSIT_ORIENTATION = -math.pi
 
-    CUBE_PICKUP_ORIENTATION = math.pi
-    # CUBE_PICKUP_1 = [5+Robot.length / 2, 1.85]
-    # CUBE_PICKUP_2 = [5+Robot.length / 2, 1.1]
+    CUBE_PICKUP_ORIENTATION = -math.pi
+    CUBE_PICKUP_1 = [5+Robot.length / 2, 1.85]
+    CUBE_PICKUP_2 = [5+Robot.length / 2, 1.1]
 
-    PICKUP_WAYPOINT = [5.4+Robot.length / 2, 1.8]
-    CROSS_POINT = [5.4+Robot.length / 2, 1.8]
-    OPP_CROSS_POINT = [5.4+Robot.length / 2, -1.8]
+    PICKUP_WAYPOINT = [5.6+Robot.length / 2, 1.8]
+    CROSS_POINT = [5.6+Robot.length / 2, 1.8]
+    OPP_CROSS_POINT = [5.6+Robot.length / 2, -1.8]
+    # PICKUP_WAYPOINT = [5.4+Robot.length / 2, 1.4]
+    # CROSS_POINT = [5.4+Robot.length / 2, 1.0]
+    # OPP_CROSS_POINT = [5.4+Robot.length / 2, -1.0]
 
     def on_enable(self):
         # self.lifter.reset() do we need this?
@@ -71,6 +74,9 @@ class OverallBase(AutonomousStateMachine):
 
         self.cube_number = 0
 
+        self.intake.clamp(True)
+        self.intake.push(False)
+
         super().on_enable()
 
     @state
@@ -81,17 +87,18 @@ class OverallBase(AutonomousStateMachine):
                 self.cube = np.array(self.CUBE_PICKUP_1)
             elif self.cube_number >= 2:
                 self.cube = np.array(self.CUBE_PICKUP_2)
-            pickup_waypoint = self.PICKUP_WAYPOINT+[self.CUBE_PICKUP_ORIENTATION,
+            pickup_waypoint = self.PICKUP_WAYPOINT+[self.CUBE_PICKUP_ORIENTATION/2,
                                                     self.PICKUP_SPEED]
-            # position we transition to the vision system at
-            self.pickup_pos = pickup_waypoint
-            self.pickup_pos[0] = (self.pickup_pos[0]+self.cube[0])/2
-            self.pickup_pos[1] = (self.pickup_pos[1]+self.cube[1])/2
+            # # position we transition to the vision system at
+            # self.pickup_pos = pickup_waypoint
+            # self.pickup_pos[0] = (self.pickup_pos[0]+self.cube[0])/2
+            # self.pickup_pos[1] = (self.pickup_pos[1]+self.cube[1])/2
             self.motion.set_waypoints(([
                 self.current_waypoint,
                 pickup_waypoint,
-                self.pickup_pos
+                list(self.cube)+[self.CUBE_PICKUP_ORIENTATION, self.PICKUP_SPEED]
                 ]))
+            print(self.motion.waypoints)
             self.intake_automation.engage(initial_state='intake_cube')
         if not self.motion.enabled:
             self.next_state_now('pick_up_cube')
@@ -104,6 +111,7 @@ class OverallBase(AutonomousStateMachine):
 
         if initial_call:
             self.intake_automation.engage(initial_state='intake_cube')
+            self.pickup_start_pos = self.chassis.position
 
         if not self.intake_automation.is_executing:
             print("Intaken cube, going to next objective")
@@ -120,7 +128,7 @@ class OverallBase(AutonomousStateMachine):
         self.chassis.field_oriented = True
 
         # speed controller
-        segment = self.cube - self.pickup_pos
+        segment = self.cube - self.pickup_start_pos
         displacement = self.cube - self.chassis.position.reshape(2)
         total_dist = np.linalg.norm(segment)
         dist_along_segment = total_dist - np.linalg.norm(displacement)
@@ -155,7 +163,8 @@ class OverallBase(AutonomousStateMachine):
             self.chassis.set_inputs(0, 0, 0)
             self.cube_number += 1
             self.cube_inside = False
-            self.intake_automation.engage(initial_state='eject_cube')
+            self.intake_automation.engage(initial_state='eject_cube', force=True)
+            print("Ejecting Cube")
         if not self.intake_automation.is_executing:
             self.lifter.reset()
             self.next_state_now('nav_to_cube')
@@ -190,6 +199,7 @@ class DoubleScaleBase(OverallBase):
 
 class LeftDoubleScale(DoubleScaleBase):
     MODE_NAME = 'Left Double Scale'
+    DEFAULT = True
 
     def on_enable(self):
         super().on_enable()
@@ -197,7 +207,10 @@ class LeftDoubleScale(DoubleScaleBase):
         self.current_side = self.start_side
         self.cube_inside = True
 
+        self.chassis.odometry_y = self.START_Y_COORDINATE
+
         if self.fms_scale == 'R':
+            print("FMS Scale Right")
             self.SCALE_DEPOSIT[1] *= -1
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
@@ -218,6 +231,7 @@ class RightDoubleScale(DoubleScaleBase):
         self.chassis.odometry_y = -self.START_Y_COORDINATE
 
         if self.fms_scale == 'R':
+            print("FMS Scale Right")
             self.SCALE_DEPOSIT[1] *= -1
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
@@ -302,6 +316,8 @@ class LeftSwitchScale(SwitchScaleBase):
         self.current_side = self.start_side
         self.done_switch = False
         self.cube_inside = True
+
+        self.chassis.odometry_y = self.START_Y_COORDINATE
 
         if self.fms_switch == 'R':
             self.SWITCH_DEPOSIT[1] *= -1
