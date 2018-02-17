@@ -13,7 +13,7 @@ class ChassisMotion:
     imu: NavX
 
     # heading motion feedforward/back gains
-    kPh = 2  # proportional gain
+    kPh = 4  # proportional gain
     kVh = 1  # feedforward gain
     kIh = 0  # integral gain
     kDh = 0  # derivative gain
@@ -23,8 +23,8 @@ class ChassisMotion:
         self.pursuit = VectorPursuit()
 
     def setup(self):
-        # self.pursuit.set_motion_params(4, 4, -3)
-        self.pursuit.set_motion_params(2, 2, -2)
+        self.pursuit.set_motion_params(4, 4, -3)
+        # self.pursuit.set_motion_params(2, 2, -2)
 
     def set_waypoints(self, waypoints: np.ndarray):
         """ Pass as set of waypoints for the chassis to follow.
@@ -35,6 +35,7 @@ class ChassisMotion:
                 [x_in_meters, y_in_meters, orientation_in_radians, speed_in_meters]
         """
         self.waypoints = waypoints
+        print("Motion waypoints %s" % self.waypoints)
         self.pursuit.set_waypoints(waypoints)
         self.enabled = True
         self.chassis.heading_hold_on()
@@ -45,7 +46,7 @@ class ChassisMotion:
         self.current_seg_distance = np.linalg.norm(self.pursuit.segment)
         heading_end = self.waypoints[self.waypoint_idx+1][2]
         self.heading_profile = generate_trapezoidal_trajectory(self.imu.getAngle(), 0,
-                                                               heading_end, 0, 4, 6, -6, 50)
+                                                               heading_end, 0, 4, 3, -3, 50)
         self.last_heading_error = 0
 
     def disable(self):
@@ -79,6 +80,7 @@ class ChassisMotion:
                 heading_seg = self.heading_profile.pop(0)
             else:
                 heading_seg = (self.waypoints[self.waypoint_idx+1][2], 0, 0)
+            # print("Heading Seg {}".format(heading_seg))
 
             # get the current heading of the robot since last reset
             # getRawHeading has been swapped for getAngle
@@ -92,16 +94,17 @@ class ChassisMotion:
             self.heading_error_i += heading_error
             # calculate the derivative of the heading error
             d_heading_error = (heading_error - self.last_heading_error)
+            # print("Heading error %s derr %s" % (heading_error, d_heading_error))
 
             # generate the rotational output to the chassis
             heading_output = (
                 self.kPh * heading_error + self.kVh * heading_seg[1]
                 + self.heading_error_i*self.kIh + d_heading_error*self.kDh)
+            # print("Heading output %s" % heading_output)
 
             # store the current errors to be used to compute the
             # derivatives in the next timestep
             self.last_heading_error = heading_error
-
             vx = speed_sp * math.cos(direction_of_motion)
             vy = speed_sp * math.sin(direction_of_motion)
 

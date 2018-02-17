@@ -34,18 +34,22 @@ class VectorPursuit:
         self.top_accel = top_accel
         self.top_decel = top_decel
 
-    def increment_segment(self, segment=None):
+    def increment_segment(self, segment=None, start_speed=None):
         if self.segment_idx is None:
             self.segment_idx = 0
         elif segment is not None:
+            if segment == self.segment_idx:
+                return
             self.segment_idx = segment
         else:
             self.segment_idx += 1
         self.segment = (self.waypoints_xy[self.segment_idx+1]
                         - self.waypoints_xy[self.segment_idx])
-        start_speed = self.waypoints[self.segment_idx][3]
+        if start_speed is None:
+            start_speed = self.waypoints[self.segment_idx][3]
         end_speed = self.waypoints[self.segment_idx+1][3]
         seg_length = np.linalg.norm(self.segment)
+        print("NEW SEGMENT Start speed {} top_speed {} end_speed {} length {}".format(start_speed, self.top_speed, end_speed, seg_length))
         self.speed_function = generate_trapezoidal_function(
                 0, start_speed, seg_length, end_speed,
                 self.top_speed, self.top_accel, self.top_decel)
@@ -109,16 +113,19 @@ class VectorPursuit:
             look_ahead_waypoint += 1
 
         before_increment = self.segment_idx
-        self.increment_segment(look_ahead_waypoint)
+        self.increment_segment(look_ahead_waypoint, start_speed=speed)
         next_seg = False
         if not before_increment == self.segment_idx:
             next_seg = True
 
-        segment_normalised = self.segment / np.linalg.norm(self.segment)
-
         # calculate angle of look ahead from oreintation
         new_x, new_y = look_ahead_point - position
         theta = math.atan2(new_y, new_x)
+
+        segment_normalised = self.segment / np.linalg.norm(self.segment)
+
+        print("VP Position {}, LAH {}, speed {}, heading {}, idx {}, traj {}".format(position, look_ahead_point, speed_sp, theta,
+                                                                                     self.waypoints, self.segment_idx))
 
         over = False
 

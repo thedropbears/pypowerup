@@ -123,10 +123,13 @@ def generate_trapezoidal_function(
     decel_dist = x_final - x_decel
     decel_mag = v_max - v_final
 
+    v_diff = v_max - v_start
+
     def get_speed(distance):
         if distance < x_cruise:
             accel_proportion = (distance / x_cruise)
-            target_v = (v_max * accel_proportion
+            target_v = (v_diff * accel_proportion
+                        + v_start
                         # factor that decays as we accelerate. Used to jump start
                         # acceleration from 0 speed.
                         + (1-accel_proportion) * direction * 0.4)
