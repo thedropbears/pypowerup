@@ -1,4 +1,5 @@
 import ctre
+import magicbot
 import wpilib
 
 
@@ -100,13 +101,15 @@ class Lifter:
         self.set_pos = input_setpos
         self.motor.set(self.motor.ControlMode.MotionMagic, self.metres_to_counts(self.set_pos))
 
-    def get_pos(self):
-        """Returns encoder position on lift
-
-       Returns:
-            int: The location of the lift
-        """
+    @magicbot.feedback
+    def get_pos(self) -> float:
+        """Get the current height of the lift."""
         return self.motor.getSelectedSensorPosition(0) / self.COUNTS_PER_METRE
+
+    @magicbot.feedback
+    def get_velocity(self) -> float:
+        """Get the current velocity of the lift."""
+        return self.motor.getSelectedSensorVelocity(0) / self.COUNTS_PER_METRE
 
     def at_pos(self):
         """Finds if cube location is at setops and within threshold
