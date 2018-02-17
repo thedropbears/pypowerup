@@ -14,17 +14,18 @@ class ChassisMotion:
     imu: NavX
 
     # heading motion feedforward/back gains
-    kPh = 3  # proportional gain
+    kPh = 2  # proportional gain
     kVh = 1  # feedforward gain
     kIh = 0  # integral gain
-    kDh = 10  # derivative gain
+    kDh = 0  # derivative gain
 
     def __init__(self):
         self.enabled = False
         self.pursuit = VectorPursuit()
 
     def setup(self):
-        self.pursuit.set_motion_params(4.0, 4, -3)
+        # self.pursuit.set_motion_params(4, 4, -3)
+        self.pursuit.set_motion_params(2, 2, -2)
 
     def set_waypoints(self, waypoints: np.ndarray):
         """ Pass as set of waypoints for the chassis to follow.
@@ -44,8 +45,8 @@ class ChassisMotion:
     def update_heading_profile(self):
         self.current_seg_distance = np.linalg.norm(self.pursuit.segment)
         heading_end = self.waypoints[self.waypoint_idx+1][2]
-        self.heading_profile = generate_trapezoidal_trajectory(self.imu.getAngle(), self.imu.getHeadingRate(),
-                                                               heading_end, 0, 3, 3, -3, 50)
+        self.heading_profile = generate_trapezoidal_trajectory(self.imu.getAngle(), 0,
+                                                               heading_end, 0, 4, 6, -6, 50)
         self.last_heading_error = 0
 
     def disable(self):
