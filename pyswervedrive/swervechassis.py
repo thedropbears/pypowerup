@@ -5,7 +5,6 @@ from wpilib.interfaces import PIDOutput
 from utilities.navx import NavX
 from pyswervedrive.swervemodule import SwerveModule
 from wpilib import SmartDashboard
-from networktables import NetworkTables
 from utilities.functions import constrain_angle
 
 
@@ -145,7 +144,6 @@ class SwerveChassis:
         SmartDashboard.putNumber('odometry_x_vel', self.odometry_x_vel)
         SmartDashboard.putNumber('odometry_y_vel', self.odometry_y_vel)
         SmartDashboard.putNumber('odometry_z_vel', self.odometry_z_vel)
-        NetworkTables.flush()
 
     def update_odometry(self):
         if self.odometry_updated:

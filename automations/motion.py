@@ -5,7 +5,6 @@ from utilities.navx import NavX
 from utilities.vector_pursuit import VectorPursuit
 from utilities.profile_generator import generate_trapezoidal_trajectory
 from wpilib import SmartDashboard
-from networktables import NetworkTables
 
 
 class ChassisMotion:
@@ -110,7 +109,6 @@ class ChassisMotion:
 
             SmartDashboard.putNumber('vector_pursuit_heading', direction_of_motion)
             SmartDashboard.putNumber('vector_pursuit_speed', speed_sp)
-            NetworkTables.flush()
 
             if over:
                 print("Motion over")
