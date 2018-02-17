@@ -108,7 +108,11 @@ class VectorPursuit:
             projected_point = segment_end
             look_ahead_waypoint += 1
 
+        before_increment = self.segment_idx
         self.increment_segment(look_ahead_waypoint)
+        next_seg = False
+        if not before_increment == self.segment_idx:
+            next_seg = True
 
         segment_normalised = self.segment / np.linalg.norm(self.segment)
 
@@ -116,7 +120,6 @@ class VectorPursuit:
         new_x, new_y = look_ahead_point - position
         theta = math.atan2(new_y, new_x)
 
-        next_seg = False
         over = False
 
         # if scale > 1 and self.segment_idx < len(self.waypoints)-2:
