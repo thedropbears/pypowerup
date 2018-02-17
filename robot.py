@@ -3,7 +3,6 @@
 import ctre
 import magicbot
 import wpilib
-import numpy as np
 from automations.intake import IntakeAutomation
 from automations.lifter import LifterAutomation
 from automations.motion import ChassisMotion
@@ -106,7 +105,7 @@ class Robot(magicbot.MagicRobot):
         if self.joystick.getRawButtonPressed(3):
             self.intake_automation.engage(initial_state="intake_cube")
 
-        if self.joystick.getRawButtonPressed(4):
+        if self.joystick.getRawButtonPressed(4) or self.gamepad.getStartButtonPressed():
             self.intake_automation.engage(initial_state="eject_cube")
 
         if self.joystick.getRawButtonPressed(5):
@@ -128,28 +127,11 @@ class Robot(magicbot.MagicRobot):
             self.lifter_automation.engage(initial_state="move_switch", force=True)
 
         if self.gamepad.getBackButtonPressed():
-            self.lifter.reset()
-
-        if self.gamepad.getAButtonPressed():
-            self.lifter_automation.engage(initial_state="move_upper_scale", force=True)
-
-        if self.gamepad.getBButtonPressed():
-            self.lifter_automation.engage(initial_state="move_balanced_scale", force=True)
-
-        if self.gamepad.getXButtonPressed():
-            self.lifter_automation.engage(initial_state="move_lower_scale", force=True)
-
-        if self.gamepad.getYButtonPressed():
-            self.lifter_automation.engage(initial_state="move_switch", force=True)
+            self.lifter_automation.engage(initial_state="reset", force=True)
 
         if self.joystick.getRawButtonPressed(10):
-            self.chassis.odometry_x = 0.0
-            self.chassis.odometry_y = 0.0
-            self.motion.set_waypoints(np.array(
-                [[0, 0, 0, 1], [1, 0, 0, 1], [1, 1, 0, 1], [2, 1, 0, 1], [2, 1, 0, 0]]))
-        if self.joystick.getRawButtonPressed(9):
-            self.motion.disable()
-            self.chassis.field_oriented = True
+            self.imu.resetHeading()
+            self.chassis.set_heading_sp_current()
 
         if self.joystick.getRawButtonPressed(8):
             print("Heading sp set")
@@ -160,9 +142,9 @@ class Robot(magicbot.MagicRobot):
         # in order to make their response exponential, and to set a dead zone -
         # which just means if it is under a certain value a 0 will be sent
         # TODO: Tune these constants for whatever robot they are on
-        vx = -rescale_js(self.joystick.getY(), deadzone=0.05, exponential=1.2, rate=4)
-        vy = -rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2, rate=4)
-        vz = -rescale_js(self.joystick.getZ(), deadzone=0.4, exponential=15.0, rate=self.spin_rate)
+        vx = -rescale_js(self.joystick.getY(), deadzone=0.2, exponential=1, rate=4)
+        vy = -rescale_js(self.joystick.getX(), deadzone=0.2, exponential=1, rate=4)
+        vz = -rescale_js(self.joystick.getZ(), deadzone=0.4, exponential=10.0, rate=self.spin_rate)
         self.chassis.set_inputs(vx, vy, vz)
 
     def robotPeriodic(self):
