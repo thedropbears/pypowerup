@@ -33,7 +33,7 @@ class Lifter:
     LOWER_SCALE = 1.2192 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE + CUBE_HEIGHT
     SWITCH = 0.47625 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE
 
-    UPWARD_ACCELERATION = FREE_SPEED * 5
+    UPWARD_ACCELERATION = FREE_SPEED // 2
     DOWNWARD_ACCELERATION = FREE_SPEED // 2
 
     def setup(self):
@@ -64,7 +64,7 @@ class Lifter:
         self.motor.config_kD(0, 1, timeoutMs=10)
 
         self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=10)
-        self.motor.configMotionCruiseVelocity(self.FREE_SPEED, timeoutMs=10)
+        self.motor.configMotionCruiseVelocity(int(self.FREE_SPEED*0.5), timeoutMs=10)
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
