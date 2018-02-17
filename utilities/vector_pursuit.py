@@ -79,7 +79,7 @@ class VectorPursuit:
         speed_sp = self.speed_function(dist_to_end)
 
         # define look ahead distance
-        look_ahead_distance = 0.1 + 0.1 * speed
+        look_ahead_distance = 0.2 + 0.3 * speed
 
         # iterate over the segments from our current projected position until
         # we exhaust the lookahead distance
