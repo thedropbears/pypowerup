@@ -74,6 +74,7 @@ class Robot(magicbot.MagicRobot):
 
         # create the imu object
         self.imu = NavX()
+        wpilib.SmartDashboard.putData('gyro', self.imu.ahrs)
 
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)
@@ -143,6 +144,7 @@ class Robot(magicbot.MagicRobot):
         self.chassis.set_inputs(vx, vy, vz)
 
     def robotPeriodic(self):
+        super().robotPeriodic()
         if self.lifter.set_pos is not None:
             self.sd.putNumber("lift/set_pos", self.lifter.set_pos)
         self.sd.putNumber("lift/current", self.lifter.motor.getOutputCurrent())
