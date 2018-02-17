@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from magicbot import tunable
 from wpilib import PIDController
 from wpilib.interfaces import PIDOutput
 from utilities.navx import NavX
@@ -15,6 +16,14 @@ class SwerveChassis:
     module_b: SwerveModule
     module_c: SwerveModule
     module_d: SwerveModule
+
+    # tunables here purely for debugging
+    odometry_x = tunable(0)
+    odometry_y = tunable(0)
+    odometry_theta = tunable(0)
+    odometry_x_vel = tunable(0)
+    odometry_y_vel = tunable(0)
+    odometry_z_vel = tunable(0)
 
     def __init__(self):
         self.vx = 0
@@ -139,11 +148,6 @@ class SwerveChassis:
         SmartDashboard.putNumber('module_b_pos', self.modules[1].current_measured_azimuth)
         SmartDashboard.putNumber('module_c_pos', self.modules[2].current_measured_azimuth)
         SmartDashboard.putNumber('module_d_pos', self.modules[3].current_measured_azimuth)
-        SmartDashboard.putNumber('odometry_x', self.odometry_x)
-        SmartDashboard.putNumber('odometry_y', self.odometry_y)
-        SmartDashboard.putNumber('odometry_x_vel', self.odometry_x_vel)
-        SmartDashboard.putNumber('odometry_y_vel', self.odometry_y_vel)
-        SmartDashboard.putNumber('odometry_z_vel', self.odometry_z_vel)
 
     def update_odometry(self):
         if self.odometry_updated:
