@@ -105,7 +105,7 @@ class Lifter:
             input_setpos (int): Encoder position to move lift to in m.
         """
         self.set_pos = input_setpos
-        if self.set_pos - self.get_pos():
+        if self.set_pos - self.get_pos() < 0:
             self.motor.configMotionAcceleration(self.DOWNWARD_ACCELERATION, timeoutMs=10)
         else:
             self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=10)
