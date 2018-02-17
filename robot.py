@@ -10,6 +10,7 @@ from automations.position_filter import PositionFilter
 from components.intake import Intake
 from components.lifter import Lifter
 from components.vision import Vision
+from components.range_finder import RangeFinder
 from pyswervedrive.swervechassis import SwerveChassis
 from pyswervedrive.swervemodule import SwerveModule
 from utilities.navx import NavX
@@ -25,6 +26,7 @@ class Robot(magicbot.MagicRobot):
     # any higher-level components (automations) that depend on them.
 
     vision: Vision
+    range_finder: RangeFinder
 
     # Automations
     position_filter: PositionFilter
@@ -66,8 +68,8 @@ class Robot(magicbot.MagicRobot):
         self.intake_kicker = wpilib.Solenoid(3)
         self.left_extension = wpilib.Solenoid(6)
         self.right_extension = wpilib.DoubleSolenoid(forwardChannel=5, reverseChannel=4)
-        self.left_infrared = SharpIRGP2Y0A41SK0F(0)
-        self.right_infrared = SharpIRGP2Y0A41SK0F(1)
+        self.left_infrared = SharpIRGP2Y0A41SK0F(5)
+        self.right_infrared = SharpIRGP2Y0A41SK0F(6)
         self.compressor = wpilib.Compressor()
         self.lifter_motor = ctre.WPI_TalonSRX(3)
         self.centre_switch = wpilib.DigitalInput(1)
@@ -84,6 +86,8 @@ class Robot(magicbot.MagicRobot):
         self.spin_rate = 5
 
         self.sd = NetworkTables.getTable("SmartDashboard")
+
+        self.range_finder_counter = wpilib.Counter(4, mode=wpilib.Counter.Mode.kPulseLength)
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''

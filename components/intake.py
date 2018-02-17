@@ -2,6 +2,7 @@ import ctre
 import magicbot
 import wpilib
 from robotpy_ext.common_drivers.distance_sensors import SharpIRGP2Y0A41SK0F
+from components.range_finder import RangeFinder
 
 
 class Intake:
@@ -13,6 +14,7 @@ class Intake:
     left_infrared: SharpIRGP2Y0A41SK0F
     right_infrared: SharpIRGP2Y0A41SK0F
     right_extension: wpilib.DoubleSolenoid
+    range_finder: RangeFinder
 
     arms_out = magicbot.tunable(False, doc='Whether the arms are outside of the starting configuration.')
 
@@ -69,13 +71,12 @@ class Intake:
     @magicbot.feedback
     def get_cube_distance(self) -> float:
         """Get the distance of the infrared sensor in m."""
-        return [self.left_infrared.getDistance() / 100,
-                self.right_infrared.getDistance() / 100]
+        return self.range_finder.getDistance()
 
     def is_cube_contained(self) -> bool:
         """Check whether a cube is in the containment mechanism."""
         cube_dist = self.get_cube_distance()
-        return 0.1 <= cube_dist[0] <= 0.15 or 0.1 <= cube_dist[1] <= 0.15
+        return 0.05 <= cube_dist <= 0.20
 
     def are_wheels_contacting_cube(self) -> bool:
         """Check whether the intake wheels are touching the cube."""

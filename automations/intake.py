@@ -23,8 +23,8 @@ class IntakeAutomation(StateMachine):
         self.intake.extend(True)
         self.intake.clamp(False)
         self.intake.push(False)
-        # if self.intake.is_cube_contained() and state_tm > 0.5:
-        if self.intake.are_wheels_contacting_cube() and state_tm > 0.5:
+        # if self.intake.are_wheels_contacting_cube() and state_tm > 0.5:
+        if self.intake.is_cube_contained() and state_tm > 0.5:
             self.next_state("pulling_in_cube")
 
     @timed_state(must_finish=True, duration=1, next_state="grab_cube")
