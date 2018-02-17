@@ -129,6 +129,18 @@ class Robot(magicbot.MagicRobot):
         if self.gamepad.getBackButtonPressed():
             self.lifter_automation.engage(initial_state="reset", force=True)
 
+        if self.gamepad.getAButtonPressed():
+            self.lifter_automation.engage(initial_state="move_upper_scale", force=True)
+
+        if self.gamepad.getBButtonPressed():
+            self.lifter_automation.engage(initial_state="move_balanced_scale", force=True)
+
+        if self.gamepad.getXButtonPressed():
+            self.lifter_automation.engage(initial_state="move_lower_scale", force=True)
+
+        if self.gamepad.getYButtonPressed():
+            self.lifter_automation.engage(initial_state="move_switch", force=True)
+
         if self.joystick.getRawButtonPressed(10):
             self.imu.resetHeading()
             self.chassis.set_heading_sp_current()
