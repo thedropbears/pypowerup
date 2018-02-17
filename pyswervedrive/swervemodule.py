@@ -87,9 +87,9 @@ class SwerveModule:
 
         self.reset_encoder_delta()
 
-        self.steer_motor.configPeakCurrentLimit(50, timeoutMs=10)
-        self.steer_motor.configContinuousCurrentLimit(40, timeoutMs=10)
-        self.steer_motor.enableCurrentLimit(True)
+        # self.steer_motor.configPeakCurrentLimit(50, timeoutMs=10)
+        # self.steer_motor.configContinuousCurrentLimit(40, timeoutMs=10)
+        # self.steer_motor.enableCurrentLimit(True)
 
         self.drive_motor.configPeakCurrentLimit(50, timeoutMs=10)
         self.drive_motor.configContinuousCurrentLimit(40, timeoutMs=10)
