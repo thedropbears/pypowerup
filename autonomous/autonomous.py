@@ -87,19 +87,17 @@ class OverallBase(AutonomousStateMachine):
                 self.cube = np.array(self.CUBE_PICKUP_1)
             elif self.cube_number >= 2:
                 self.cube = np.array(self.CUBE_PICKUP_2)
-            pickup_waypoint = self.PICKUP_WAYPOINT+[self.CUBE_PICKUP_ORIENTATION/2,
+            pickup_waypoint = self.PICKUP_WAYPOINT+[self.CUBE_PICKUP_ORIENTATION,
                                                     self.PICKUP_SPEED]
-            # # position we transition to the vision system at
-            # self.pickup_pos = pickup_waypoint
-            # self.pickup_pos[0] = (self.pickup_pos[0]+self.cube[0])/2
-            # self.pickup_pos[1] = (self.pickup_pos[1]+self.cube[1])/2
             self.motion.set_waypoints(([
                 self.current_waypoint,
                 pickup_waypoint,
                 list(self.cube)+[self.CUBE_PICKUP_ORIENTATION, self.PICKUP_SPEED]
                 ]))
-            print(self.motion.waypoints)
             self.intake_automation.engage(initial_state='intake_cube')
+        if not self.intake_automation.is_executing:
+            self.next_objective()
+            return
         if not self.motion.enabled:
             self.next_state_now('pick_up_cube')
 
