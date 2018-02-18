@@ -5,7 +5,7 @@ import wpilib
 
 class Lifter:
     compressor: wpilib.Compressor
-    motor: ctre.WPI_TalonSRX
+    motor: ctre.talonsrx.TalonSRX
     centre_switch: wpilib.DigitalInput
     top_switch: wpilib.DigitalInput
 
@@ -26,7 +26,7 @@ class Lifter:
     HEIGHT_FROM_FLOOR = 0.17  # height from floor to initial lift pos when reset in m
     CONTAINMENT_SIZE = 0  # height needed for the mechanism to work properly in m
 
-    CUBE_HEIGHT = 0.5
+    CUBE_HEIGHT = 0.4
 
     UPPER_SCALE = 1.8288 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE + CUBE_HEIGHT  # in m
     BALANCED_SCALE = 1.524 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE + CUBE_HEIGHT
@@ -42,11 +42,11 @@ class Lifter:
 
         self.motor.setQuadraturePosition(0, timeoutMs=10)
         self.motor.setInverted(True)
-        self.motor.setNeutralMode(ctre.WPI_TalonSRX.NeutralMode.Brake)
+        self.motor.setNeutralMode(ctre.NeutralMode.Brake)
 
         self.motor.overrideLimitSwitchesEnable(False)
-        self.motor.configReverseLimitSwitchSource(ctre.WPI_TalonSRX.LimitSwitchSource.FeedbackConnector, ctre.WPI_TalonSRX.LimitSwitchNormal.NormallyOpen, deviceID=0, timeoutMs=10)
-        self.motor.configForwardLimitSwitchSource(ctre.WPI_TalonSRX.LimitSwitchSource.Deactivated, ctre.WPI_TalonSRX.LimitSwitchNormal.Disabled, deviceID=0, timeoutMs=10)
+        self.motor.configReverseLimitSwitchSource(ctre.talonsrx.TalonSRX.LimitSwitchSource.FeedbackConnector, ctre.talonsrx.TalonSRX.LimitSwitchNormal.NormallyOpen, deviceID=0, timeoutMs=10)
+        self.motor.configForwardLimitSwitchSource(ctre.talonsrx.TalonSRX.LimitSwitchSource.Deactivated, ctre.talonsrx.TalonSRX.LimitSwitchNormal.Disabled, deviceID=0, timeoutMs=10)
 
         self.motor.overrideSoftLimitsEnable(True)
         self.motor.configForwardSoftLimitEnable(True, timeoutMs=10)
@@ -54,7 +54,7 @@ class Lifter:
         self.motor.configReverseSoftLimitEnable(True, timeoutMs=10)
         self.motor.configReverseSoftLimitThreshold(self.metres_to_counts(self.BOTTOM_HEIGHT), timeoutMs=10)
 
-        self.motor.configSelectedFeedbackSensor(ctre.WPI_TalonSRX.FeedbackDevice.QuadEncoder, 0, timeoutMs=10)
+        self.motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, timeoutMs=10)
 
         # TODO tune motion profiling
         self.motor.selectProfileSlot(0, 0)
@@ -66,6 +66,8 @@ class Lifter:
         self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=10)
         self.motor.configMotionCruiseVelocity(int(self.FREE_SPEED*0.5), timeoutMs=10)
 
+        self.compressor_on = True
+
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
 
@@ -76,17 +78,21 @@ class Lifter:
     def execute(self):
         """Run at the end of every control loop iteration."""
 
-        if not self.centre_switch.get():
-            self.motor.setSelectedSensorPosition(self.metres_to_counts(self.SWITCH), 0, timeoutMs=10)
-        if not self.top_switch.get():
-            self.motor.setSelectedSensorPosition(self.metres_to_counts(self.BALANCED_SCALE), 0, timeoutMs=10)
-        if self.motor.isRevLimitSwitchClosed():
-            self.motor.setSelectedSensorPosition(self.metres_to_counts(self.BOTTOM_HEIGHT), 0, timeoutMs=10)
+        # if not self.centre_switch.get():
+        #     self.motor.setSelectedSensorPosition(self.metres_to_counts(self.SWITCH), 0, timeoutMs=10)
+        # if not self.top_switch.get():
+        #     self.motor.setSelectedSensorPosition(self.metres_to_counts(self.BALANCED_SCALE), 0, timeoutMs=10)
+        # if self.motor.isRevLimitSwitchClosed():
+        #     self.motor.setSelectedSensorPosition(self.metres_to_counts(self.BOTTOM_HEIGHT), 0, timeoutMs=10)
 
-        if self.set_pos is None or self.at_pos():
-            self.compressor.start()
+        if self.set_pos is not None and self.set_pos > 0:
+            if self.compressor_on:
+                self.compressor.stop()
+                self.compressor_on = False
         else:
-            self.compressor.stop()
+            if not self.compressor_on:
+                self.compressor.start()
+                self.compressor_on = True
 
     def metres_to_counts(self, metres):
         return int(metres * self.COUNTS_PER_METRE)
@@ -94,7 +100,7 @@ class Lifter:
     def stop(self):
         """Stop the lift motor"""
         self.set_pos = None
-        self.motor.stopMotor()
+        self.motor.neutralOutput()
 
     def reset(self):
         self.move(self.BOTTOM_HEIGHT)
@@ -111,7 +117,7 @@ class Lifter:
         else:
             self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=10)
 
-        self.motor.set(self.motor.ControlMode.MotionMagic, self.metres_to_counts(self.set_pos))
+        self.motor.set(ctre.ControlMode.MotionMagic, self.metres_to_counts(self.set_pos))
 
     @magicbot.feedback
     def get_pos(self) -> float:

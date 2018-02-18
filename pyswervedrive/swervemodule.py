@@ -41,6 +41,8 @@ class SwerveModule:
         self.drive_motor = drive_talon
         self.x_pos = x_pos
         self.y_pos = y_pos
+        self.dist = math.hypot(self.x_pos, self.y_pos)
+        self.angle = math.atan2(self.y_pos, self.x_pos)
         self.reverse_steer_direction = reverse_steer_direction
         self.reverse_steer_encoder = reverse_steer_encoder
         self.reverse_drive_direction = reverse_drive_direction
@@ -50,6 +52,8 @@ class SwerveModule:
         self.absolute_rotation = False
         self.vx = 0
         self.vy = 0
+
+        self.update_odometry()
 
         # NOTE: In all the following config* calls to the drive and steer
         # motors, the last argument is the timeout in milliseconds. See
@@ -119,8 +123,7 @@ class SwerveModule:
         odometry.
         """
         self.zero_azimuth = self.current_measured_azimuth
-        self.zero_drive_pos = (self.drive_motor.getSelectedSensorPosition(0)
-                               / self.drive_counts_per_metre)
+        self.zero_drive_pos = self.wheel_pos
 
     def get_encoder_delta(self):
         """Return the difference between the modules' current position and
@@ -130,8 +133,7 @@ class SwerveModule:
         """
         steer_delta = constrain_angle(self.current_measured_azimuth
                                       - self.zero_azimuth)
-        drive_delta = (self.drive_motor.getSelectedSensorPosition(0)
-                       / self.drive_counts_per_metre) - self.zero_drive_pos
+        drive_delta = self.wheel_pos - self.zero_drive_pos
         return steer_delta, drive_delta
 
     def get_cartesian_delta(self):
@@ -169,6 +171,11 @@ class SwerveModule:
         :param vy: desired y velocity, m/s (y is left on the robot)
         """
 
+        if math.hypot(self.vx, self.vy) != 0 and math.hypot(vx, vy) == 0:
+            self.drive_motor.setIntegralAccumulator(0, 0, 10)
+            self.drive_motor.neutralOutput()
+            self.steer_motor.neutralOutput()
+
         self.vx = vx
         self.vy = vy
 
@@ -176,13 +183,7 @@ class SwerveModule:
         velocity = math.hypot(self.vx, self.vy)
         desired_azimuth = math.atan2(self.vy, self.vx)
 
-        # if we have a really low velocity, don't do anything. This is to
-        # prevent stuff like joystick whipping back and changing the module
-        # azimuth
         if velocity == 0:
-            self.drive_motor.setIntegralAccumulator(0, 0, 10)
-            self.drive_motor.stopMotor()
-            self.steer_motor.stopMotor()
             return
 
         if self.absolute_rotation:
@@ -229,23 +230,26 @@ class SwerveModule:
         return int(self.steer_enc_offset_entry.getDouble(0))
 
     @property
-    def current_azimuth(self):
-        """Return the current azimuth from the controller setpoint in radians."""
-        setpoint = self.steer_motor.getClosedLoopTarget()
-        return float(setpoint - self.steer_enc_offset) / self.STEER_COUNTS_PER_RADIAN
-
-    @property
     def current_measured_azimuth(self):
         """Return the azimuth of the wheel as measured by the encoder."""
-        pos = self.steer_motor.getSelectedSensorPosition(0)
-        return constrain_angle(float(pos - self.steer_enc_offset)
-                               / self.STEER_COUNTS_PER_RADIAN)
+        return self.measured_azimuth
 
     @property
     def current_speed(self):
         """Return the current speed of the module's wheel"""
-        wheel_vel = self.drive_motor.getSelectedSensorVelocity(0)
-        return wheel_vel / self.drive_velocity_to_native_units
+        return self.wheel_vel
+
+    def update_odometry(self):
+        # self.wheel_pos = 0
+        # self.measured_azimuth = 0
+        # self.wheel_vel = 0
+        # return
+        drive_pos, drive_vel = self.drive_motor.getQuadratureSensor()
+        self.wheel_vel = drive_vel / self.drive_velocity_to_native_units
+        steer_pos = self.steer_motor.getPulseWidthPosition()
+        self.measured_azimuth = constrain_angle(float(steer_pos - self.steer_enc_offset)
+                                                / self.STEER_COUNTS_PER_RADIAN)
+        self.wheel_pos = (drive_pos / self.drive_counts_per_metre)
 
     @staticmethod
     def min_angular_displacement(current, target):

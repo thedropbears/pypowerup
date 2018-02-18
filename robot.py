@@ -16,6 +16,7 @@ from pyswervedrive.swervemodule import SwerveModule
 from utilities.navx import NavX
 from utilities.functions import rescale_js
 from robotpy_ext.common_drivers.distance_sensors import SharpIRGP2Y0A41SK0F
+from robotpy_ext.misc.looptimer import LoopTimer
 from networktables import NetworkTables
 import math
 
@@ -46,24 +47,24 @@ class Robot(magicbot.MagicRobot):
         """Create non-components here."""
 
         self.module_a = SwerveModule(  # top left module
-            "a", steer_talon=ctre.WPI_TalonSRX(48), drive_talon=ctre.WPI_TalonSRX(49),
+            "a", steer_talon=ctre.talonsrx.TalonSRX(48), drive_talon=ctre.talonsrx.TalonSRX(49),
             x_pos=0.25, y_pos=0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_b = SwerveModule(  # bottom left modulet
-            "b", steer_talon=ctre.WPI_TalonSRX(46), drive_talon=ctre.WPI_TalonSRX(47),
+            "b", steer_talon=ctre.talonsrx.TalonSRX(46), drive_talon=ctre.talonsrx.TalonSRX(47),
             x_pos=-0.25, y_pos=0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_c = SwerveModule(  # bottom right modulet
-            "c", steer_talon=ctre.WPI_TalonSRX(44), drive_talon=ctre.WPI_TalonSRX(45),
+            "c", steer_talon=ctre.talonsrx.TalonSRX(44), drive_talon=ctre.talonsrx.TalonSRX(45),
             x_pos=-0.25, y_pos=-0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_d = SwerveModule(  # top right modulet
-            "d", steer_talon=ctre.WPI_TalonSRX(42), drive_talon=ctre.WPI_TalonSRX(43),
+            "d", steer_talon=ctre.talonsrx.TalonSRX(42), drive_talon=ctre.talonsrx.TalonSRX(43),
             x_pos=0.25, y_pos=-0.31,
             drive_free_speed=Robot.module_drive_free_speed)
 
-        self.intake_left_motor = ctre.WPI_TalonSRX(14)
-        self.intake_right_motor = ctre.WPI_TalonSRX(2)
+        self.intake_left_motor = ctre.talonsrx.TalonSRX(14)
+        self.intake_right_motor = ctre.talonsrx.TalonSRX(2)
         self.clamp_arm = wpilib.Solenoid(2)
         self.intake_kicker = wpilib.Solenoid(3)
         self.left_extension = wpilib.Solenoid(6)
@@ -71,19 +72,19 @@ class Robot(magicbot.MagicRobot):
         self.left_infrared = SharpIRGP2Y0A41SK0F(5)
         self.right_infrared = SharpIRGP2Y0A41SK0F(6)
         self.compressor = wpilib.Compressor()
-        self.lifter_motor = ctre.WPI_TalonSRX(3)
+        self.lifter_motor = ctre.talonsrx.TalonSRX(3)
         self.centre_switch = wpilib.DigitalInput(1)
         self.top_switch = wpilib.DigitalInput(2)
 
         # create the imu object
         self.imu = NavX()
-        wpilib.SmartDashboard.putData('gyro', self.imu.ahrs)
+        # wpilib.SmartDashboard.putData('gyro', self.imu.ahrs)
 
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)
         self.gamepad = wpilib.XboxController(1)
 
-        self.spin_rate = 5
+        self.spin_rate = 2
 
         self.sd = NetworkTables.getTable("SmartDashboard")
 
@@ -93,6 +94,7 @@ class Robot(magicbot.MagicRobot):
         '''Called when teleop starts; optional'''
         self.motion.enabled = False
         self.chassis.set_inputs(0, 0, 0)
+        self.loop_timer = LoopTimer(self.logger)
 
     def teleopPeriodic(self):
         """
@@ -159,16 +161,18 @@ class Robot(magicbot.MagicRobot):
         # in order to make their response exponential, and to set a dead zone -
         # which just means if it is under a certain value a 0 will be sent
         # TODO: Tune these constants for whatever robot they are on
-        vx = -rescale_js(self.joystick.getY(), deadzone=0.2, exponential=1, rate=4)
-        vy = -rescale_js(self.joystick.getX(), deadzone=0.2, exponential=1, rate=4)
+        vx = -rescale_js(self.joystick.getY(), deadzone=0.1, exponential=1.5, rate=4)
+        vy = -rescale_js(self.joystick.getX(), deadzone=0.1, exponential=1.5, rate=4)
         vz = -rescale_js(self.joystick.getZ(), deadzone=0.4, exponential=10.0, rate=self.spin_rate)
         self.chassis.set_inputs(vx, vy, vz)
 
+        self.loop_timer.measure()
+
     def robotPeriodic(self):
-        super().robotPeriodic()
+        # super().robotPeriodic()
         if self.lifter.set_pos is not None:
             self.sd.putNumber("lift/set_pos", self.lifter.set_pos)
-        self.sd.putNumber("lift/current", self.lifter.motor.getOutputCurrent())
+        # self.sd.putNumber("lift/current", self.lifter.motor.getOutputCurrent())
 
 
 if __name__ == '__main__':

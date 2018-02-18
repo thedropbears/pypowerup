@@ -4,6 +4,7 @@ from pyswervedrive.swervechassis import SwerveChassis
 from utilities.navx import NavX
 from utilities.vector_pursuit import VectorPursuit
 from utilities.profile_generator import generate_trapezoidal_trajectory
+from utilities.functions import constrain_angle
 from wpilib import SmartDashboard
 
 
@@ -21,6 +22,7 @@ class ChassisMotion:
     def __init__(self):
         self.enabled = False
         self.pursuit = VectorPursuit()
+        self.last_heading_error = 0
 
     def setup(self):
         self.pursuit.set_motion_params(4, 4, -3)
@@ -46,14 +48,15 @@ class ChassisMotion:
         self.current_seg_distance = np.linalg.norm(self.pursuit.segment)
         heading_end = self.waypoints[self.waypoint_idx+1][2]
         self.heading_profile = generate_trapezoidal_trajectory(self.imu.getAngle(), 0,
-                                                               heading_end, 0, 4, 3, -3, 50)
+                                                               heading_end, 0, 3, 3, -3, 50)
         self.last_heading_error = 0
 
     def disable(self):
         self.enabled = False
 
     def on_enable(self):
-        pass
+        self.waypoints = []
+        self.enabled = False
 
     def execute(self):
         if self.enabled:
@@ -80,7 +83,6 @@ class ChassisMotion:
                 heading_seg = self.heading_profile.pop(0)
             else:
                 heading_seg = (self.waypoints[self.waypoint_idx+1][2], 0, 0)
-            # print("Heading Seg {}".format(heading_seg))
 
             # get the current heading of the robot since last reset
             # getRawHeading has been swapped for getAngle
@@ -88,13 +90,11 @@ class ChassisMotion:
             # calculate the heading error
             heading_error = heading_seg[0] - heading
             # wrap heading error, stops jumping by 2 pi from the imu
-            heading_error = math.atan2(math.sin(heading_error),
-                                       math.cos(heading_error))
+            heading_error = constrain_angle(heading_error)
             # sum the heading error over the timestep
             self.heading_error_i += heading_error
             # calculate the derivative of the heading error
             d_heading_error = (heading_error - self.last_heading_error)
-            # print("Heading error %s derr %s" % (heading_error, d_heading_error))
 
             # generate the rotational output to the chassis
             heading_output = (
@@ -113,6 +113,8 @@ class ChassisMotion:
 
             SmartDashboard.putNumber('vector_pursuit_heading', direction_of_motion)
             SmartDashboard.putNumber('vector_pursuit_speed', speed_sp)
+            SmartDashboard.putNumber('heading_mp_sp', heading_seg[0])
+            SmartDashboard.putNumber('heading_mp_error', heading_error)
 
             if over:
                 print("Motion over")

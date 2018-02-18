@@ -75,6 +75,7 @@ class PositionFilter:
         self.kalman.unscented_update(measurement, z_dim=2, R=self.R, h=observation)
 
     def execute(self):
+        return
         self.chassis.update_odometry()
         self.predict()
         vision_tm = self.vision.time

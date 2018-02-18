@@ -5,8 +5,6 @@ from wpilib import PIDController
 from wpilib.interfaces import PIDOutput
 from utilities.navx import NavX
 from pyswervedrive.swervemodule import SwerveModule
-from wpilib import SmartDashboard
-from utilities.functions import constrain_angle
 
 
 class SwerveChassis:
@@ -20,10 +18,10 @@ class SwerveChassis:
     # tunables here purely for debugging
     odometry_x = tunable(0)
     odometry_y = tunable(0)
-    odometry_theta = tunable(0)
-    odometry_x_vel = tunable(0)
-    odometry_y_vel = tunable(0)
-    odometry_z_vel = tunable(0)
+    # odometry_theta = tunable(0)
+    # odometry_x_vel = tunable(0)
+    # odometry_y_vel = tunable(0)
+    # odometry_z_vel = tunable(0)
 
     def __init__(self):
         self.vx = 0
@@ -122,16 +120,16 @@ class SwerveChassis:
             input_vz = self.vz
         vz = input_vz + pid_z
 
+        angle = self.imu.getAngle()
+
         for module in self.modules:
-            module_dist = math.hypot(module.x_pos, module.y_pos)
-            module_angle = math.atan2(module.y_pos, module.x_pos)
+            module.update_odometry()
             # Calculate the additional vx and vy components for this module
             # required to achieve our desired angular velocity
-            vz_x = -module_dist*vz*math.sin(module_angle)
-            vz_y = module_dist*vz*math.cos(module_angle)
+            vz_x = -module.dist*vz*math.sin(module.angle)
+            vz_y = module.dist*vz*math.cos(module.angle)
             # TODO: re enable this and test field-oriented mode
             if self.field_oriented:
-                angle = self.imu.getAngle()
                 vx, vy = self.robot_orient(self.vx, self.vy, angle)
             else:
                 vx, vy = self.vx, self.vy
@@ -140,23 +138,10 @@ class SwerveChassis:
         self.update_odometry()
         self.odometry_updated = False  # reset for next timestep
 
-        SmartDashboard.putNumber('module_a_speed', self.modules[0].current_speed)
-        SmartDashboard.putNumber('module_b_speed', self.modules[1].current_speed)
-        SmartDashboard.putNumber('module_c_speed', self.modules[2].current_speed)
-        SmartDashboard.putNumber('module_d_speed', self.modules[3].current_speed)
-        SmartDashboard.putNumber('module_a_pos', self.modules[0].current_measured_azimuth)
-        SmartDashboard.putNumber('module_b_pos', self.modules[1].current_measured_azimuth)
-        SmartDashboard.putNumber('module_c_pos', self.modules[2].current_measured_azimuth)
-        SmartDashboard.putNumber('module_d_pos', self.modules[3].current_measured_azimuth)
-
     def update_odometry(self):
         if self.odometry_updated:
             return
         heading = self.imu.getAngle()
-        heading_delta = constrain_angle(heading - self.last_heading)
-        heading_adjustment_factor = 1
-        adjusted_heading = heading - heading_adjustment_factor * heading_delta
-        timestep_average_heading = adjusted_heading - heading_delta / 2
 
         odometry_outputs = np.zeros((8, 1))
         velocity_outputs = np.zeros((8, 1))
@@ -170,29 +155,20 @@ class SwerveChassis:
             velocity_outputs[i*2+1, 0] = velocity_y
             module.reset_encoder_delta()
 
-        v_x, v_y, v_z = self.robot_movement_from_odometry(velocity_outputs, heading)
-        delta_x, delta_y, delta_z = self.robot_movement_from_odometry(odometry_outputs, heading, z_vel=v_z)
+        delta_x, delta_y, delta_z = self.robot_movement_from_odometry(odometry_outputs, heading)
 
         self.odometry_x += delta_x
         self.odometry_y += delta_y
-        self.odometry_x_vel = v_x
-        self.odometry_y_vel = v_y
-        self.odometry_z_vel = v_z
 
         self.last_heading = heading
 
-        SmartDashboard.putNumber('odometry_delta_x', delta_x)
-        SmartDashboard.putNumber('odometry_delta_y', delta_y)
-        SmartDashboard.putNumber('imu_heading', heading)
-        SmartDashboard.putNumber('heading_delta', heading_delta)
-        SmartDashboard.putNumber('average_heading', timestep_average_heading)
         self.odometry_updated = True
 
     def robot_movement_from_odometry(self, odometry_outputs, angle, z_vel=0):
         lstsq_ret = np.linalg.lstsq(self.A, odometry_outputs,
                                     rcond=None)
         x, y, theta = lstsq_ret[0].reshape(3)
-        x_field, y_field = self.field_orient(x, y, angle + z_vel*(2/50))
+        x_field, y_field = self.field_orient(x, y, angle + z_vel*(0.5/50))
         return x_field, y_field, theta
 
     def set_velocity_heading(self, vx, vy, heading):
@@ -263,7 +239,7 @@ class SwerveChassis:
 
     @property
     def speed(self):
-        return math.hypot(self.odometry_x_vel, self.odometry_y_vel)
+        return math.hypot(self.vx, self.vy)
 
 
 class ChassisPIDOutput(PIDOutput):
