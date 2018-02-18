@@ -124,8 +124,8 @@ class VectorPursuit:
 
         segment_normalised = self.segment / np.linalg.norm(self.segment)
 
-        print("VP Position {}, LAH {}, speed {}, heading {}, idx {}, traj {}".format(position, look_ahead_point, speed_sp, theta,
-                                                                                     self.waypoints, self.segment_idx))
+        # print("VP Position {}, LAH {}, speed {}, heading {}, idx {}, traj {}".format(position, look_ahead_point, speed_sp, theta,
+        #                                                                              self.waypoints, self.segment_idx))
 
         over = False
 
