@@ -39,24 +39,30 @@ class OverallBase(AutonomousStateMachine):
 
     # Coordinates of various objectives no the field
     # Default to those for LEFT HAND SIDE of the field
-    SCALE_DEPOSIT = [7.6-Robot.length / 2, 1.8]
+    """SCALE_DEPOSIT = [7.6-Robot.length / 2, 1.8]
     CUBE_PICKUP_1 = [5+Robot.length / 2, 1.4]
     CUBE_PICKUP_2 = [5+Robot.length / 2, 1.1]
     SWITCH_DEPOSIT = [5+Robot.length / 2, 1.2]
 
-    SWITCH_DEPOSIT = [5+Robot.length / 2, 1.68]
     SWITCH_DEPOSIT_ORIENTATION = -math.pi
 
     CUBE_PICKUP_ORIENTATION = -math.pi
-    CUBE_PICKUP_1 = [5+Robot.length / 2, 1.85]
-    CUBE_PICKUP_2 = [5+Robot.length / 2, 1.1]
 
     PICKUP_WAYPOINT = [5.6+Robot.length / 2, 1.8]
     CROSS_POINT = [5.6+Robot.length / 2, 1.8]
-    OPP_CROSS_POINT = [5.6+Robot.length / 2, -1.8]
-    # PICKUP_WAYPOINT = [5.4+Robot.length / 2, 1.4]
-    # CROSS_POINT = [5.4+Robot.length / 2, 1.0]
-    # OPP_CROSS_POINT = [5.4+Robot.length / 2, -1.0]
+    OPP_CROSS_POINT = [5.6+Robot.length / 2, -1.8]"""
+    SCALE_DEPOSIT = [6-Robot.length / 2, 1]
+    CUBE_PICKUP_1 = [3+Robot.length / 2, 0.5]
+    CUBE_PICKUP_2 = [3+Robot.length / 2, -0.5]
+    SWITCH_DEPOSIT = [3+Robot.length / 2, 0]
+
+    SWITCH_DEPOSIT_ORIENTATION = -math.pi
+
+    CUBE_PICKUP_ORIENTATION = -math.pi
+
+    PICKUP_WAYPOINT = [4.5, 0]
+    CROSS_POINT = [4, 1.5]
+    OPP_CROSS_POINT = [4, -1.5]
 
     def on_enable(self):
         # self.lifter.reset() do we need this?
