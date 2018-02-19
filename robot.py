@@ -109,13 +109,13 @@ class Robot(magicbot.MagicRobot):
         if self.joystick.getRawButtonPressed(11):
             self.intake.push_on = not self.intake.push_on
 
-        if self.joystick.getRawButtonPressed(3):
+        if self.joystick.getRawButtonPressed(3) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kLeft) > 0.5:
             self.intake_automation.engage(initial_state="intake_cube")
 
         if self.joystick.getRawButtonPressed(4) or self.gamepad.getStartButtonPressed():
             self.intake_automation.engage(initial_state="eject_cube")
 
-        if self.joystick.getRawButtonPressed(5):
+        if self.joystick.getRawButtonPressed(5) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kRight) > 0.5:
             self.intake_automation.engage(initial_state="stop", force=True)
 
         if self.joystick.getRawButtonPressed(6):
