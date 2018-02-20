@@ -50,9 +50,9 @@ class VectorPursuit:
         end_speed = self.waypoints[self.segment_idx+1][3]
         seg_length = np.linalg.norm(self.segment)
         print("NEW SEGMENT Start speed {} top_speed {} end_speed {} length {}".format(start_speed, self.top_speed, end_speed, seg_length))
-        self.speed_function = generate_trapezoidal_function(
+        self.speed_function, end_tm = generate_trapezoidal_function(
                 0, start_speed, seg_length, end_speed,
-                self.top_speed, self.top_accel, self.top_decel)
+                self.top_speed, self.top_accel, self.top_decel, time_mode=False)
 
     def get_output(self, position: np.ndarray, speed: float):
         """Compute the angle to move the robot in to converge with waypoints.

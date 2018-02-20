@@ -85,7 +85,7 @@ def generate_interpolation_function(x_start, x_final, interpolation_distance):
 
 
 def generate_trapezoidal_function(
-        x_start, v_start, x_final, v_final, v_max, a_pos, a_neg):
+        x_start, v_start, x_final, v_final, v_max, a_pos, a_neg, time_mode=True):
     direction = sign(x_final-x_start)
 
     # area under the velocity-time trapezoid
@@ -96,7 +96,9 @@ def generate_trapezoidal_function(
     a_neg = -abs(a_neg)*direction
 
     if x == 0:
-        return [(x_start, v_start, 0.0)]
+        def f(time):
+            return (x_start, 0.0, 0.0)
+        return f, 0
 
     # find the max reachable velocity if we spend all our time accelerating
     # and decelerating. Used as max velocity in cases where we don't hit the
@@ -125,35 +127,62 @@ def generate_trapezoidal_function(
 
     v_diff = v_max - v_start
 
-    def get_speed(distance):
-        if distance < x_cruise:
-            accel_proportion = (distance / x_cruise)
-            target_v = (v_diff * accel_proportion
-                        + v_start
-                        # factor that decays as we accelerate. Used to jump start
-                        # acceleration from 0 speed.
-                        + (1-accel_proportion) * direction * 0.4)
-            # print("Accelerating. accel_proportion %s, target_v %s" % (accel_proportion, target_v))
-            return target_v
-        elif distance < x_decel:
-            target_v = v_max
-            # print("Cruising at %s" % target_v)
-            return target_v
-        elif distance < x_final:
-            if decel_dist == 0:
-                print("Warning: decel_dist is 0. Returning max_v")
-                return v_max
-            decel_proportion = 1 - ((x_final - distance) / decel_dist)
-            target_v = (v_max
-                        - decel_mag * decel_proportion
-                        + (1 - decel_proportion) * -direction * 0.2)
-            # print("Decelerating. decel_proportion %s, target_v %s, final_v %s" % (decel_proportion, target_v, v_final))
-            return target_v
-        else:
-            print("WARNING: calling speed profile function when after final distance")
-            return v_final
+    t_f = t_decel + t_slow
 
-    return get_speed
+    if time_mode:
+        def f(time):
+            if time < t_cruise:
+                accel_proportion = (time / t_cruise)
+                target_v = (v_diff * accel_proportion
+                            + v_start)
+                displacement = x_start + (target_v+v_start)/2*t_cruise*accel_proportion
+                accel = a_pos
+                return (displacement, target_v, accel)
+            elif time < t_decel:
+                target_v = v_max
+                displacement = x_start + x_cruise + (time - t_cruise) * v_max
+                accel = 0
+                return (displacement, target_v, accel)
+            elif time < t_decel+t_slow:
+                decel_proportion = 1 - ((t_f - time) / t_slow)
+                target_v = (v_max - decel_mag * decel_proportion)
+                displacement = (x_start + x_decel
+                                + (target_v+v_max)/2*(t_f-t_decel)*decel_proportion)
+                accel = a_neg
+                return (displacement, target_v, accel)
+            else:
+                print("WARNING: calling motion profile function when after final time")
+                return (x_final, 0, 0)
+    else:
+        def f(distance):
+            if distance < x_cruise:
+                accel_proportion = (distance / x_cruise)
+                target_v = (v_diff * accel_proportion
+                            + v_start
+                            # factor that decays as we accelerate. Used to jump start
+                            # acceleration from 0 speed.
+                            + (1-accel_proportion) * direction * 0.4)
+                # print("Accelerating. accel_proportion %s, target_v %s" % (accel_proportion, target_v))
+                return target_v
+            elif distance < x_decel:
+                target_v = v_max
+                # print("Cruising at %s" % target_v)
+                return target_v
+            elif distance < x_final:
+                if decel_dist == 0:
+                    print("Warning: decel_dist is 0. Returning max_v")
+                    return v_max
+                decel_proportion = 1 - ((x_final - distance) / decel_dist)
+                target_v = (v_max
+                            - decel_mag * decel_proportion
+                            + (1 - decel_proportion) * -direction * 0.2)
+                # print("Decelerating. decel_proportion %s, target_v %s, final_v %s" % (decel_proportion, target_v, v_final))
+                return target_v
+            else:
+                print("WARNING: calling speed profile function when after final distance")
+                return v_final
+
+    return f, t_f
 
 
 def generate_trapezoidal_trajectory(
