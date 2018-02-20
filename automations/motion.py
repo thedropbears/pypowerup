@@ -15,10 +15,10 @@ class ChassisMotion:
     imu: NavX
 
     # heading motion feedforward/back gains
-    kPh = 1  # proportional gain
+    kPh = 3  # proportional gain
     kVh = 1  # feedforward gain
     kIh = 0  # integral gain
-    kDh = 0  # derivative gain
+    kDh = 20  # derivative gain
 
     def __init__(self):
         self.enabled = False
@@ -27,7 +27,8 @@ class ChassisMotion:
 
     def setup(self):
         # self.pursuit.set_motion_params(4, 4, -3)
-        self.pursuit.set_motion_params(2, 2, -2)
+        # self.pursuit.set_motion_params(2, 2, -2)
+        self.pursuit.set_motion_params(1.5, 2, -2)
 
     def set_waypoints(self, waypoints: np.ndarray):
         """ Pass as set of waypoints for the chassis to follow.
@@ -51,7 +52,7 @@ class ChassisMotion:
         heading_end = self.waypoints[self.waypoint_idx+1][2]
         delta = constrain_angle(heading_end-heading)
         print(f"Setting heading trajectory heading {heading}, heading_end {heading_end}, delta {delta}")
-        self.heading_function, self.heading_traj_tm = generate_trapezoidal_function(heading, 0, heading+delta, 0, 3, 3, -3)
+        self.heading_function, self.heading_traj_tm = generate_trapezoidal_function(heading, 0, heading+delta, 0, 2, 2, -3)
         self.heading_profile_tm = time.monotonic()
         self.last_heading_error = 0
 
@@ -87,13 +88,11 @@ class ChassisMotion:
                 heading_time = time.monotonic() - self.heading_profile_tm
                 if heading_time < self.heading_traj_tm:
                     heading_seg = self.heading_function(heading_time)
-                    print("Heading_seg")
                 else:
                     self.heading_function = None
                     heading_seg = (self.waypoints[self.waypoint_idx+1][2], 0, 0)
             else:
                 heading_seg = (self.waypoints[self.waypoint_idx+1][2], 0, 0)
-            print(f'heading_seg {heading_seg}')
 
             # get the current heading of the robot since last reset
             # getRawHeading has been swapped for getAngle

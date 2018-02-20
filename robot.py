@@ -82,7 +82,7 @@ class Robot(magicbot.MagicRobot):
         self.joystick = wpilib.Joystick(0)
         self.gamepad = wpilib.XboxController(1)
 
-        self.spin_rate = 2
+        self.spin_rate = 1
 
         self.sd = NetworkTables.getTable("SmartDashboard")
 
@@ -149,7 +149,7 @@ class Robot(magicbot.MagicRobot):
         # TODO: Tune these constants for whatever robot they are on
         vx = -rescale_js(self.joystick.getY(), deadzone=0.1, exponential=1.5, rate=4)
         vy = -rescale_js(self.joystick.getX(), deadzone=0.1, exponential=1.5, rate=4)
-        vz = -rescale_js(self.joystick.getZ(), deadzone=0.4, exponential=10.0, rate=self.spin_rate)
+        vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=20.0, rate=self.spin_rate)
         self.chassis.set_inputs(vx, vy, vz)
 
         self.loop_timer.measure()
@@ -166,6 +166,8 @@ class Robot(magicbot.MagicRobot):
         if self.lifter.set_pos is not None:
             self.sd.putNumber("lift/set_pos", self.lifter.set_pos)
         self.sd.putNumber("imu_heading", self.imu.getAngle())
+        self.sd.putNumber("odometry_x", self.chassis.odometry_x)
+        self.sd.putNumber("odometry_y", self.chassis.odometry_y)
         # self.sd.putNumber("lift/current", self.lifter.motor.getOutputCurrent())
 
 

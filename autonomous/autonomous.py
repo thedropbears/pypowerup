@@ -33,11 +33,11 @@ class OverallBase(AutonomousStateMachine):
     intake_automation: IntakeAutomation
     lifter_automation: LifterAutomation
 
-    START_Y_COORDINATE = 3
+    START_Y_COORDINATE = 1
 
-    CROSS_POINT_SPEED = 2
+    CROSS_POINT_SPEED = 1
 
-    PICKUP_SPEED = 2
+    PICKUP_SPEED = 1
 
     # Coordinates of various objectives no the field
     # Default to those for LEFT HAND SIDE of the field
@@ -53,7 +53,7 @@ class OverallBase(AutonomousStateMachine):
     PICKUP_WAYPOINT = [5.6+Robot.length / 2, 1.8]
     CROSS_POINT = [5.6+Robot.length / 2, 1.8]
     OPP_CROSS_POINT = [5.6+Robot.length / 2, -1.8]"""
-    SCALE_DEPOSIT = [6-Robot.length / 2, 1]
+    SCALE_DEPOSIT = [0.3+6-Robot.length / 2, 1+0.3]
     CUBE_PICKUP_1 = [3+Robot.length / 2, 0.5]
     CUBE_PICKUP_2 = [3+Robot.length / 2, -0.5]
     SWITCH_DEPOSIT = [3+Robot.length / 2, 0]
@@ -63,8 +63,8 @@ class OverallBase(AutonomousStateMachine):
     CUBE_PICKUP_ORIENTATION = -math.pi
 
     PICKUP_WAYPOINT = [4.5, 0]
-    CROSS_POINT = [4, 1.5]
-    OPP_CROSS_POINT = [4, -1.5]
+    CROSS_POINT = [4, 1]
+    OPP_CROSS_POINT = [4, -1]
 
     def on_enable(self):
         # self.lifter.reset() do we need this?
@@ -100,14 +100,15 @@ class OverallBase(AutonomousStateMachine):
             self.motion.set_waypoints(([
                 self.current_waypoint,
                 pickup_waypoint,
-                list(self.cube)+[self.CUBE_PICKUP_ORIENTATION, self.PICKUP_SPEED]
+                list(self.cube)+[self.CUBE_PICKUP_ORIENTATION, self.PICKUP_SPEED/2]
                 ]))
-            self.intake_automation.engage(initial_state='intake_cube')
-        if not self.intake_automation.is_executing:
-            self.next_objective()
-            return
+            self.intake_automation.engage(initial_state='intake_cube', force=True)
+        # if not self.intake_automation.is_executing:
+        #     self.next_objective()
+        #     return
         if not self.motion.enabled:
-            self.next_state_now('pick_up_cube')
+            # self.next_state_now('pick_up_cube')
+            self.next_objective()
 
     @state
     def pick_up_cube(self, initial_call):
@@ -153,7 +154,7 @@ class OverallBase(AutonomousStateMachine):
         self.chassis.set_velocity_heading(vx, vy, alignment_direction)
 
     @state
-    def go_to_scale(self, initial_call):
+    def go_to_scale(self, initial_call, state_tm):
         """Navigate to the scale. Raise the lift"""
         if initial_call:
             self.done_switch = True
@@ -162,7 +163,7 @@ class OverallBase(AutonomousStateMachine):
                 self.SCALE_DEPOSIT+[0, 0]
                 ])
             self.lifter_automation.engage(initial_state='move_upper_scale')
-        if not self.motion.enabled:
+        if not self.motion.enabled and state_tm > 4:
             self.next_state_now('deposit_scale')
 
     @state
@@ -187,7 +188,7 @@ class OverallBase(AutonomousStateMachine):
 class DoubleScaleBase(OverallBase):
 
     @state(first=True)
-    def cross_field(self, initial_call):
+    def cross_field(self, initial_call, state_tm):
         """Cross the field."""
         if initial_call:
             if self.start_side == self.fms_scale:
@@ -197,16 +198,20 @@ class DoubleScaleBase(OverallBase):
                 self.motion.set_waypoints([
                     self.current_waypoint,
                     self.CROSS_POINT+[0, self.CROSS_POINT_SPEED],
-                    self.OPP_CROSS_POINT+[0, self.CROSS_POINT_SPEED]
+                    self.OPP_CROSS_POINT+[0, self.CROSS_POINT_SPEED],
+                    self.SCALE_DEPOSIT+[0, 0]
                     ])
+        if state_tm > 1:
+            self.lifter_automation.engage(initial_state='move_upper_scale')
         if not self.motion.enabled:
-            self.next_state_now("go_to_scale")
+            self.next_state_now("deposit_scale")
 
     def next_objective(self):
         self.next_state_now('go_to_scale')
 
 
 class LeftDoubleScale(DoubleScaleBase):
+    DEFAULT = True
     MODE_NAME = 'Left Double Scale'
 
     def on_enable(self):
@@ -365,7 +370,6 @@ class RightSwitchScale(SwitchScaleBase):
 
 class PickupCubeAuto(OverallBase):
     MODE_NAME = "Vision Pickup Test"
-    DEFAULT = True
 
     @state(first=True)
     def start(self):

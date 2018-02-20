@@ -10,7 +10,7 @@ class VectorPursuit:
 
     kP = 1
     kI = 0
-    kD = 0
+    kD = 0.5
     kV = 1
     kA = 0
 
@@ -93,7 +93,7 @@ class VectorPursuit:
                            + scale * self.segment)
 
         # define look ahead distance
-        look_ahead_distance = 0.3 + 0.2 * speed
+        look_ahead_distance = 0.2 + 0.2 * speed
 
         # iterate over the segments from our current projected position until
         # we exhaust the lookahead distance

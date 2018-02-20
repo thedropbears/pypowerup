@@ -40,7 +40,7 @@ class IntakeAutomation(StateMachine):
         self.intake.clamp(True)
         self.intake.push(False)
         if state_tm > 0.05:
-            self.lifter.move(0.2)
+            self.lifter.move(0.1)
             self.next_state_now("stop")
 
     @state(must_finish=True)
@@ -51,13 +51,14 @@ class IntakeAutomation(StateMachine):
             self.next_state_now('deposit_exchange')
 
     @state(must_finish=True)
-    def deposit_exchange(self):
+    def deposit_exchange(self, state_tm):
         self.intake.rotate(1)
         self.intake.push(True)
         self.intake.clamp(False)
         self.intake.extend(False)
-        if (self.intake.get_cube_distance() > 1):
-            self.done()
+        # if (self.intake.get_cube_distance() > 1):
+        if state_tm > 2:
+            self.next_state_now('stop')
 
     @timed_state(must_finish=True, duration=1, next_state="stop")
     def push_out_cube(self):

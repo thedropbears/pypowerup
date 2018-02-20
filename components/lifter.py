@@ -34,7 +34,7 @@ class Lifter:
     # SWITCH = 0.47625 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE
     SWITCH = 1.0 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE
 
-    UPWARD_ACCELERATION = int(FREE_SPEED * 0.8)
+    UPWARD_ACCELERATION = FREE_SPEED // 2
     DOWNWARD_ACCELERATION = FREE_SPEED // 2
 
     def setup(self):
@@ -65,7 +65,7 @@ class Lifter:
         self.motor.config_kD(0, 1, timeoutMs=10)
 
         self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=10)
-        self.motor.configMotionCruiseVelocity(int(self.FREE_SPEED*0.8), timeoutMs=10)
+        self.motor.configMotionCruiseVelocity(int(self.FREE_SPEED*0.5), timeoutMs=10)
 
         self.compressor_on = True
 
