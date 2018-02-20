@@ -308,7 +308,6 @@ class LeftSwitchScale(SwitchScaleBase):
 
 
 class RightSwitchScale(SwitchScaleBase):
-    DEFAULT = True
     MODE_NAME = 'Right Switch & Scale'
 
     def on_enable(self):
