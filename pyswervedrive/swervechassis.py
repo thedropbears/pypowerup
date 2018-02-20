@@ -95,7 +95,7 @@ class SwerveChassis:
             self.A[i*2+1, 2] = module_dist*math.cos(module_angle)
 
             module.reset_encoder_delta()
-            module.reset_steer_setpoint()
+            module.read_steer_pos()
 
         self.last_heading = self.imu.getAngle()
         self.odometry_updated = False

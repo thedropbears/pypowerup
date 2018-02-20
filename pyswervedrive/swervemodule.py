@@ -24,13 +24,15 @@ class SwerveModule:
     drive_velocity_to_native_units = drive_counts_per_metre*0.1
 
     def __init__(self, name: str,
-                 steer_talon: ctre.WPI_TalonSRX, drive_talon: ctre.WPI_TalonSRX,
+                 steer_talon: ctre.TalonSRX, drive_talon: ctre.TalonSRX,
                  x_pos: float, y_pos: float,
                  drive_free_speed: float,
                  reverse_steer_direction: bool = True,
                  reverse_steer_encoder: bool = False,
                  reverse_drive_direction: bool = False,
                  reverse_drive_encoder: bool = False):
+
+        self.name = name
 
         nt = NetworkTables.getTable("SwerveConfig").getSubTable(name)
         self.steer_enc_offset_entry = nt.getEntry("steer_enc_offset")
@@ -71,9 +73,9 @@ class SwerveModule:
         self.steer_motor.config_kD(0, 5.0, 10)
         self.steer_motor.selectProfileSlot(0, 0)
         self.steer_motor.config_kF(0, 0, 10)
-        self.reset_steer_setpoint()
+        self.read_steer_pos()
 
-        self.steer_motor.setNeutralMode(ctre.WPI_TalonSRX.NeutralMode.Coast)
+        self.steer_motor.setNeutralMode(ctre.NeutralMode.Coast)
 
         self.drive_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, 10)
         # changes direction of motor encoder
@@ -87,7 +89,7 @@ class SwerveModule:
         self.drive_motor.configClosedLoopRamp(0.3, 10)
         self.drive_motor.selectProfileSlot(0, 0)
 
-        self.drive_motor.setNeutralMode(ctre.WPI_TalonSRX.NeutralMode.Brake)
+        self.drive_motor.setNeutralMode(ctre.NeutralMode.Brake)
 
         self.reset_encoder_delta()
 
@@ -107,14 +109,13 @@ class SwerveModule:
         rotate forwards to the required angle."""
         self.absolute_rotation = rotation_mode
 
-    def reset_steer_setpoint(self):
-        """Reset the setpoint of the steer motor to its current position.
-
-        This prevents the module unwinding on start.
-        """
+    def read_steer_pos(self):
         sp = self.steer_motor.getSelectedSensorPosition(0)
         self.current_azimuth_sp = float(sp - self.steer_enc_offset) / self.STEER_COUNTS_PER_RADIAN
-        self.steer_motor.set(ctre.ControlMode.Position, sp)
+
+    def store_steer_offsets(self):
+        """Store the current steer positions as the offsets."""
+        self.steer_enc_offset_entry.setDouble(self.steer_motor.getSelectedSensorPosition(0))
 
     def reset_encoder_delta(self):
         """Re-zero the encoder deltas as returned from
@@ -246,7 +247,7 @@ class SwerveModule:
         # return
         drive_pos, drive_vel = self.drive_motor.getQuadratureSensor()
         self.wheel_vel = drive_vel / self.drive_velocity_to_native_units
-        steer_pos = self.steer_motor.getPulseWidthPosition()
+        steer_pos = self.steer_motor.getSelectedSensorPosition(0)
         self.measured_azimuth = constrain_angle(float(steer_pos - self.steer_enc_offset)
                                                 / self.STEER_COUNTS_PER_RADIAN)
         self.wheel_pos = (drive_pos / self.drive_counts_per_metre)

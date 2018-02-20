@@ -45,24 +45,24 @@ class Robot(magicbot.MagicRobot):
         """Create non-components here."""
 
         self.module_a = SwerveModule(  # top left module
-            "a", steer_talon=ctre.talonsrx.TalonSRX(48), drive_talon=ctre.talonsrx.TalonSRX(49),
+            "a", steer_talon=ctre.TalonSRX(48), drive_talon=ctre.TalonSRX(49),
             x_pos=0.25, y_pos=0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_b = SwerveModule(  # bottom left modulet
-            "b", steer_talon=ctre.talonsrx.TalonSRX(46), drive_talon=ctre.talonsrx.TalonSRX(47),
+            "b", steer_talon=ctre.TalonSRX(46), drive_talon=ctre.TalonSRX(47),
             x_pos=-0.25, y_pos=0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_c = SwerveModule(  # bottom right modulet
-            "c", steer_talon=ctre.talonsrx.TalonSRX(44), drive_talon=ctre.talonsrx.TalonSRX(45),
+            "c", steer_talon=ctre.TalonSRX(44), drive_talon=ctre.TalonSRX(45),
             x_pos=-0.25, y_pos=-0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_d = SwerveModule(  # top right modulet
-            "d", steer_talon=ctre.talonsrx.TalonSRX(42), drive_talon=ctre.talonsrx.TalonSRX(43),
+            "d", steer_talon=ctre.TalonSRX(42), drive_talon=ctre.TalonSRX(43),
             x_pos=0.25, y_pos=-0.31,
             drive_free_speed=Robot.module_drive_free_speed)
 
-        self.intake_left_motor = ctre.talonsrx.TalonSRX(14)
-        self.intake_right_motor = ctre.talonsrx.TalonSRX(2)
+        self.intake_left_motor = ctre.TalonSRX(14)
+        self.intake_right_motor = ctre.TalonSRX(2)
         self.clamp_arm = wpilib.Solenoid(2)
         self.intake_kicker = wpilib.Solenoid(3)
         self.left_extension = wpilib.Solenoid(6)
@@ -70,7 +70,7 @@ class Robot(magicbot.MagicRobot):
         self.left_infrared = SharpIRGP2Y0A41SK0F(5)
         self.right_infrared = SharpIRGP2Y0A41SK0F(6)
         self.compressor = wpilib.Compressor()
-        self.lifter_motor = ctre.talonsrx.TalonSRX(3)
+        self.lifter_motor = ctre.TalonSRX(3)
         self.centre_switch = wpilib.DigitalInput(1)
         self.top_switch = wpilib.DigitalInput(2)
 
@@ -107,16 +107,16 @@ class Robot(magicbot.MagicRobot):
         if self.joystick.getRawButtonPressed(11):
             self.intake.push_on = not self.intake.push_on
 
-        if self.joystick.getRawButtonPressed(3) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kLeft) > 0.5:
+        if self.joystick.getTrigger():
             self.intake_automation.engage(initial_state="intake_cube")
 
-        if self.joystick.getRawButtonPressed(4) or self.gamepad.getStartButtonPressed():
+        if self.joystick.getRawButtonPressed(4) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kRight) > 0.5:
             self.intake_automation.engage(initial_state="eject_cube")
 
-        if self.joystick.getRawButtonPressed(5) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kRight) > 0.5:
+        if self.joystick.getRawButtonPressed(2) or self.gamepad.getStartButtonPressed():
             self.intake_automation.engage(initial_state="stop", force=True)
 
-        if self.joystick.getRawButtonPressed(6):
+        if self.joystick.getRawButtonPressed(3) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kLeft) > 0.5:
             self.intake_automation.engage(initial_state="exchange")
 
         if self.gamepad.getAButtonPressed():
@@ -125,26 +125,14 @@ class Robot(magicbot.MagicRobot):
         if self.gamepad.getBButtonPressed():
             self.lifter_automation.engage(initial_state="move_balanced_scale", force=True)
 
-        if self.gamepad.getXButtonPressed():
+        if self.gamepad.getYButtonPressed():
             self.lifter_automation.engage(initial_state="move_lower_scale", force=True)
 
-        if self.gamepad.getYButtonPressed():
+        if self.gamepad.getXButtonPressed():
             self.lifter_automation.engage(initial_state="move_switch", force=True)
 
         if self.gamepad.getBackButtonPressed():
             self.lifter_automation.engage(initial_state="reset", force=True)
-
-        if self.gamepad.getAButtonPressed():
-            self.lifter_automation.engage(initial_state="move_upper_scale", force=True)
-
-        if self.gamepad.getBButtonPressed():
-            self.lifter_automation.engage(initial_state="move_balanced_scale", force=True)
-
-        if self.gamepad.getXButtonPressed():
-            self.lifter_automation.engage(initial_state="move_lower_scale", force=True)
-
-        if self.gamepad.getYButtonPressed():
-            self.lifter_automation.engage(initial_state="move_switch", force=True)
 
         if self.joystick.getRawButtonPressed(10):
             self.imu.resetHeading()
@@ -165,6 +153,13 @@ class Robot(magicbot.MagicRobot):
         self.chassis.set_inputs(vx, vy, vz)
 
         self.loop_timer.measure()
+
+    def testPeriodic(self):
+        if self.gamepad.getStartButtonPressed():
+            self.module_a.store_steer_offsets()
+            self.module_b.store_steer_offsets()
+            self.module_c.store_steer_offsets()
+            self.module_d.store_steer_offsets()
 
     def robotPeriodic(self):
         # super().robotPeriodic()
