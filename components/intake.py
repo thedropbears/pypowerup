@@ -24,10 +24,10 @@ class Intake:
         self.push_on = False
         self.extension_on = False
         self.extension_double = False
-        self.last_clamp_on = self.clamp_on
-        self.last_push_on = self.push_on
-        self.last_extension_on = self.extension_on
-        self.last_motor_output = self.motor_output
+        self.last_clamp_on = None
+        self.last_push_on = None
+        self.last_extension_on = None
+        self.last_motor_output = None
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
@@ -36,7 +36,10 @@ class Intake:
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
-        pass
+        self.last_clamp_on = None
+        self.last_push_on = None
+        self.last_extension_on = None
+        self.last_motor_output = None
 
     def on_disable(self):
         """This is called whenever the robot transitions to disabled mode."""
@@ -87,6 +90,7 @@ class Intake:
         """Get the distance of the infrared sensor in m."""
         return self.range_finder.getDistance()
 
+    @magicbot.feedback
     def is_cube_contained(self) -> bool:
         """Check whether a cube is in the containment mechanism."""
         cube_dist = self.get_cube_distance()
