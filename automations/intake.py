@@ -1,18 +1,21 @@
 from magicbot import StateMachine, state, timed_state
 from components.intake import Intake
+from components.lifter import Lifter
 
 
 class IntakeAutomation(StateMachine):
     intake: Intake
+    lifter: Lifter
 
     def on_enable(self):
         if not self.intake.arms_out:
             self.engage(initial_state="start")
 
-    @timed_state(must_finish=True, duration=0.5, next_state="stop")
+    @timed_state(must_finish=True, duration=0.5, next_state="grab_cube")
     def start(self):
         """Get the intake arms out of their starting position."""
         self.intake.extend(True)
+        self.intake.clamp(False)
         self.intake.rotate(1)
         self.intake.arms_out = True
 
@@ -27,24 +30,34 @@ class IntakeAutomation(StateMachine):
         if self.intake.is_cube_contained() and state_tm > 0.5:
             self.next_state("pulling_in_cube")
 
-    @timed_state(must_finish=True, duration=1, next_state="grab_cube")
+    @timed_state(must_finish=True, duration=0.7, next_state="grab_cube")
     def pulling_in_cube(self):
         self.intake.extend(False)
         self.intake.rotate(-1)
 
     @state(must_finish=True)
-    def grab_cube(self):
+    def grab_cube(self, state_tm):
         self.intake.clamp(True)
         self.intake.push(False)
-        self.next_state("stop")
+        if state_tm > 0.05:
+            self.lifter.move(0.2)
+            self.next_state_now("stop")
 
     @state(must_finish=True)
-    def exchange(self):
+    def exchange(self, initial_call):
+        if initial_call:
+            self.lifter.move(0)
+        if self.lifter.at_pos():
+            self.next_state_now('deposit_exchange')
+
+    @state(must_finish=True)
+    def deposit_exchange(self):
         self.intake.rotate(1)
         self.intake.push(True)
         self.intake.clamp(False)
-        if not self.intake.is_cube_contained():
-            self.next_state("push_out_cube")
+        self.intake.extend(False)
+        if (self.intake.get_cube_distance() > 1):
+            self.done()
 
     @timed_state(must_finish=True, duration=1, next_state="stop")
     def push_out_cube(self):

@@ -20,7 +20,7 @@ class Intake:
 
     def __init__(self):
         self.motor_output = 0
-        self.clamp_on = False
+        self.clamp_on = True
         self.push_on = False
         self.extension_on = False
         self.extension_double = False

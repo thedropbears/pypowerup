@@ -16,6 +16,8 @@ from pyswervedrive.swervechassis import SwerveChassis
 from robot import Robot
 from utilities.navx import NavX
 
+from wpilib import SmartDashboard
+
 
 class OverallBase(AutonomousStateMachine):
     """statemachine designed to intelegently respond to possible situations in auto"""
@@ -117,7 +119,7 @@ class OverallBase(AutonomousStateMachine):
             self.intake_automation.engage(initial_state='intake_cube')
             self.pickup_start_pos = self.chassis.position
 
-        if not self.intake_automation.is_executing:
+        if not self.intake_automation.is_executing and not initial_call:
             print("Intaken cube, going to next objective")
             self.next_objective()
             return
@@ -127,8 +129,7 @@ class OverallBase(AutonomousStateMachine):
         if vision_angle is None:
             print("Don't see cube in vision")
             return
-        absolute_cube_direction = heading + vision_angle
-        # new_heading = heading + 0.2 * vision_angle
+        alignment_direction = heading + vision_angle * 0.5
         self.chassis.field_oriented = True
 
         # speed controller
@@ -142,10 +143,14 @@ class OverallBase(AutonomousStateMachine):
         # slowly ramp down the speed as we approach the cube
 
         speed = (self.PICKUP_SPEED - percent_along*(self.PICKUP_SPEED-0.5))
+        SmartDashboard.putNumber('cube_pickup_speed', speed)
+        SmartDashboard.putNumber('vision_angle', vision_angle)
+        SmartDashboard.putNumber('vision_alignment_heading', alignment_direction)
+        speed = 1
 
-        vx = speed*math.cos(absolute_cube_direction)
-        vy = speed*math.sin(absolute_cube_direction)
-        self.chassis.set_velocity_heading(vx, vy, absolute_cube_direction)
+        vx = speed*math.cos(alignment_direction)
+        vy = speed*math.sin(alignment_direction)
+        self.chassis.set_velocity_heading(vx, vy, alignment_direction)
 
     @state
     def go_to_scale(self, initial_call):
@@ -203,7 +208,6 @@ class DoubleScaleBase(OverallBase):
 
 class LeftDoubleScale(DoubleScaleBase):
     MODE_NAME = 'Left Double Scale'
-    DEFAULT = True
 
     def on_enable(self):
         super().on_enable()
@@ -357,3 +361,18 @@ class RightSwitchScale(SwitchScaleBase):
         self.current_side = self.start_side
         self.done_switch = False
         self.cube_inside = True
+
+
+class PickupCubeAuto(OverallBase):
+    MODE_NAME = "Vision Pickup Test"
+    DEFAULT = True
+
+    @state(first=True)
+    def start(self):
+        self.cube = [3, 0]
+        self.chassis.odometry_y = 0
+        self.chassis.odometry_x = 6
+        self.next_state_now('pick_up_cube')
+
+    def next_objective(self):
+        self.done()

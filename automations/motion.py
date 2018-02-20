@@ -3,9 +3,10 @@ import numpy as np
 from pyswervedrive.swervechassis import SwerveChassis
 from utilities.navx import NavX
 from utilities.vector_pursuit import VectorPursuit
-from utilities.profile_generator import generate_trapezoidal_trajectory
+from utilities.profile_generator import generate_trapezoidal_function
 from utilities.functions import constrain_angle
 from wpilib import SmartDashboard
+import time
 
 
 class ChassisMotion:
@@ -14,7 +15,7 @@ class ChassisMotion:
     imu: NavX
 
     # heading motion feedforward/back gains
-    kPh = 4  # proportional gain
+    kPh = 1  # proportional gain
     kVh = 1  # feedforward gain
     kIh = 0  # integral gain
     kDh = 0  # derivative gain
@@ -25,8 +26,8 @@ class ChassisMotion:
         self.last_heading_error = 0
 
     def setup(self):
-        self.pursuit.set_motion_params(4, 4, -3)
-        # self.pursuit.set_motion_params(2, 2, -2)
+        # self.pursuit.set_motion_params(4, 4, -3)
+        self.pursuit.set_motion_params(2, 2, -2)
 
     def set_waypoints(self, waypoints: np.ndarray):
         """ Pass as set of waypoints for the chassis to follow.
@@ -46,9 +47,12 @@ class ChassisMotion:
 
     def update_heading_profile(self):
         self.current_seg_distance = np.linalg.norm(self.pursuit.segment)
+        heading = self.imu.getAngle()
         heading_end = self.waypoints[self.waypoint_idx+1][2]
-        self.heading_profile = generate_trapezoidal_trajectory(self.imu.getAngle(), 0,
-                                                               heading_end, 0, 3, 3, -3, 50)
+        delta = constrain_angle(heading_end-heading)
+        print(f"Setting heading trajectory heading {heading}, heading_end {heading_end}, delta {delta}")
+        self.heading_function, self.heading_traj_tm = generate_trapezoidal_function(heading, 0, heading+delta, 0, 3, 3, -3)
+        self.heading_profile_tm = time.monotonic()
         self.last_heading_error = 0
 
     def disable(self):
@@ -79,10 +83,17 @@ class ChassisMotion:
             if seg_end_dist < 0:
                 seg_end_dist = 0
 
-            if self.heading_profile:
-                heading_seg = self.heading_profile.pop(0)
+            if self.heading_function is not None:
+                heading_time = time.monotonic() - self.heading_profile_tm
+                if heading_time < self.heading_traj_tm:
+                    heading_seg = self.heading_function(heading_time)
+                    print("Heading_seg")
+                else:
+                    self.heading_function = None
+                    heading_seg = (self.waypoints[self.waypoint_idx+1][2], 0, 0)
             else:
                 heading_seg = (self.waypoints[self.waypoint_idx+1][2], 0, 0)
+            print(f'heading_seg {heading_seg}')
 
             # get the current heading of the robot since last reset
             # getRawHeading has been swapped for getAngle
