@@ -14,10 +14,8 @@ from pyswervedrive.swervechassis import SwerveChassis
 from pyswervedrive.swervemodule import SwerveModule
 from utilities.navx import NavX
 from utilities.functions import rescale_js
-from robotpy_ext.common_drivers.distance_sensors import SharpIRGP2Y0A41SK0F
 from robotpy_ext.misc.looptimer import LoopTimer
 from networktables import NetworkTables
-import math
 
 
 class Robot(magicbot.MagicRobot):
@@ -67,8 +65,6 @@ class Robot(magicbot.MagicRobot):
         self.intake_kicker = wpilib.Solenoid(3)
         self.left_extension = wpilib.Solenoid(6)
         self.right_extension = wpilib.DoubleSolenoid(forwardChannel=5, reverseChannel=4)
-        self.left_infrared = SharpIRGP2Y0A41SK0F(5)
-        self.right_infrared = SharpIRGP2Y0A41SK0F(6)
         self.compressor = wpilib.Compressor()
         self.lifter_motor = ctre.TalonSRX(3)
         self.centre_switch = wpilib.DigitalInput(1)
@@ -76,7 +72,6 @@ class Robot(magicbot.MagicRobot):
 
         # create the imu object
         self.imu = NavX()
-        # wpilib.SmartDashboard.putData('gyro', self.imu.ahrs)
 
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)
@@ -138,10 +133,6 @@ class Robot(magicbot.MagicRobot):
             self.imu.resetHeading()
             self.chassis.set_heading_sp_current()
 
-        if self.joystick.getRawButtonPressed(8):
-            print("Heading sp set")
-            self.chassis.set_heading_sp(self.imu.getAngle() + math.pi)
-
         # this is where the joystick inputs get converted to numbers that are sent
         # to the chassis component. we rescale them using the rescale_js function,
         # in order to make their response exponential, and to set a dead zone -
@@ -168,7 +159,6 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("imu_heading", self.imu.getAngle())
         self.sd.putNumber("odometry_x", self.chassis.odometry_x)
         self.sd.putNumber("odometry_y", self.chassis.odometry_y)
-        # self.sd.putNumber("lift/current", self.lifter.motor.getOutputCurrent())
 
 
 if __name__ == '__main__':

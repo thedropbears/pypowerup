@@ -139,14 +139,8 @@ class VectorPursuit:
 
         segment_normalised = self.segment / norm(self.segment)
 
-        # print("VP Position {}, LAH {}, speed {}, heading {}, idx {}, traj {}".format(position, look_ahead_point, speed_sp, theta,
-        #                                                                              self.waypoints, self.segment_idx))
-
         over = False
 
-        # if scale > 1 and self.segment_idx < len(self.waypoints)-2:
-        #     self.increment_segment()
-        #     next_seg = True
         if (norm(position - self.waypoints_xy[-1]) < 0.1
            or (scale >= 1 and self.segment_idx == len(self.waypoints)-2)):
             over = True

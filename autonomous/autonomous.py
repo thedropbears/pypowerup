@@ -103,10 +103,12 @@ class OverallBase(AutonomousStateMachine):
                 list(self.cube)+[self.CUBE_PICKUP_ORIENTATION, self.PICKUP_SPEED/2]
                 ]))
             self.intake_automation.engage(initial_state='intake_cube', force=True)
-        # if not self.intake_automation.is_executing:
-        #     self.next_objective()
-        #     return
+        if not self.intake_automation.is_executing:
+            self.next_objective()
+            return
         if not self.motion.enabled:
+            # TODO: navigate via vision once we get odometry-based movement
+            # working well
             # self.next_state_now('pick_up_cube')
             self.next_objective()
 

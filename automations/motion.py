@@ -26,8 +26,6 @@ class ChassisMotion:
         self.last_heading_error = 0
 
     def setup(self):
-        # self.pursuit.set_motion_params(4, 4, -3)
-        # self.pursuit.set_motion_params(2, 2, -2)
         self.pursuit.set_motion_params(1.5, 2, -2)
 
     def set_waypoints(self, waypoints: np.ndarray):
@@ -39,7 +37,6 @@ class ChassisMotion:
                 [x_in_meters, y_in_meters, orientation_in_radians, speed_in_meters]
         """
         self.waypoints = waypoints
-        print("Motion waypoints %s" % self.waypoints)
         self.pursuit.set_waypoints(waypoints)
         self.enabled = True
         self.chassis.heading_hold_on()
@@ -51,7 +48,6 @@ class ChassisMotion:
         heading = self.imu.getAngle()
         heading_end = self.waypoints[self.waypoint_idx+1][2]
         delta = constrain_angle(heading_end-heading)
-        print(f"Setting heading trajectory heading {heading}, heading_end {heading_end}, delta {delta}")
         self.heading_function, self.heading_traj_tm = generate_trapezoidal_function(heading, 0, heading+delta, 0, 2, 2, -3)
         self.heading_profile_tm = time.monotonic()
         self.last_heading_error = 0
@@ -72,7 +68,6 @@ class ChassisMotion:
             odom_vel = np.array([self.chassis.odometry_x_vel, self.chassis.odometry_y_vel])
 
             speed = np.linalg.norm(odom_vel)
-            # print("Odom speed %s" % speed)
 
             direction_of_motion, speed_sp, next_seg, over = self.pursuit.get_output(odom_pos, speed)
 
@@ -110,7 +105,6 @@ class ChassisMotion:
             heading_output = (
                 self.kPh * heading_error + self.kVh * heading_seg[1]
                 + self.heading_error_i*self.kIh + d_heading_error*self.kDh)
-            # print("Heading output %s" % heading_output)
 
             # store the current errors to be used to compute the
             # derivatives in the next timestep
@@ -118,7 +112,6 @@ class ChassisMotion:
             vx = speed_sp * math.cos(direction_of_motion)
             vy = speed_sp * math.sin(direction_of_motion)
 
-            # self.chassis.set_velocity_heading(vx, vy, self.waypoints[self.waypoint_idx+1][2])
             self.chassis.set_inputs(vx, vy, heading_output)
 
             SmartDashboard.putNumber('vector_pursuit_heading', direction_of_motion)
