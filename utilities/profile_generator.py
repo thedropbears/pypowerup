@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from functions import constrain_angle
+from utilities.functions import constrain_angle
 
 
 def sign(x):

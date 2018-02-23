@@ -122,8 +122,10 @@ class SwerveChassis:
 
         angle = self.imu.getAngle()
 
+        self.update_odometry()
+        self.odometry_updated = False  # reset for next timestep
+
         for module in self.modules:
-            module.update_odometry()
             # Calculate the additional vx and vy components for this module
             # required to achieve our desired angular velocity
             vz_x = -module.dist*vz*math.sin(module.angle)
@@ -135,9 +137,6 @@ class SwerveChassis:
                 vx, vy = self.vx, self.vy
             module.set_velocity(vx+vz_x, vy+vz_y)
 
-        self.update_odometry()
-        self.odometry_updated = False  # reset for next timestep
-
     def update_odometry(self):
         if self.odometry_updated:
             return
@@ -147,6 +146,7 @@ class SwerveChassis:
         velocity_outputs = np.zeros((8, 1))
 
         for i, module in enumerate(self.modules):
+            module.update_odometry()
             odometry_x, odometry_y = module.get_cartesian_delta()
             velocity_x, velocity_y = module.get_cartesian_vel()
             odometry_outputs[i*2, 0] = odometry_x

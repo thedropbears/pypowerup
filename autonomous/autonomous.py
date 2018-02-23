@@ -95,18 +95,15 @@ class OverallBase(AutonomousStateMachine):
                 self.cube = np.array(self.CUBE_PICKUP_1)
             elif self.cube_number >= 2:
                 self.cube = np.array(self.CUBE_PICKUP_2)
-            pickup_waypoint = self.PICKUP_WAYPOINT+[self.CUBE_PICKUP_ORIENTATION,
-                                                    self.PICKUP_SPEED]
-            self.motion.set_waypoints(([
+            self.motion.set_trajectory([
                 self.current_waypoint,
-                pickup_waypoint,
-                list(self.cube)+[self.CUBE_PICKUP_ORIENTATION, self.PICKUP_SPEED/2]
-                ]))
+                self.PICKUP_WAYPOINT,
+                self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION)
             self.intake_automation.engage(initial_state='intake_cube', force=True)
         if not self.intake_automation.is_executing:
             self.next_objective()
             return
-        if not self.motion.enabled:
+        if not self.motion.trajectory_executing:
             # TODO: navigate via vision once we get odometry-based movement
             # working well
             # self.next_state_now('pick_up_cube')
@@ -160,12 +157,12 @@ class OverallBase(AutonomousStateMachine):
         """Navigate to the scale. Raise the lift"""
         if initial_call:
             self.done_switch = True
-            self.motion.set_waypoints([
+            self.motion.set_trajectory([
                 self.current_waypoint,
-                self.SCALE_DEPOSIT+[0, 0]
-                ])
+                self.SCALE_DEPOSIT
+                ], end_heading=0)
             self.lifter_automation.engage(initial_state='move_upper_scale')
-        if not self.motion.enabled and state_tm > 4:
+        if not self.motion.trajectory_executing and state_tm > 4:
             self.next_state_now('deposit_scale')
 
     @state
@@ -183,8 +180,7 @@ class OverallBase(AutonomousStateMachine):
 
     @property
     def current_waypoint(self):
-        return [self.chassis.odometry_x, self.chassis.odometry_y,
-                self.imu.getAngle(), self.chassis.speed]
+        return [self.chassis.odometry_x, self.chassis.odometry_y]
 
 
 class DoubleScaleBase(OverallBase):
@@ -197,15 +193,15 @@ class DoubleScaleBase(OverallBase):
                 self.next_state_now("go_to_scale")
                 return
             else:
-                self.motion.set_waypoints([
+                self.motion.set_trajectory([
                     self.current_waypoint,
-                    self.CROSS_POINT+[0, self.CROSS_POINT_SPEED],
-                    self.OPP_CROSS_POINT+[0, self.CROSS_POINT_SPEED],
-                    self.SCALE_DEPOSIT+[0, 0]
-                    ])
+                    self.CROSS_POINT,
+                    self.OPP_CROSS_POINT,
+                    self.SCALE_DEPOSIT
+                    ], end_heading=0)
         if state_tm > 1:
             self.lifter_automation.engage(initial_state='move_upper_scale')
-        if not self.motion.enabled:
+        if not self.motion.trajectory_executing:
             self.next_state_now("deposit_scale")
 
     def next_objective(self):
@@ -274,12 +270,12 @@ class SwitchScaleBase(OverallBase):
                 self.decide_objective()
                 return
             else:
-                self.motion.set_waypoints([
+                self.motion.set_trajectory([
                     self.current_waypoint,
-                    self.CROSS_POINT+[0, self.CROSS_POINT_SPEED],
-                    self.OPP_CROSS_POINT+[0, self.CROSS_POINT_SPEED]
-                    ])
-        if not self.motion.enabled:
+                    self.CROSS_POINT,
+                    self.OPP_CROSS_POINT,
+                    ], end_heading=0)
+        if not self.motion.trajectory_executing:
             self.current_side = 'R' if self.current_side == 'L' else 'L'
             self.decide_objective()
             return
@@ -289,12 +285,12 @@ class SwitchScaleBase(OverallBase):
         """Navigate to the scale. Raise the lift"""
         if initial_call:
             self.done_switch = True
-            self.motion.set_waypoints([
+            self.motion.set_trajectory([
                 self.current_waypoint,
-                self.SWITCH_DEPOSIT+[self.SWITCH_DEPOSIT_ORIENTATION, 0]
-                ])
+                self.SWITCH_DEPOSIT
+                ], end_heading=0)
             self.lifter_automation.engage(initial_state='move_switch')
-        if not self.motion.enabled:
+        if not self.motion.trajectory_executing:
             self.next_state_now('deposit_switch')
 
     def next_objective(self):
