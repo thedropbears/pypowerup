@@ -5,8 +5,8 @@ from components.range_finder import RangeFinder
 
 
 class Intake:
-    left_motor: ctre.talonsrx.TalonSRX
-    right_motor: ctre.talonsrx.TalonSRX
+    left_motor: ctre.TalonSRX
+    right_motor: ctre.TalonSRX
     clamp_arm: wpilib.Solenoid
     intake_kicker: wpilib.Solenoid
     left_extension: wpilib.Solenoid

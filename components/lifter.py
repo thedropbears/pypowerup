@@ -1,11 +1,10 @@
 import ctre
-import magicbot
 import wpilib
 
 
 class Lifter:
     compressor: wpilib.Compressor
-    motor: ctre.talonsrx.TalonSRX
+    motor: ctre.TalonSRX
     centre_switch: wpilib.DigitalInput
     top_switch: wpilib.DigitalInput
 
@@ -46,8 +45,8 @@ class Lifter:
         self.motor.setNeutralMode(ctre.NeutralMode.Brake)
 
         self.motor.overrideLimitSwitchesEnable(False)
-        self.motor.configReverseLimitSwitchSource(ctre.talonsrx.TalonSRX.LimitSwitchSource.FeedbackConnector, ctre.talonsrx.TalonSRX.LimitSwitchNormal.NormallyOpen, deviceID=0, timeoutMs=10)
-        self.motor.configForwardLimitSwitchSource(ctre.talonsrx.TalonSRX.LimitSwitchSource.Deactivated, ctre.talonsrx.TalonSRX.LimitSwitchNormal.Disabled, deviceID=0, timeoutMs=10)
+        self.motor.configReverseLimitSwitchSource(ctre.TalonSRX.LimitSwitchSource.FeedbackConnector, ctre.TalonSRX.LimitSwitchNormal.NormallyOpen, deviceID=0, timeoutMs=10)
+        self.motor.configForwardLimitSwitchSource(ctre.TalonSRX.LimitSwitchSource.Deactivated, ctre.TalonSRX.LimitSwitchNormal.Disabled, deviceID=0, timeoutMs=10)
 
         self.motor.overrideSoftLimitsEnable(True)
         self.motor.configForwardSoftLimitEnable(True, timeoutMs=10)
@@ -114,18 +113,16 @@ class Lifter:
         """
         self.set_pos = input_setpos
         if self.set_pos - self.get_pos() < 0:
-            self.motor.configMotionAcceleration(self.DOWNWARD_ACCELERATION, timeoutMs=10)
+            self.motor.configMotionAcceleration(self.DOWNWARD_ACCELERATION, timeoutMs=0)
         else:
-            self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=10)
+            self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=0)
 
         self.motor.set(ctre.ControlMode.MotionMagic, self.metres_to_counts(self.set_pos))
 
-    @magicbot.feedback
     def get_pos(self) -> float:
         """Get the current height of the lift."""
         return self.motor.getSelectedSensorPosition(0) / self.COUNTS_PER_METRE
 
-    @magicbot.feedback
     def get_velocity(self) -> float:
         """Get the current velocity of the lift."""
         return self.motor.getSelectedSensorVelocity(0) / self.COUNTS_PER_METRE
