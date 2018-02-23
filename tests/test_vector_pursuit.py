@@ -19,6 +19,8 @@ def position_delta_x_y(theta, speed, robot_x, robot_y, orientation):
 def test_single_waypoint_converge():
     orientation = 0  # rad
 
+    speed = 2
+
     robot_x = 0.0
     robot_y = 1.0
     waypoints = np.array([[0, 0, 0, 0], [100, 0, 0, 1]])
@@ -31,7 +33,7 @@ def test_single_waypoint_converge():
     fake_tm = time.monotonic()
 
     for i in range(200):
-        theta, speed, next_seg, over = pursuit.get_output(np.array([robot_x, robot_y]), last_speed, current_tm=fake_tm)
+        theta, next_seg, over = pursuit.get_output(np.array([robot_x, robot_y]), last_speed, current_tm=fake_tm)
         robot_x, robot_y = position_delta_x_y(theta, speed,
                                               robot_x, robot_y, orientation)
         if over:
@@ -59,7 +61,7 @@ def test_multi_waypoint_converge():
     fake_tm = time.monotonic()
 
     for i in range(500):
-        theta, speed, next_seg, over = pursuit.get_output(np.array([robot_x, robot_y]), last_speed, current_tm=fake_tm)
+        theta, next_seg, over = pursuit.get_output(np.array([robot_x, robot_y]), last_speed, current_tm=fake_tm)
         robot_x, robot_y = position_delta_x_y(theta, speed,
                                               robot_x, robot_y, orientation)
         if over:
@@ -69,29 +71,3 @@ def test_multi_waypoint_converge():
 
     assert abs(robot_x-1) < 0.1
     assert robot_y > 2
-
-
-def test_speed_control():
-    speed = 1  # m/s
-    orientation = 0  # rad
-
-    robot_x = 0.0
-    robot_y = 1.0
-    waypoints = np.array([[0, 1, 0, 0], [1, 0, 0, 1], [1, 2, 0, 2]])
-
-    pursuit = VectorPursuit()
-    pursuit.set_motion_params(3.0, 4.5, -4.5)
-    pursuit.set_waypoints(waypoints)
-    last_speed = 0
-    fake_tm = time.monotonic()
-
-    for i in range(500):
-        theta, speed, next_seg, over = pursuit.get_output(np.array([robot_x, robot_y]), last_speed, current_tm=fake_tm)
-        robot_x, robot_y = position_delta_x_y(theta, speed,
-                                              robot_x, robot_y, orientation)
-        if over:
-            break
-        last_speed = speed
-        fake_tm += MagicRobot.control_loop_wait_time
-
-    assert abs(speed - 2) < 0.2
