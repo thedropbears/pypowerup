@@ -1,4 +1,6 @@
 import math
+import numpy as np
+from functions import constrain_angle
 
 
 def sign(x):
@@ -6,6 +8,45 @@ def sign(x):
         return 1
     else:
         return -1
+
+
+def smooth_waypoints(waypoints, radius, samples=7):
+    """Smooth the corners of a specified trajectory by inserting extra waypoints.
+
+        Args:
+            waypoints: An array of waypoints that the chassis will follow.
+                Waypoints are themselves arrays, constructed as follows:
+                [x_in_meters, y_in_meters, orientation_in_radians, speed_in_meters]
+            radius: Turn radius.
+            samples: number of samples to be taken about the radius at the corners.
+        Note:
+            Waypoint list must be greater than or equal to 3 in length, otherwise
+            there are no corners to smooth out...
+    """
+    original_waypoints_xy = [np.array([point[0], point[1]]) for point in waypoints]
+    new_waypoints_xy = []
+    for i, waypoint in enumerate(original_waypoints_xy):
+        if i in [0, len(waypoints)-1]:
+            new_waypoints_xy.append(waypoint)
+            continue
+        segment_a = original_waypoints_xy[i] - original_waypoints_xy[i-1]
+        heading_a = math.atan2(segment_a[1], segment_a[0])
+        segment_b = original_waypoints_xy[i+1] - original_waypoints_xy[i]
+        heading_b = math.atan2(segment_b[1], segment_b[0])
+        azimuth_delta = (heading_b - heading_a) / 2
+        direction = sign(azimuth_delta)
+        # distance from the waypoint to the center of the circle the smoothing
+        # waypoints will be generated about
+        waypoint_center_distance = radius / math.cos(azimuth_delta)
+        corner_center_heading = constrain_angle(heading_b + direction*math.pi/2 - azimuth_delta)
+        center_corner_heading = constrain_angle(corner_center_heading - direction * math.pi)
+        center_x = waypoint[0] + waypoint_center_distance * math.cos(corner_center_heading)
+        center_y = waypoint[1] + waypoint_center_distance * math.sin(corner_center_heading)
+        for sample_angle in np.linspace(center_corner_heading-azimuth_delta, center_corner_heading+azimuth_delta, num=samples):
+            sample_x = center_x + radius * math.cos(sample_angle)
+            sample_y = center_y + radius * math.sin(sample_angle)
+            new_waypoints_xy.append(np.array([sample_x, sample_y]))
+    return new_waypoints_xy
 
 
 def cubic_generator(keypoints):
