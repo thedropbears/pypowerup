@@ -13,6 +13,8 @@ class Intake:
     right_extension: wpilib.DoubleSolenoid
     range_finder: RangeFinder
 
+    cube_switch: wpilib.DigitalInput
+
     arms_out = magicbot.tunable(False, doc='Whether the arms are outside of the starting configuration.')
 
     def __init__(self):
@@ -89,8 +91,9 @@ class Intake:
     @magicbot.feedback
     def is_cube_contained(self) -> bool:
         """Check whether a cube is in the containment mechanism."""
-        cube_dist = self.get_cube_distance()
-        return 0.05 <= cube_dist <= 0.35
+        # cube_dist = self.get_cube_distance()
+        # return 0.05 <= cube_dist <= 0.35
+        return not self.cube_switch.get()
 
     def are_wheels_contacting_cube(self) -> bool:
         """Check whether the intake wheels are touching the cube."""

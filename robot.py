@@ -70,6 +70,8 @@ class Robot(magicbot.MagicRobot):
         self.centre_switch = wpilib.DigitalInput(1)
         self.top_switch = wpilib.DigitalInput(2)
 
+        self.intake_cube_switch = wpilib.DigitalInput(3)
+
         # create the imu object
         self.imu = IMU('bno055')
 
