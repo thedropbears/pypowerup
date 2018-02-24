@@ -1,7 +1,7 @@
 import math
 import numpy as np
 from pyswervedrive.swervechassis import SwerveChassis
-from utilities.navx import NavX
+from utilities.imu import IMU
 from utilities.vector_pursuit import VectorPursuit
 from utilities.profile_generator import generate_trapezoidal_function, smooth_waypoints
 from utilities.functions import constrain_angle
@@ -12,7 +12,7 @@ import time
 class ChassisMotion:
 
     chassis: SwerveChassis
-    imu: NavX
+    imu: IMU
 
     # heading motion feedforward/back gains
     kPh = 3  # proportional gain

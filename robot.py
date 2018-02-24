@@ -12,7 +12,7 @@ from components.vision import Vision
 from components.range_finder import RangeFinder
 from pyswervedrive.swervechassis import SwerveChassis
 from pyswervedrive.swervemodule import SwerveModule
-from utilities.navx import NavX
+from utilities.imu import IMU
 from utilities.functions import rescale_js
 from robotpy_ext.misc.looptimer import LoopTimer
 from networktables import NetworkTables
@@ -71,7 +71,7 @@ class Robot(magicbot.MagicRobot):
         self.top_switch = wpilib.DigitalInput(2)
 
         # create the imu object
-        self.imu = NavX()
+        self.imu = IMU('bno055')
 
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)

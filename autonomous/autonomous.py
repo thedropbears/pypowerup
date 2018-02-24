@@ -14,7 +14,7 @@ from components.intake import Intake
 from components.vision import Vision
 from pyswervedrive.swervechassis import SwerveChassis
 from robot import Robot
-from utilities.navx import NavX
+from utilities.imu import IMU
 
 from wpilib import SmartDashboard
 
@@ -24,7 +24,7 @@ class OverallBase(AutonomousStateMachine):
     vision: Vision
     lifter: Lifter
     intake: Intake
-    imu: NavX
+    imu: IMU
     chassis: SwerveChassis
     ds: wpilib.DriverStation
 

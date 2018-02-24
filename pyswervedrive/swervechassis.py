@@ -3,13 +3,13 @@ import numpy as np
 from magicbot import tunable
 from wpilib import PIDController
 from wpilib.interfaces import PIDOutput
-from utilities.navx import NavX
+from utilities.imu import IMU
 from pyswervedrive.swervemodule import SwerveModule
 
 
 class SwerveChassis:
 
-    imu: NavX
+    imu: IMU
     module_a: SwerveModule
     module_b: SwerveModule
     module_c: SwerveModule
