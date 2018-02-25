@@ -118,6 +118,8 @@ class SwerveChassis:
         input_vz = 0
         if self.vz is not None:
             input_vz = self.vz
+        if pid_z < 0.05 and math.hypot(self.vx, self.vy) < 0.01:
+            pid_z = 0
         vz = input_vz + pid_z
 
         angle = self.imu.getAngle()
@@ -155,7 +157,8 @@ class SwerveChassis:
             velocity_outputs[i*2+1, 0] = velocity_y
             module.reset_encoder_delta()
 
-        delta_x, delta_y, delta_z = self.robot_movement_from_odometry(odometry_outputs, heading)
+        vx, vy, vz = self.robot_movement_from_odometry(velocity_outputs, heading)
+        delta_x, delta_y, delta_z = self.robot_movement_from_odometry(odometry_outputs, heading, z_vel=vz)
 
         self.odometry_x += delta_x
         self.odometry_y += delta_y
@@ -168,7 +171,7 @@ class SwerveChassis:
         lstsq_ret = np.linalg.lstsq(self.A, odometry_outputs,
                                     rcond=None)
         x, y, theta = lstsq_ret[0].reshape(3)
-        x_field, y_field = self.field_orient(x, y, angle + z_vel*(0.5/50))
+        x_field, y_field = self.field_orient(x, y, angle + z_vel*(0/50))
         return x_field, y_field, theta
 
     def set_velocity_heading(self, vx, vy, heading):

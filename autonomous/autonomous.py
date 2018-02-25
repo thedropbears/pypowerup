@@ -53,9 +53,11 @@ class OverallBase(AutonomousStateMachine):
     PICKUP_WAYPOINT = [5.6+Robot.length / 2, 1.8]
     CROSS_POINT = [5.6+Robot.length / 2, 1.8]
     OPP_CROSS_POINT = [5.6+Robot.length / 2, -1.8]"""
-    SCALE_DEPOSIT = [0.3+6-Robot.length / 2, 1+0.3]
+    # SCALE_DEPOSIT = [0.3+6-Robot.length / 2, 1+0.3]
+    SCALE_DEPOSIT = [6-Robot.length / 2, 1+0.2]
     CUBE_PICKUP_1 = [3+Robot.length / 2, 0.5]
-    CUBE_PICKUP_2 = [3+Robot.length / 2, -0.5]
+    # CUBE_PICKUP_2 = [3+Robot.length / 2, -0.5]
+    CUBE_PICKUP_2 = [3+Robot.length / 2, 0]
     SWITCH_DEPOSIT = [3+Robot.length / 2, 0]
 
     SWITCH_DEPOSIT_ORIENTATION = -math.pi
@@ -63,8 +65,8 @@ class OverallBase(AutonomousStateMachine):
     CUBE_PICKUP_ORIENTATION = -math.pi
 
     PICKUP_WAYPOINT = [4.5, 0]
-    CROSS_POINT = [4, 1]
-    OPP_CROSS_POINT = [4, -1]
+    CROSS_POINT = [4.5, 1]
+    OPP_CROSS_POINT = [4.5, -1]
 
     def on_enable(self):
         # self.lifter.reset() do we need this?
@@ -97,17 +99,18 @@ class OverallBase(AutonomousStateMachine):
                 self.cube = np.array(self.CUBE_PICKUP_2)
             self.motion.set_trajectory([
                 self.current_waypoint,
-                self.PICKUP_WAYPOINT,
-                self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION)
+                self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, smooth=True)
             self.intake_automation.engage(initial_state='intake_cube', force=True)
-        if not self.intake_automation.is_executing:
+        # if not self.intake_automation.is_executing:
+        if self.intake.is_cube_contained():
+            print("Cube contained in nav to cube")
             self.next_objective()
             return
-        if not self.motion.trajectory_executing:
-            # TODO: navigate via vision once we get odometry-based movement
-            # working well
-            # self.next_state_now('pick_up_cube')
-            self.next_objective()
+        # if not self.motion.trajectory_executing and self.motion.average_speed < 0.1:
+        #     # TODO: navigate via vision once we get odometry-based movement
+        #     # working well
+        #     # self.next_state_now('pick_up_cube')
+        #     self.next_objective()
 
     @state
     def pick_up_cube(self, initial_call):
@@ -150,7 +153,7 @@ class OverallBase(AutonomousStateMachine):
 
         vx = speed*math.cos(alignment_direction)
         vy = speed*math.sin(alignment_direction)
-        self.chassis.set_velocity_heading(vx, vy, alignment_direction)
+        self.chassis.set_velocity_heading(vx, vy, math.pi)
 
     @state
     def go_to_scale(self, initial_call, state_tm):
@@ -162,7 +165,8 @@ class OverallBase(AutonomousStateMachine):
                 self.SCALE_DEPOSIT
                 ], end_heading=0)
             self.lifter_automation.engage(initial_state='move_upper_scale')
-        if not self.motion.trajectory_executing and state_tm > 4:
+        # if not self.motion.trajectory_executing and state_tm > 4:
+        if not self.motion.trajectory_executing and self.motion.average_speed < 0.1:
             self.next_state_now('deposit_scale')
 
     @state

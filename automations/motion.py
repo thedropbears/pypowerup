@@ -6,6 +6,7 @@ from utilities.vector_pursuit import VectorPursuit
 from utilities.profile_generator import generate_trapezoidal_function, smooth_waypoints
 from utilities.functions import constrain_angle
 from wpilib import SmartDashboard
+from networktables import NetworkTables
 import time
 
 
@@ -15,18 +16,19 @@ class ChassisMotion:
     imu: IMU
 
     # heading motion feedforward/back gains
-    kPh = 3  # proportional gain
+    kPh = 5  # proportional gain
     kVh = 1  # feedforward gain
     kIh = 0  # integral gain
-    kDh = 20  # derivative gain
+    kDh = 0  # derivative gain
+    kAh = 0.2
 
-    kP = 1
+    kP = 0.5
     kI = 0
-    kD = 0.5
+    kD = 0
     kV = 1
-    kA = 0
+    kA = 0.2
 
-    waypoint_corner_radius = 0.5
+    waypoint_corner_radius = 0.7
 
     def __init__(self):
         self.enabled = False
@@ -34,17 +36,22 @@ class ChassisMotion:
         self.last_heading_error = 0
 
     def setup(self):
-        self.pursuit.set_motion_params(1.5, 2, -2)
+        pass
 
-    def set_trajectory(self, waypoints: np.ndarray, end_heading):
+    def set_trajectory(self, waypoints: np.ndarray, end_heading, smooth=True):
         """ Pass as set of waypoints for the chassis to follow.
 
         Args:
             waypoints: A numpy array of waypoints that the chassis will follow.
                 Waypoints are themselves arrays, constructed as follows:
-                [x_in_meters, y_in_meters, orientation_in_radians, speed_in_meters]
+                [x_in_meters, y_in_meters]
         """
-        waypoints_smoothed = smooth_waypoints(waypoints, radius=self.waypoint_corner_radius)
+        print(f'original_waypoints {waypoints}')
+        if smooth:
+            waypoints_smoothed = smooth_waypoints(waypoints, radius=self.waypoint_corner_radius)
+        else:
+            waypoints_smoothed = [np.array(point) for point in waypoints]
+        print(f'smoothed_waypoints {waypoints_smoothed}')
         trajectory_length = sum([np.linalg.norm(waypoints_smoothed[i] - waypoints_smoothed[i-1])
                                  for i in range(1, len(waypoints_smoothed))])
         self.end_heading = end_heading
@@ -64,24 +71,32 @@ class ChassisMotion:
     def update_linear_profile(self):
         self.speed_function, self.distance_traj_tm = generate_trapezoidal_function(
                                                             0, 0, self.end_distance, 0,
-                                                            v_max=3, a_pos=3, a_neg=3)
+                                                            # v_max=3, a_pos=3, a_neg=3)
+                                                            v_max=2.5, a_pos=2, a_neg=1.5)
         self.linear_position = 0
-        self.last_position = self.chassis.position
+        self.last_position = self.chassis.position.reshape(2)
+        print(f'start_position {self.last_position}')
         self.last_linear_error = 0
         self.linear_error_i = 0
 
     def update_heading_profile(self):
         heading = self.imu.getAngle()
-        delta = constrain_angle(self.end_heading-heading)
         self.heading_function, self.heading_traj_tm = generate_trapezoidal_function(
-                                                            heading, 0, heading+delta, 0,
-                                                            v_max=2, a_pos=3, a_neg=3)
+                                                            heading, 0, self.end_heading, 0,
+                                                            v_max=3, a_pos=3, a_neg=3)
         self.last_heading_error = 0
         self.heading_error_i = 0
 
     @property
     def trajectory_executing(self):
         return self.enabled
+
+    @property
+    def average_speed(self):
+        speed = 0
+        for module in self.chassis.modules:
+            speed += module.wheel_vel / 4
+        return speed
 
     def disable(self):
         self.enabled = False
@@ -113,14 +128,17 @@ class ChassisMotion:
             if over:
                 print("Motion over")
                 self.enabled = False
-                if self.waypoints[-1][3] == 0:
-                    self.chassis.set_inputs(0, 0, 0)
+                self.chassis.set_inputs(0, 0, 0)
 
     def run_speed_controller(self):
-        self.linear_position += np.linalg.norm(self.chassis.position - self.last_position)
-        print(self.linear_position)
+        chassis_pos = self.chassis.position.reshape(2)
+        self.linear_position += np.linalg.norm(chassis_pos - self.last_position)
 
-        linear_seg = self.speed_function(time.monotonic() - self.start_segment_tm)
+        profile_tm = time.monotonic() - self.start_segment_tm
+        if profile_tm > self.distance_traj_tm:
+            return 0.5
+
+        linear_seg = self.speed_function(profile_tm)
         if linear_seg is None:
             linear_seg = (0, 0, 0)
             print("WARNING: Linear segment is 0")
@@ -138,8 +156,13 @@ class ChassisMotion:
                     + self.kA*linear_seg[2] + self.kI*self.linear_error_i
                     + self.kD*self.d_pos_error)
 
-        self.last_position = self.chassis.position
+        self.last_position = chassis_pos
         self.last_linear_error = pos_error
+
+        SmartDashboard.putNumber('linear_mp_sp', linear_seg[0])
+        SmartDashboard.putNumber('linear_mp_error', pos_error)
+        SmartDashboard.putNumber('linear_pos', self.linear_position)
+        NetworkTables.flush()
 
         return speed_sp
 
@@ -168,7 +191,7 @@ class ChassisMotion:
 
         # generate the rotational output to the chassis
         heading_output = (
-            self.kPh * heading_error + self.kVh * heading_seg[1]
+            self.kPh * heading_error + self.kAh * heading_seg[2] + self.kVh * heading_seg[1]
             + self.heading_error_i*self.kIh + d_heading_error*self.kDh)
 
         # store the current errors to be used to compute the

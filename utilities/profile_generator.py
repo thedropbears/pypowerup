@@ -10,7 +10,7 @@ def sign(x):
         return -1
 
 
-def smooth_waypoints(waypoints, radius, samples=7):
+def smooth_waypoints(waypoints, radius, samples=17):
     """Smooth the corners of a specified trajectory by inserting extra waypoints.
 
         Args:
