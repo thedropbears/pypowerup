@@ -5,7 +5,7 @@ from pyswervedrive.swervechassis import SwerveChassis
 class CrossBaseline(AutonomousStateMachine):
 
     chassis: SwerveChassis
-    MODE_NAME = 'Drive forwards (DO NOT USE)'
+    MODE_NAME = 'Drive forwards'
     DEFAULT = True
 
     @state(first=True)
@@ -18,5 +18,4 @@ class CrossBaseline(AutonomousStateMachine):
     @state
     def stopping(self):
         self.chassis.set_inputs(0, 0, 0)
-        print("====================Autonomous complete====================")
         self.done()
