@@ -54,10 +54,12 @@ class OverallBase(AutonomousStateMachine):
     CROSS_POINT = [5.6+Robot.length / 2, 1.8]
     OPP_CROSS_POINT = [5.6+Robot.length / 2, -1.8]"""
     # SCALE_DEPOSIT = [0.3+6-Robot.length / 2, 1+0.3]
-    SCALE_DEPOSIT = [6-Robot.length / 2, 1+0.2]
-    CUBE_PICKUP_1 = [3+Robot.length / 2, 0.5]
+    SCALE_DEPOSIT = [6-Robot.length / 2, 1]
+    PICKUP_WAYPOINT_X = 4.5
+    # CUBE_PICKUP_1 = [3+Robot.length / 2, 0.5]
     # CUBE_PICKUP_2 = [3+Robot.length / 2, -0.5]
-    CUBE_PICKUP_2 = [3+Robot.length / 2, 0]
+    CUBE_PICKUP_1 = [3+1, 0.5]
+    CUBE_PICKUP_2 = [3+1, -0.5]
     SWITCH_DEPOSIT = [3+Robot.length / 2, 0]
 
     SWITCH_DEPOSIT_ORIENTATION = -math.pi
@@ -67,6 +69,8 @@ class OverallBase(AutonomousStateMachine):
     PICKUP_WAYPOINT = [4.5, 0]
     CROSS_POINT = [4.5, 1]
     OPP_CROSS_POINT = [4.5, -1]
+
+    CUBE_RUN_MOTION = (1.5, 1.5, 1.5)
 
     def on_enable(self):
         # self.lifter.reset() do we need this?
@@ -87,6 +91,8 @@ class OverallBase(AutonomousStateMachine):
         self.intake.clamp(True)
         self.intake.push(False)
 
+        self.slow_scale = False
+
         super().on_enable()
 
     @state
@@ -97,20 +103,22 @@ class OverallBase(AutonomousStateMachine):
                 self.cube = np.array(self.CUBE_PICKUP_1)
             elif self.cube_number >= 2:
                 self.cube = np.array(self.CUBE_PICKUP_2)
+            pickup_waypoint = [self.PICKUP_WAYPOINT_X, self.cube[1]]
             self.motion.set_trajectory([
                 self.current_waypoint,
-                self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, smooth=True)
+                pickup_waypoint,
+                self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, end_speed=0.5,
+                smooth=True, motion_params=self.CUBE_RUN_MOTION)
             self.intake_automation.engage(initial_state='intake_cube', force=True)
         # if not self.intake_automation.is_executing:
         if self.intake.is_cube_contained():
             print("Cube contained in nav to cube")
             self.next_objective()
             return
-        # if not self.motion.trajectory_executing and self.motion.average_speed < 0.1:
-        #     # TODO: navigate via vision once we get odometry-based movement
-        #     # working well
-        #     # self.next_state_now('pick_up_cube')
-        #     self.next_objective()
+        if not self.motion.trajectory_executing:
+            # TODO: navigate via vision once we get odometry-based movement
+            # working well
+            self.next_state_now('pick_up_cube')
 
     @state
     def pick_up_cube(self, initial_call):
@@ -122,9 +130,9 @@ class OverallBase(AutonomousStateMachine):
             self.intake_automation.engage(initial_state='intake_cube')
             self.pickup_start_pos = self.chassis.position
 
-        if not self.intake_automation.is_executing and not initial_call:
+        if self.intake.is_cube_contained():
             print("Intaken cube, going to next objective")
-            self.next_objective()
+            self.next_state_now('stop')
             return
 
         vision_angle = self.vision.largest_cube()
@@ -142,28 +150,39 @@ class OverallBase(AutonomousStateMachine):
         dist_along_segment = total_dist - np.linalg.norm(displacement)
         if dist_along_segment < 0:
             dist_along_segment = 0
-        percent_along = dist_along_segment / total_dist
         # slowly ramp down the speed as we approach the cube
 
-        speed = (self.PICKUP_SPEED - percent_along*(self.PICKUP_SPEED-0.5))
+        speed = 1
         SmartDashboard.putNumber('cube_pickup_speed', speed)
         SmartDashboard.putNumber('vision_angle', vision_angle)
         SmartDashboard.putNumber('vision_alignment_heading', alignment_direction)
-        speed = 1
 
         vx = speed*math.cos(alignment_direction)
         vy = speed*math.sin(alignment_direction)
         self.chassis.set_velocity_heading(vx, vy, math.pi)
 
     @state
+    def stop(self, initial_call):
+        if initial_call:
+            self.chassis.set_inputs(0, 0, 0)
+        if self.chassis.speed < 0.1:
+            self.next_objective()
+
+    @state
     def go_to_scale(self, initial_call, state_tm):
         """Navigate to the scale. Raise the lift"""
         if initial_call:
             self.done_switch = True
-            self.motion.set_trajectory([
-                self.current_waypoint,
-                self.SCALE_DEPOSIT
-                ], end_heading=0)
+            if self.slow_scale:
+                self.motion.set_trajectory([
+                    self.current_waypoint,
+                    self.SCALE_DEPOSIT
+                    ], end_heading=0, motion_params=self.CUBE_RUN_MOTION)
+            else:
+                self.motion.set_trajectory([
+                    self.current_waypoint,
+                    self.SCALE_DEPOSIT
+                    ], end_heading=0)
             self.lifter_automation.engage(initial_state='move_upper_scale')
         # if not self.motion.trajectory_executing and state_tm > 4:
         if not self.motion.trajectory_executing and self.motion.average_speed < 0.1:
@@ -209,6 +228,7 @@ class DoubleScaleBase(OverallBase):
             self.next_state_now("deposit_scale")
 
     def next_objective(self):
+        self.slow_scale = True
         self.next_state_now('go_to_scale')
 
 

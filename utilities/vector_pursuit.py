@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from numpy.linalg import norm
+from wpilib import SmartDashboard
 
 
 class VectorPursuit:
@@ -82,9 +83,10 @@ class VectorPursuit:
         # calculate projected point
         projected_point = (self.waypoints_xy[self.segment_idx]
                            + scale * self.segment)
+        SmartDashboard.putNumber('track_error', np.linalg.norm(position-projected_point))
 
         # define look ahead distance
-        look_ahead_distance = 0.2 + 0.2 * speed
+        look_ahead_distance = 0.15  # + 0.1 * speed
 
         # iterate over the segments from our current projected position until
         # we exhaust the lookahead distance
@@ -122,8 +124,7 @@ class VectorPursuit:
         # calculate angle of look ahead from oreintation
         new_x, new_y = look_ahead_point - position
         theta = math.atan2(new_y, new_x)
-
-        segment_normalised = self.segment / norm(self.segment)
+        SmartDashboard.putNumber('pursuit_theta', theta)
 
         over = False
 

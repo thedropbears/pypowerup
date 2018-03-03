@@ -27,6 +27,7 @@ class SwerveChassis:
         self.vx = 0
         self.vy = 0
         self.vz = 0
+        self.last_vx, self.last_vy = self.vx, self.vy
         self.field_oriented = True
         self.hold_heading = True
         self.momentum = False
@@ -34,7 +35,7 @@ class SwerveChassis:
     def setup(self):
         # Heading PID controller
         self.heading_pid_out = ChassisPIDOutput()
-        self.heading_pid = PIDController(Kp=1.0, Ki=0.0, Kd=0.0,
+        self.heading_pid = PIDController(Kp=3.0, Ki=0.0, Kd=5.0,
                                          source=self.imu.getAngle,
                                          output=self.heading_pid_out,
                                          period=1/50)
@@ -162,6 +163,9 @@ class SwerveChassis:
 
         self.odometry_x += delta_x
         self.odometry_y += delta_y
+        self.odometry_x_vel = vx
+        self.odometry_y_vel = vy
+        self.odometry_z_vel = vz
 
         self.last_heading = heading
 
@@ -171,7 +175,7 @@ class SwerveChassis:
         lstsq_ret = np.linalg.lstsq(self.A, odometry_outputs,
                                     rcond=None)
         x, y, theta = lstsq_ret[0].reshape(3)
-        x_field, y_field = self.field_orient(x, y, angle + z_vel*(0/50))
+        x_field, y_field = self.field_orient(x, y, angle - z_vel*(1/50))
         return x_field, y_field, theta
 
     def set_velocity_heading(self, vx, vy, heading):
@@ -195,6 +199,7 @@ class SwerveChassis:
             vz: The vz (counter-clockwise rotation) component of the robot's
                 desired [angular] velocity. In radians/s.
         """
+        self.last_vx, self.last_vy = self.vx, self.vy
         self.vx = vx
         self.vy = vy
         self.vz = vz
@@ -242,7 +247,7 @@ class SwerveChassis:
 
     @property
     def speed(self):
-        return math.hypot(self.vx, self.vy)
+        return math.hypot(self.odometry_x_vel, self.odometry_y_vel)
 
 
 class ChassisPIDOutput(PIDOutput):

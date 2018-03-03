@@ -73,7 +73,7 @@ class Robot(magicbot.MagicRobot):
         self.intake_cube_switch = wpilib.DigitalInput(3)
 
         # create the imu object
-        self.imu = IMU('bno055')
+        self.imu = IMU('navx')
 
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)
@@ -133,7 +133,7 @@ class Robot(magicbot.MagicRobot):
 
         if self.joystick.getRawButtonPressed(10):
             self.imu.resetHeading()
-            self.chassis.set_heading_sp_current()
+            self.chassis.set_heading_sp(0)
 
         # this is where the joystick inputs get converted to numbers that are sent
         # to the chassis component. we rescale them using the rescale_js function,

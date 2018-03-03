@@ -16,7 +16,7 @@ class ChassisMotion:
     imu: IMU
 
     # heading motion feedforward/back gains
-    kPh = 5  # proportional gain
+    kPh = 3  # proportional gain
     kVh = 1  # feedforward gain
     kIh = 0  # integral gain
     kDh = 0  # derivative gain
@@ -38,7 +38,8 @@ class ChassisMotion:
     def setup(self):
         pass
 
-    def set_trajectory(self, waypoints: np.ndarray, end_heading, smooth=True):
+    def set_trajectory(self, waypoints: np.ndarray, end_heading, end_speed=0.0,
+                       smooth=True, motion_params=(2.5, 2, 1.5)):
         """ Pass as set of waypoints for the chassis to follow.
 
         Args:
@@ -58,7 +59,7 @@ class ChassisMotion:
         self.end_distance = trajectory_length
         self.start_segment_tm = time.monotonic()
 
-        self.update_linear_profile()
+        self.update_linear_profile(motion_params, end_speed)
         self.update_heading_profile()
 
         self.waypoints = waypoints_smoothed
@@ -68,11 +69,12 @@ class ChassisMotion:
 
         self.chassis.heading_hold_off()
 
-    def update_linear_profile(self):
+    def update_linear_profile(self, motion_params, end_speed):
         self.speed_function, self.distance_traj_tm = generate_trapezoidal_function(
-                                                            0, 0, self.end_distance, 0,
-                                                            # v_max=3, a_pos=3, a_neg=3)
-                                                            v_max=2.5, a_pos=2, a_neg=1.5)
+                                                            0, 0, self.end_distance, end_speed,
+                                                            v_max=motion_params[0],
+                                                            a_pos=motion_params[1],
+                                                            a_neg=motion_params[2])
         self.linear_position = 0
         self.last_position = self.chassis.position.reshape(2)
         print(f'start_position {self.last_position}')
@@ -83,7 +85,7 @@ class ChassisMotion:
         heading = self.imu.getAngle()
         self.heading_function, self.heading_traj_tm = generate_trapezoidal_function(
                                                             heading, 0, self.end_heading, 0,
-                                                            v_max=3, a_pos=3, a_neg=3)
+                                                            v_max=3, a_pos=2, a_neg=2)
         self.last_heading_error = 0
         self.heading_error_i = 0
 
