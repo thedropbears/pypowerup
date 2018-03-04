@@ -70,6 +70,10 @@ class OverallBase(AutonomousStateMachine):
     CROSS_POINT = [4.5, 1]
     OPP_CROSS_POINT = [4.5, -1]
 
+    DRIVE_BY_SWITCH_POINT = [2, 0.5]
+    DRIVE_BY_ORIENTATION = -math.pi / 4
+    DRIVE_BY_SPEED = 1
+
     CUBE_RUN_MOTION = (1.5, 1.5, 1.5)
 
     def on_enable(self):
@@ -189,6 +193,20 @@ class OverallBase(AutonomousStateMachine):
             self.next_state_now('deposit_scale')
 
     @state
+    def cross_to_scale(self, initial_call, state_tm):
+        if initial_call:
+            self.motion.set_trajectory([
+                self.current_waypoint,
+                self.CROSS_POINT,
+                self.OPP_CROSS_POINT,
+                self.SCALE_DEPOSIT
+                ], end_heading=0)
+        if state_tm > 1:
+            self.lifter_automation.engage(initial_state='move_upper_scale')
+        if not self.motion.trajectory_executing:
+            self.next_state_now("deposit_scale")
+
+    @state
     def deposit_scale(self, initial_call):
         """Deposit the cube on the scale."""
         if initial_call:
@@ -211,21 +229,12 @@ class DoubleScaleBase(OverallBase):
     @state(first=True)
     def cross_field(self, initial_call, state_tm):
         """Cross the field."""
-        if initial_call:
-            if self.start_side == self.fms_scale:
-                self.next_state_now("go_to_scale")
-                return
-            else:
-                self.motion.set_trajectory([
-                    self.current_waypoint,
-                    self.CROSS_POINT,
-                    self.OPP_CROSS_POINT,
-                    self.SCALE_DEPOSIT
-                    ], end_heading=0)
-        if state_tm > 1:
-            self.lifter_automation.engage(initial_state='move_upper_scale')
-        if not self.motion.trajectory_executing:
-            self.next_state_now("deposit_scale")
+        if self.start_side == self.fms_scale:
+            self.next_state_now("go_to_scale")
+            return
+        else:
+            self.next_state_now('cross_to_scale')
+            return
 
     def next_objective(self):
         self.slow_scale = True
@@ -275,54 +284,71 @@ class RightDoubleScale(DoubleScaleBase):
 
 class SwitchScaleBase(OverallBase):
 
-    def decide_objective(self):
-        if self.cube_inside:
-            if self.current_side == self.fms_switch and not self.done_switch:
-                print("Going to switch, current side %s switch side %s scale %s" % (self.current_side, self.fms_switch, self.fms_scale))
-                self.next_state_now('go_to_switch')
-            elif self.current_side == self.fms_scale:
-                print("Going to scale, current side %s switch side %s scale %s" % (self.current_side, self.fms_switch, self.fms_scale))
-                self.next_state_now('go_to_scale')
-        else:
-            self.next_state_now('nav_to_cube')
-
     @state(first=True)
-    def cross_field(self, initial_call):
-        """Cross the field."""
-        if initial_call:
-            if self.current_side in [self.fms_switch, self.fms_scale]:
-                self.decide_objective()
-                return
+    def decide_objectives(self):
+        # first call, decide objective list
+        if (self.current_side == self.fms_scale
+           or not self.current_side == self.fms_switch):
+            self.second_objective = 'switch'
+            if not self.current_side == self.fms_scale:
+                self.next_state_now('cross_to_scale')
+                self.last_objective = 'scale'
             else:
-                self.motion.set_trajectory([
-                    self.current_waypoint,
-                    self.CROSS_POINT,
-                    self.OPP_CROSS_POINT,
-                    ], end_heading=0)
-        if not self.motion.trajectory_executing:
-            self.current_side = 'R' if self.current_side == 'L' else 'L'
-            self.decide_objective()
-            return
+                self.next_state_now('go_to_scale')
+                self.last_objective = 'switch'
+        else:
+            self.second_objective = 'scale'
+            self.last_objective = 'scale'
+            self.next_state_now('drive_by_switch')
 
     @state
-    def go_to_switch(self, initial_call):
-        """Navigate to the scale. Raise the lift"""
+    def drive_by_switch(self, initial_call, state_tm):
         if initial_call:
-            self.done_switch = True
+            self.switch_smooth = [self.DRIVE_BY_SWITCH_POINT[0]+0.5,
+                                  self.DRIVE_BY_SWITCH_POINT[1]]
             self.motion.set_trajectory([
                 self.current_waypoint,
-                self.SWITCH_DEPOSIT
-                ], end_heading=0)
+                self.DRIVE_BY_SWITCH_POINT,
+                self.switch_smooth], end_heading=self.DRIVE_BY_ORIENTATION,
+                end_speed=self.DRIVE_BY_SPEED)
             self.lifter_automation.engage(initial_state='move_switch')
+            self.cube_number += 1
+        if self.motion.waypoint_idx == 1:
+                self.intake_automation.engage(initial_state='eject_cube', force=True)
+                self.next_state_now('switch_to_cube')
+
+    @state
+    def switch_to_cube(self, initial_call):
+        if initial_call:
+            self.cube = CUBE_PICKUP_1
+            pickup_waypoint = [self.PICKUP_WAYPOINT_X, self.cube[1]]
+            self.motion.set_trajectory([
+                self.current_waypoint,
+                self.switch_smooth,
+                self.CROSS_POINT,
+                self.pickup_waypoint],
+                end_heading = self.CUBE_PICKUP_ORIENTATION,
+                start_speed=self.chassis.speed,
+                end_speed=0.5,
+                waypoint_corner_radius=0.3)
+            self.reset_mechanisms = False
+        if self.motion.waypoint_idx == 1 and not self.reset_mechanisms:
+            self.reset_mechanisms = True
+            self.lifter_automation.engage(initial_state='reset', force=True)
         if not self.motion.trajectory_executing:
-            self.next_state_now('deposit_switch')
+            self.next_state_now('pick_up_cube')
 
     def next_objective(self):
-        self.cube_inside = True
-        if self.done_switch:
-            self.next_state_now('go_to_scale')
+        if self.cube_number == 1:
+            if self.second_objective == 'switch':
+                self.next_state_now('deposit_switch')
+            else:
+                self.next_state_now('go_to_scale')
         else:
-            self.next_state_now('cross_field')
+            if self.last_objective == 'switch':
+                self.next_state_now('deposit_switch')
+            else:
+                self.next_state_now('go_to_scale')
 
     @state
     def deposit_switch(self, initial_call):
@@ -331,14 +357,14 @@ class SwitchScaleBase(OverallBase):
             self.chassis.set_inputs(0, 0, 0)
             self.cube_number += 1
             self.cube_inside = False
+            self.deposited = False
+            self.lifter_automation.engage(initial_state='move_switch')
+        if not self.lifter_automation.is_executing():
             self.intake_automation.engage(initial_state='eject_cube')
-        if not self.intake_automation.is_executing:
+            self.deposited = True
+        if not self.intake_automation.is_executing and self.deposited:
             self.lifter.reset()
-            if self.current_side == self.fms_scale:
-                self.next_state_now('nav_to_cube')
-            else:
-                self.next_state_now('cross_field')
-            return
+            self.next_state_now('nav_to_cube')
 
 
 class LeftSwitchScale(SwitchScaleBase):
@@ -356,11 +382,13 @@ class LeftSwitchScale(SwitchScaleBase):
         if self.fms_switch == 'R':
             self.SWITCH_DEPOSIT[1] *= -1
             self.SWITCH_DEPOSIT_ORIENTATION *= -1
-        if self.fms_scale == 'R':
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
             self.CUBE_PICKUP_ORIENTATION *= -1
             self.PICKUP_WAYPOINT[1] *= -1
+            self.DRIVE_BY_SWITCH_POINT[1] *= -1
+            self.DRIVE_BY_ORIENTATION *= -1
+        if self.fms_scale == 'R':
             self.SCALE_DEPOSIT[1] *= -1
 
 
@@ -377,12 +405,15 @@ class RightSwitchScale(SwitchScaleBase):
         if self.fms_switch == 'R':
             self.SWITCH_DEPOSIT[1] *= -1
             self.SWITCH_DEPOSIT_ORIENTATION *= -1
-        if self.fms_scale == 'R':
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
             # self.CUBE_PICKUP_ORIENTATION *= -1
             self.PICKUP_WAYPOINT[1] *= -1
+            self.DRIVE_BY_SWITCH_POINT[1] *= -1
+            self.DRIVE_BY_ORIENTATION *= -1
+        if self.fms_scale == 'R':
             self.SCALE_DEPOSIT[1] *= -1
+
         self.start_side = 'R'
         self.current_side = self.start_side
         self.done_switch = False

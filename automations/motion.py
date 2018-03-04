@@ -38,8 +38,9 @@ class ChassisMotion:
     def setup(self):
         pass
 
-    def set_trajectory(self, waypoints: np.ndarray, end_heading, end_speed=0.0,
-                       smooth=True, motion_params=(2.5, 2, 1.5)):
+    def set_trajectory(self, waypoints: np.ndarray, end_heading,
+                       start_speed=0.0, end_speed=0.0, smooth=True,
+                       motion_params=(2.5, 2, 1.5), waypoint_corner_radius=None):
         """ Pass as set of waypoints for the chassis to follow.
 
         Args:
@@ -49,7 +50,9 @@ class ChassisMotion:
         """
         print(f'original_waypoints {waypoints}')
         if smooth:
-            waypoints_smoothed = smooth_waypoints(waypoints, radius=self.waypoint_corner_radius)
+            if waypoint_corner_radius is None:
+                waypoint_corner_radius = self.waypoint_corner_radius
+            waypoints_smoothed = smooth_waypoints(waypoints, radius=waypoint_corner_radius)
         else:
             waypoints_smoothed = [np.array(point) for point in waypoints]
         print(f'smoothed_waypoints {waypoints_smoothed}')
@@ -59,7 +62,7 @@ class ChassisMotion:
         self.end_distance = trajectory_length
         self.start_segment_tm = time.monotonic()
 
-        self.update_linear_profile(motion_params, end_speed)
+        self.update_linear_profile(motion_params, start_speed, end_speed)
         self.update_heading_profile()
 
         self.waypoints = waypoints_smoothed
@@ -69,9 +72,11 @@ class ChassisMotion:
 
         self.chassis.heading_hold_off()
 
-    def update_linear_profile(self, motion_params, end_speed):
+    def update_linear_profile(self, motion_params, start_speed, end_speed):
         self.speed_function, self.distance_traj_tm = generate_trapezoidal_function(
-                                                            0, 0, self.end_distance, end_speed,
+                                                            0, start_speed,
+                                                            self.end_distance,
+                                                            end_speed,
                                                             v_max=motion_params[0],
                                                             a_pos=motion_params[1],
                                                             a_neg=motion_params[2])
