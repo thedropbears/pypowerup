@@ -213,7 +213,6 @@ class DoubleScaleBase(OverallBase):
 
 
 class LeftDoubleScale(DoubleScaleBase):
-    DEFAULT = True
     MODE_NAME = 'Left Double Scale'
 
     def on_enable(self):
