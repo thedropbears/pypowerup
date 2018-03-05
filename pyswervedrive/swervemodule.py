@@ -6,10 +6,13 @@ from utilities.functions import constrain_angle
 
 class SwerveModule:
 
+    # TODO: change back for real robot
     # SRX_MAG_COUNTS_PER_REV: int = 4096
     SRX_MAG_COUNTS_PER_REV: int = 80
     WHEEL_DIAMETER: float = 0.0254 * 3
+    # TODO: change this back for the real robot
     DRIVE_ENCODER_GEAR_REDUCTION: float = 66/14 * 30/26
+    # DRIVE_ENCODER_GEAR_REDUCTION: float = 30/26
     STEER_COUNTS_PER_RADIAN = 4096 / math.tau
 
     drive_counts_per_rev = SRX_MAG_COUNTS_PER_REV*DRIVE_ENCODER_GEAR_REDUCTION
@@ -83,10 +86,10 @@ class SwerveModule:
         self.drive_motor.setSensorPhase(self.reverse_drive_encoder)
         # changes sign of motor throttle values
         self.drive_motor.setInverted(self.reverse_drive_direction)
-        # TODO: don't multiply by 50 once we get back on the real robot
-        # self.drive_motor.config_kP(0, 0.3*50, 10)
-        # self.drive_motor.config_kI(0, 0.002*50, 10)
-        # self.drive_motor.config_kD(0, 0.0*50, 10)
+        # TODO: change back to original constants once we get on to real robot
+        # self.drive_motor.config_kP(0, 0.3, 10)
+        # self.drive_motor.config_kI(0, 0.002, 10)
+        # self.drive_motor.config_kD(0, 0.0, 10)
         self.drive_motor.config_kP(0, 0.3*50/5, 10)
         self.drive_motor.config_kI(0, 0.002*50/5, 10)
         self.drive_motor.config_kD(0, 0.0*50, 10)
