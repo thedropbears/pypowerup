@@ -31,8 +31,9 @@ class IntakeAutomation(StateMachine):
             self.next_state("pulling_in_cube")
 
     @timed_state(must_finish=True, duration=0.7, next_state="grab_cube")
-    def pulling_in_cube(self):
-        self.intake.extend(False)
+    def pulling_in_cube(self, state_tm):
+        if state_tm > 0.4:
+            self.intake.extend(False)
         self.intake.rotate(-1)
 
     @state(must_finish=True)
