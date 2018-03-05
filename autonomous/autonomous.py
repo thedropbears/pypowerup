@@ -10,16 +10,20 @@ from automations.intake import IntakeAutomation
 from automations.lifter import LifterAutomation
 from automations.motion import ChassisMotion
 from components.lifter import Lifter
+from components.intake import Intake
 from components.vision import Vision
 from pyswervedrive.swervechassis import SwerveChassis
 from robot import Robot
 from utilities.navx import NavX
+
+from wpilib import SmartDashboard
 
 
 class OverallBase(AutonomousStateMachine):
     """statemachine designed to intelegently respond to possible situations in auto"""
     vision: Vision
     lifter: Lifter
+    intake: Intake
     imu: NavX
     chassis: SwerveChassis
     ds: wpilib.DriverStation
@@ -29,23 +33,38 @@ class OverallBase(AutonomousStateMachine):
     intake_automation: IntakeAutomation
     lifter_automation: LifterAutomation
 
-    START_Y_COORDINATE = 3
+    START_Y_COORDINATE = 1
 
-    CROSS_POINT_SPEED = 3
+    CROSS_POINT_SPEED = 1
 
-    PICKUP_SPEED = 2
+    PICKUP_SPEED = 1
 
     # Coordinates of various objectives no the field
     # Default to those for LEFT HAND SIDE of the field
-    SCALE_DEPOSIT = [7.6-Robot.length / 2, 1.8]
-    SWITCH_DEPOSIT = [4.2, 1.9+Robot.length / 2]
-    SWITCH_DEPOSIT_ORIENTATION = -math.pi/2
-    PICKUP_WAYPOINT = [5.4, 1.8]
-    CROSS_POINT = [5.4, 1.8]
-    OPP_CROSS_POINT = [5.4, -1.8]
+    """SCALE_DEPOSIT = [7.6-Robot.length / 2, 1.8]
+    CUBE_PICKUP_1 = [5+Robot.length / 2, 1.4]
+    CUBE_PICKUP_2 = [5+Robot.length / 2, 1.1]
+    SWITCH_DEPOSIT = [5+Robot.length / 2, 1.2]
+
+    SWITCH_DEPOSIT_ORIENTATION = -math.pi
+
     CUBE_PICKUP_ORIENTATION = -math.pi
-    CUBE_PICKUP_1 = [5, 1.7]
-    CUBE_PICKUP_2 = [5, 1.4]
+
+    PICKUP_WAYPOINT = [5.6+Robot.length / 2, 1.8]
+    CROSS_POINT = [5.6+Robot.length / 2, 1.8]
+    OPP_CROSS_POINT = [5.6+Robot.length / 2, -1.8]"""
+    SCALE_DEPOSIT = [0.3+6-Robot.length / 2, 1+0.3]
+    CUBE_PICKUP_1 = [3+Robot.length / 2, 0.5]
+    CUBE_PICKUP_2 = [3+Robot.length / 2, -0.5]
+    SWITCH_DEPOSIT = [3+Robot.length / 2, 0]
+
+    SWITCH_DEPOSIT_ORIENTATION = -math.pi
+
+    CUBE_PICKUP_ORIENTATION = -math.pi
+
+    PICKUP_WAYPOINT = [4.5, 0]
+    CROSS_POINT = [4, 1]
+    OPP_CROSS_POINT = [4, -1]
 
     def on_enable(self):
         # self.lifter.reset() do we need this?
@@ -63,6 +82,9 @@ class OverallBase(AutonomousStateMachine):
 
         self.cube_number = 0
 
+        self.intake.clamp(True)
+        self.intake.push(False)
+
         super().on_enable()
 
     @state
@@ -75,18 +97,20 @@ class OverallBase(AutonomousStateMachine):
                 self.cube = np.array(self.CUBE_PICKUP_2)
             pickup_waypoint = self.PICKUP_WAYPOINT+[self.CUBE_PICKUP_ORIENTATION,
                                                     self.PICKUP_SPEED]
-            # position we transition to the vision system at
-            self.pickup_pos = pickup_waypoint
-            self.pickup_pos[0] = (self.pickup_pos[0]+self.cube[0])/2
-            self.pickup_pos[1] = (self.pickup_pos[1]+self.cube[1])/2
             self.motion.set_waypoints(([
                 self.current_waypoint,
                 pickup_waypoint,
-                self.pickup_pos
+                list(self.cube)+[self.CUBE_PICKUP_ORIENTATION, self.PICKUP_SPEED/2]
                 ]))
-            self.intake_automation.engage(initial_state='intake_cube')
+            self.intake_automation.engage(initial_state='intake_cube', force=True)
+        if not self.intake_automation.is_executing:
+            self.next_objective()
+            return
         if not self.motion.enabled:
-            self.next_state_now('pick_up_cube')
+            # TODO: navigate via vision once we get odometry-based movement
+            # working well
+            # self.next_state_now('pick_up_cube')
+            self.next_objective()
 
     @state
     def pick_up_cube(self, initial_call):
@@ -96,8 +120,9 @@ class OverallBase(AutonomousStateMachine):
 
         if initial_call:
             self.intake_automation.engage(initial_state='intake_cube')
+            self.pickup_start_pos = self.chassis.position
 
-        if not self.intake_automation.is_executing:
+        if not self.intake_automation.is_executing and not initial_call:
             print("Intaken cube, going to next objective")
             self.next_objective()
             return
@@ -107,12 +132,11 @@ class OverallBase(AutonomousStateMachine):
         if vision_angle is None:
             print("Don't see cube in vision")
             return
-        absolute_cube_direction = heading + vision_angle
-        # new_heading = heading + 0.2 * vision_angle
+        alignment_direction = heading + vision_angle * 0.5
         self.chassis.field_oriented = True
 
         # speed controller
-        segment = self.cube - self.pickup_pos
+        segment = self.cube - self.pickup_start_pos
         displacement = self.cube - self.chassis.position.reshape(2)
         total_dist = np.linalg.norm(segment)
         dist_along_segment = total_dist - np.linalg.norm(displacement)
@@ -122,13 +146,17 @@ class OverallBase(AutonomousStateMachine):
         # slowly ramp down the speed as we approach the cube
 
         speed = (self.PICKUP_SPEED - percent_along*(self.PICKUP_SPEED-0.5))
+        SmartDashboard.putNumber('cube_pickup_speed', speed)
+        SmartDashboard.putNumber('vision_angle', vision_angle)
+        SmartDashboard.putNumber('vision_alignment_heading', alignment_direction)
+        speed = 1
 
-        vx = speed*math.cos(absolute_cube_direction)
-        vy = speed*math.sin(absolute_cube_direction)
-        self.chassis.set_velocity_heading(vx, vy, absolute_cube_direction)
+        vx = speed*math.cos(alignment_direction)
+        vy = speed*math.sin(alignment_direction)
+        self.chassis.set_velocity_heading(vx, vy, alignment_direction)
 
     @state
-    def go_to_scale(self, initial_call):
+    def go_to_scale(self, initial_call, state_tm):
         """Navigate to the scale. Raise the lift"""
         if initial_call:
             self.done_switch = True
@@ -137,7 +165,7 @@ class OverallBase(AutonomousStateMachine):
                 self.SCALE_DEPOSIT+[0, 0]
                 ])
             self.lifter_automation.engage(initial_state='move_upper_scale')
-        if not self.motion.enabled:
+        if not self.motion.enabled and state_tm > 4:
             self.next_state_now('deposit_scale')
 
     @state
@@ -147,7 +175,8 @@ class OverallBase(AutonomousStateMachine):
             self.chassis.set_inputs(0, 0, 0)
             self.cube_number += 1
             self.cube_inside = False
-            self.intake_automation.engage(initial_state='eject_cube')
+            self.intake_automation.engage(initial_state='eject_cube', force=True)
+            print("Ejecting Cube")
         if not self.intake_automation.is_executing:
             self.lifter.reset()
             self.next_state_now('nav_to_cube')
@@ -161,7 +190,7 @@ class OverallBase(AutonomousStateMachine):
 class DoubleScaleBase(OverallBase):
 
     @state(first=True)
-    def cross_field(self, initial_call):
+    def cross_field(self, initial_call, state_tm):
         """Cross the field."""
         if initial_call:
             if self.start_side == self.fms_scale:
@@ -171,16 +200,20 @@ class DoubleScaleBase(OverallBase):
                 self.motion.set_waypoints([
                     self.current_waypoint,
                     self.CROSS_POINT+[0, self.CROSS_POINT_SPEED],
-                    self.OPP_CROSS_POINT+[0, self.CROSS_POINT_SPEED]
+                    self.OPP_CROSS_POINT+[0, self.CROSS_POINT_SPEED],
+                    self.SCALE_DEPOSIT+[0, 0]
                     ])
+        if state_tm > 1:
+            self.lifter_automation.engage(initial_state='move_upper_scale')
         if not self.motion.enabled:
-            self.next_state_now("go_to_scale")
+            self.next_state_now("deposit_scale")
 
     def next_objective(self):
         self.next_state_now('go_to_scale')
 
 
 class LeftDoubleScale(DoubleScaleBase):
+    DEFAULT = True
     MODE_NAME = 'Left Double Scale'
 
     def on_enable(self):
@@ -189,7 +222,10 @@ class LeftDoubleScale(DoubleScaleBase):
         self.current_side = self.start_side
         self.cube_inside = True
 
+        self.chassis.odometry_y = self.START_Y_COORDINATE
+
         if self.fms_scale == 'R':
+            print("FMS Scale Right")
             self.SCALE_DEPOSIT[1] *= -1
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
@@ -210,6 +246,7 @@ class RightDoubleScale(DoubleScaleBase):
         self.chassis.odometry_y = -self.START_Y_COORDINATE
 
         if self.fms_scale == 'R':
+            print("FMS Scale Right")
             self.SCALE_DEPOSIT[1] *= -1
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
@@ -273,7 +310,6 @@ class SwitchScaleBase(OverallBase):
         """Deposit the cube on the switch."""
         if initial_call:
             self.chassis.set_inputs(0, 0, 0)
-            self.intake_automation.engage(initial_state='deposit')
             self.cube_number += 1
             self.cube_inside = False
             self.intake_automation.engage(initial_state='eject_cube')
@@ -296,6 +332,8 @@ class LeftSwitchScale(SwitchScaleBase):
         self.done_switch = False
         self.cube_inside = True
 
+        self.chassis.odometry_y = self.START_Y_COORDINATE
+
         if self.fms_switch == 'R':
             self.SWITCH_DEPOSIT[1] *= -1
             self.SWITCH_DEPOSIT_ORIENTATION *= -1
@@ -308,7 +346,6 @@ class LeftSwitchScale(SwitchScaleBase):
 
 
 class RightSwitchScale(SwitchScaleBase):
-    DEFAULT = True
     MODE_NAME = 'Right Switch & Scale'
 
     def on_enable(self):
@@ -331,3 +368,17 @@ class RightSwitchScale(SwitchScaleBase):
         self.current_side = self.start_side
         self.done_switch = False
         self.cube_inside = True
+
+
+class PickupCubeAuto(OverallBase):
+    MODE_NAME = "Vision Pickup Test"
+
+    @state(first=True)
+    def start(self):
+        self.cube = [3, 0]
+        self.chassis.odometry_y = 0
+        self.chassis.odometry_x = 6
+        self.next_state_now('pick_up_cube')
+
+    def next_objective(self):
+        self.done()

@@ -1,9 +1,18 @@
 import math
+import time
 from utilities.profile_generator import generate_trapezoidal_function
 import numpy as np
+from numpy.linalg import norm
+from wpilib import SmartDashboard
 
 
 class VectorPursuit:
+
+    kP = 1
+    kI = 0
+    kD = 0.5
+    kV = 1
+    kA = 0
 
     def set_waypoints(self, waypoints: np.array):
         """Set the waypoints the controller should drive the robot through.
@@ -34,23 +43,34 @@ class VectorPursuit:
         self.top_accel = top_accel
         self.top_decel = top_decel
 
-    def increment_segment(self, segment=None):
+    def increment_segment(self, position=None, segment=None, start_speed=None, start_segment_tm=None):
         if self.segment_idx is None:
             self.segment_idx = 0
         elif segment is not None:
+            if segment == self.segment_idx:
+                return
             self.segment_idx = segment
         else:
             self.segment_idx += 1
         self.segment = (self.waypoints_xy[self.segment_idx+1]
                         - self.waypoints_xy[self.segment_idx])
-        start_speed = self.waypoints[self.segment_idx][3]
-        end_speed = self.waypoints[self.segment_idx+1][3]
-        seg_length = np.linalg.norm(self.segment)
-        self.speed_function = generate_trapezoidal_function(
-                0, start_speed, seg_length, end_speed,
-                self.top_speed, self.top_accel, self.top_decel)
+        if start_speed is None:
+            start_speed = self.waypoints[self.segment_idx][3]
 
-    def get_output(self, position: np.ndarray, speed: float):
+        if position is None:
+            position = self.waypoints_xy[self.segment_idx]
+        end_speed = self.waypoints[self.segment_idx+1][3]
+        self.start_to_end = norm(position - self.waypoints_xy[self.segment_idx+1])
+        self.speed_function, end_tm = generate_trapezoidal_function(
+                0, start_speed, self.start_to_end, end_speed,
+                self.top_speed, self.top_accel, self.top_decel, time_mode=True)
+        self.last_position_error = 0
+        self.position_error_i = 0
+        if start_segment_tm is None:
+            start_segment_tm = time.monotonic()
+        self.start_segment_tm = start_segment_tm
+
+    def get_output(self, position: np.ndarray, speed: float, current_tm=None):
         """Compute the angle to move the robot in to converge with waypoints.
         Args:
             position: Robot's position as an [x, y] numpy array. Units m.
@@ -72,14 +92,8 @@ class VectorPursuit:
         projected_point = (self.waypoints_xy[self.segment_idx]
                            + scale * self.segment)
 
-        # calculate the norm of the vector to the end of our current trajectory
-        dist_to_end = np.linalg.norm(self.segment) - np.linalg.norm(self.waypoints_xy[self.segment_idx+1] - position)
-        if dist_to_end < 0:
-            dist_to_end = 0
-        speed_sp = self.speed_function(dist_to_end)
-
         # define look ahead distance
-        look_ahead_distance = 0.1 + 0.1 * speed
+        look_ahead_distance = 0.2 + 0.2 * speed
 
         # iterate over the segments from our current projected position until
         # we exhaust the lookahead distance
@@ -92,14 +106,14 @@ class VectorPursuit:
             segment = segment_end - segment_start
 
             # unit vector of the segment we are iterating over
-            segment_normalised = segment / np.linalg.norm(segment)
+            segment_normalised = segment / norm(segment)
 
             look_ahead_point = (projected_point + look_ahead_remaining
                                 * segment_normalised)
 
             # take away from the remaining look ahead the amount we have travelled
             # along the segment
-            look_ahead_remaining -= np.linalg.norm(segment_end-projected_point)
+            look_ahead_remaining -= norm(segment_end-projected_point)
             if (look_ahead_waypoint == len(self.waypoints)-2 or
                     look_ahead_remaining <= 0):
                 break
@@ -108,22 +122,54 @@ class VectorPursuit:
             projected_point = segment_end
             look_ahead_waypoint += 1
 
-        self.increment_segment(look_ahead_waypoint)
+        before_increment = self.segment_idx
+        self.increment_segment(position, look_ahead_waypoint, start_speed=speed, start_segment_tm=current_tm)
+        next_seg = False
+        if not before_increment == self.segment_idx:
+            next_seg = True
 
-        segment_normalised = self.segment / np.linalg.norm(self.segment)
+        speed_controller_tm = time.monotonic()
+        if current_tm is not None:
+            speed_controller_tm = current_tm
+        speed_sp = self.run_speed_controller(position, speed_controller_tm)
 
         # calculate angle of look ahead from oreintation
         new_x, new_y = look_ahead_point - position
         theta = math.atan2(new_y, new_x)
 
-        next_seg = False
+        segment_normalised = self.segment / norm(self.segment)
+
         over = False
 
-        # if scale > 1 and self.segment_idx < len(self.waypoints)-2:
-        #     self.increment_segment()
-        #     next_seg = True
-        if (np.linalg.norm(position - self.waypoints_xy[-1]) < 0.1
-           or (scale >= 0.95 and self.segment_idx == len(self.waypoints)-2)):
+        if (norm(position - self.waypoints_xy[-1]) < 0.1
+           or (scale >= 1 and self.segment_idx == len(self.waypoints)-2)):
             over = True
 
         return theta, speed_sp, next_seg, over
+
+    def run_speed_controller(self, position, current_tm):
+
+        linear_seg = self.speed_function(current_tm - self.start_segment_tm)
+        if linear_seg is None:
+            linear_seg = (0, 0, 0)
+            print("WARNING: Linear segment is 0")
+
+        pos = self.start_to_end - norm(position - self.waypoints_xy[self.segment_idx+1])
+        if pos < 0:
+            pos = 0
+        SmartDashboard.putNumber("vector_pursuit_position", pos)
+        # calculate the position errror
+        pos_error = linear_seg[0] - pos
+        # calucate the derivative of the position error
+        self.d_pos_error = (pos_error - self.last_position_error)
+        # sum the position error over the timestep
+        self.position_error_i += pos_error
+
+        # generate the linear output to the chassis (m/s)
+        speed_sp = (self.kP*pos_error + self.kV*linear_seg[1]
+                    + self.kA*linear_seg[2] + self.kI*self.position_error_i
+                    + self.kD*self.d_pos_error)
+
+        self.last_position_error = pos_error
+
+        return speed_sp
