@@ -6,7 +6,6 @@ from utilities.vector_pursuit import VectorPursuit
 from utilities.profile_generator import generate_trapezoidal_function, smooth_waypoints
 from utilities.functions import constrain_angle
 from wpilib import SmartDashboard
-from networktables import NetworkTables
 import time
 
 
@@ -171,7 +170,6 @@ class ChassisMotion:
         SmartDashboard.putNumber('linear_mp_sp', linear_seg[0])
         SmartDashboard.putNumber('linear_mp_error', pos_error)
         SmartDashboard.putNumber('linear_pos', self.linear_position)
-        NetworkTables.flush()
 
         return speed_sp
 
