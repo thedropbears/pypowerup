@@ -72,7 +72,7 @@ class PhysicsEngine:
         # convert meters to ft. (cause america)
         vx /= 0.3048
         vy /= 0.3048
-        self.controller.vector_drive(-vy, vx, vw, tm_diff)
+        self.controller.vector_drive(-vy, vx, -vw, tm_diff)
 
         # lift simulation
         center_switch = hal_data["dio"][1]
