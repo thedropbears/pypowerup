@@ -1,4 +1,5 @@
 import ctre
+import hal
 import magicbot
 import wpilib
 from components.range_finder import RangeFinder
@@ -91,6 +92,8 @@ class Intake:
     @magicbot.feedback
     def is_cube_contained(self) -> bool:
         """Check whether a cube is in the containment mechanism."""
+        if hal.isSimulation():
+            return True
         # cube_dist = self.get_cube_distance()
         # return 0.05 <= cube_dist <= 0.35
         # TODO: change back to using lidar once we get on comp drive base
