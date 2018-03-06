@@ -69,6 +69,8 @@ class ChassisMotion:
         self.pursuit.set_waypoints(waypoints_smoothed)
 
         self.enabled = True
+        if self.distance_traj_tm < self.heading_traj_tm:
+            print('WARNING: Distance trajectory longer than linear trajectory')
 
         self.chassis.heading_hold_off()
 
