@@ -3,7 +3,6 @@ import math
 
 import numpy as np
 
-from robot import Robot
 from pyswervedrive.swervemodule import SwerveModule
 from components.lifter import Lifter
 from utilities.functions import constrain_angle
@@ -51,7 +50,7 @@ class PhysicsEngine:
 
         steer_positions = []
         for can_id, offset in zip(self.module_steer_can_ids, self.module_steer_offsets):
-            value = hal_data['CAN'][can_id]['value']
+            value = hal_data['CAN'][can_id]['pid0_target']
             hal_data['CAN'][can_id]['pulse_width_position'] = int(value)
             position = constrain_angle(
                     (hal_data['CAN'][can_id]['pulse_width_position']-offset)
@@ -60,10 +59,9 @@ class PhysicsEngine:
 
         motor_speeds = []
         for i, can_id in enumerate(self.module_drive_can_ids):
-            speed_sp = hal_data['CAN'][can_id]['value']
-            enc_speed = speed_sp * Robot.module_drive_free_speed
+            enc_speed = hal_data['CAN'][can_id]['pid0_target']
             speed = enc_speed / SwerveModule.drive_velocity_to_native_units
-            hal_data['CAN'][can_id]['quad_position'] += int(enc_speed*10*tm_diff)
+            hal_data['CAN'][can_id]['quad_position'] += int(enc_speed*tm_diff*10)
             hal_data['CAN'][can_id]['quad_velocity'] = int(enc_speed)
             motor_speeds.append(speed)
 
@@ -74,7 +72,7 @@ class PhysicsEngine:
         # convert meters to ft. (cause america)
         vx /= 0.3048
         vy /= 0.3048
-        self.controller.vector_drive(vy, vx, vw, tm_diff)
+        self.controller.vector_drive(-vy, vx, vw, tm_diff)
 
         # lift simulation
         center_switch = hal_data["dio"][1]
