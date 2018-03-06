@@ -1,4 +1,5 @@
 import time
+import hal
 
 from networktables import NetworkTables
 
@@ -32,6 +33,8 @@ class Vision:
         self.data = value
 
     def largest_cube(self):
+        if hal.isSimulation():
+            return 0
         if len(self.data) < 2:
             return None
         return self.data[0]
