@@ -69,7 +69,7 @@ class ChassisMotion:
 
         self.enabled = True
         if self.distance_traj_tm < self.heading_traj_tm:
-            print('WARNING: Heading trajectory longer than linear trajectory')
+            print(f'WARNING: Heading trajectory ({self.heading_traj_tm}s) longer than linear trajectory ({self.distance_traj_tm}s)')
 
         self.chassis.heading_hold_off()
 
@@ -89,9 +89,17 @@ class ChassisMotion:
 
     def update_heading_profile(self):
         heading = self.imu.getAngle()
+        # this ensures we always rotate the same way going from the switch to
+        # the scale, but that we do not do 360s while maniuplating cubes at the
+        # switch
+        if abs(heading) > math.pi / 2:
+            delta = constrain_angle(self.end_heading - heading)
+            end_heading = heading + delta
+        else:
+            end_heading = self.end_heading
         self.heading_function, self.heading_traj_tm = generate_trapezoidal_function(
-                                                            heading, 0, self.end_heading, 0,
-                                                            v_max=3, a_pos=2, a_neg=2)
+                                                            heading, 0, end_heading, 0,
+                                                            v_max=3, a_pos=3, a_neg=3)
         self.last_heading_error = 0
         self.heading_error_i = 0
 
