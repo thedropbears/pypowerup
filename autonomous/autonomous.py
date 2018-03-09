@@ -33,29 +33,26 @@ class OverallBase(AutonomousStateMachine):
     intake_automation: IntakeAutomation
     lifter_automation: LifterAutomation
 
-    START_Y_COORDINATE = 1
-
-    CROSS_POINT_SPEED = 1
-
-    PICKUP_SPEED = 1
+    START_Y_COORDINATE = 3.3 - Robot.width / 2
 
     # Coordinates of various objectives no the field
     # Default to those for LEFT HAND SIDE of the field
-    """SCALE_DEPOSIT = [7.6-Robot.length / 2, 1.8]
-    CUBE_PICKUP_1 = [5+Robot.length / 2, 1.4]
-    CUBE_PICKUP_2 = [5+Robot.length / 2, 1.1]
+    # TODO: determine how far forward/back of this we want to go
+    SCALE_DEPOSIT = [7.6, 1.8]
+    CUBE_PICKUP_1 = [5+Robot.length / 2, 1.6]
+    CUBE_PICKUP_2 = [5+Robot.length / 2, 1.2]
     SWITCH_DEPOSIT = [5+Robot.length / 2, 1.2]
 
     SWITCH_DEPOSIT_ORIENTATION = -math.pi
 
     CUBE_PICKUP_ORIENTATION = -math.pi
 
-    PICKUP_WAYPOINT = [5.6+Robot.length / 2, 1.8]
-    CROSS_POINT = [5.6+Robot.length / 2, 1.8]
-    OPP_CROSS_POINT = [5.6+Robot.length / 2, -1.8]"""
-    # SCALE_DEPOSIT = [0.3+6-Robot.length / 2, 1+0.3]
+    PICKUP_WAYPOINT_X = 5.6
+    CROSS_POINT = [6, START_Y_COORDINATE]
+    OPP_CROSS_POINT = [6, -START_Y_COORDINATE]
+    """
+    START_Y_COORDINATE = 1
     SCALE_DEPOSIT = [6-Robot.length / 2, 1]
-    PICKUP_WAYPOINT_X = 4.5
     # CUBE_PICKUP_1 = [3+Robot.length / 2, 0.5]
     # CUBE_PICKUP_2 = [3+Robot.length / 2, -0.5]
     CUBE_PICKUP_1 = [3+1, 0.5]
@@ -66,11 +63,13 @@ class OverallBase(AutonomousStateMachine):
 
     CUBE_PICKUP_ORIENTATION = -math.pi
 
-    PICKUP_WAYPOINT = [4.5, 0]
+    PICKUP_WAYPOINT_X = 4.5
     CROSS_POINT = [4.5, 1]
     OPP_CROSS_POINT = [4.5, -1]
+    """
 
-    DRIVE_BY_SWITCH_POINT = [2, 0.5]
+    # DRIVE_BY_SWITCH_POINT = [2, 0.5]
+    DRIVE_BY_SWITCH_POINT = [3.6, 1.9+Robot.length / 2]
     DRIVE_BY_ORIENTATION = -math.pi / 4
     DRIVE_BY_SPEED = 1
 
@@ -112,13 +111,13 @@ class OverallBase(AutonomousStateMachine):
                 self.current_waypoint,
                 pickup_waypoint,
                 self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, end_speed=0.5,
-                smooth=True, motion_params=self.CUBE_RUN_MOTION)
+                # DO NOT SMOOTH WAYPONTS HERE (it breaks things)
+                smooth=False, motion_params=self.CUBE_RUN_MOTION)
             self.intake_automation.engage(initial_state='intake_cube', force=True)
-        # if not self.intake_automation.is_executing:
-        if self.intake.is_cube_contained():
-            print("Cube contained in nav to cube")
-            self.next_objective()
-            return
+        # if self.intake.is_cube_contained():
+        #     print("Cube contained in nav to cube")
+        #     self.next_objective()
+        #     return
         if not self.motion.trajectory_executing:
             # TODO: navigate via vision once we get odometry-based movement
             # working well
@@ -166,10 +165,10 @@ class OverallBase(AutonomousStateMachine):
         self.chassis.set_velocity_heading(vx, vy, math.pi)
 
     @state
-    def stop(self, initial_call):
+    def stop(self, initial_call, state_tm):
         if initial_call:
             self.chassis.set_inputs(0, 0, 0)
-        if self.chassis.speed < 0.1:
+        if self.chassis.speed < 0.1 or state_tm > 1:
             self.next_objective()
 
     @state
@@ -189,7 +188,7 @@ class OverallBase(AutonomousStateMachine):
                     ], end_heading=0)
             self.lifter_automation.engage(initial_state='move_upper_scale')
         # if not self.motion.trajectory_executing and state_tm > 4:
-        if not self.motion.trajectory_executing and self.motion.average_speed < 0.1:
+        if not self.motion.trajectory_executing:
             self.next_state_now('deposit_scale')
 
     @state
@@ -258,7 +257,6 @@ class LeftDoubleScale(DoubleScaleBase):
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
             self.CUBE_PICKUP_ORIENTATION *= -1
-            self.PICKUP_WAYPOINT[1] *= -1
 
 
 class RightDoubleScale(DoubleScaleBase):
@@ -279,7 +277,6 @@ class RightDoubleScale(DoubleScaleBase):
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
             self.CUBE_PICKUP_ORIENTATION *= -1
-            self.PICKUP_WAYPOINT[1] *= -1
 
 
 class SwitchScaleBase(OverallBase):
@@ -295,7 +292,10 @@ class SwitchScaleBase(OverallBase):
                 self.last_objective = 'scale'
             else:
                 self.next_state_now('go_to_scale')
-                self.last_objective = 'switch'
+                if self.current_side == self.fms_switch:
+                    self.last_objective = 'scale'
+                else:
+                    self.last_objective = 'switch'
         else:
             self.second_objective = 'scale'
             self.last_objective = 'scale'
@@ -304,7 +304,11 @@ class SwitchScaleBase(OverallBase):
     @state
     def drive_by_switch(self, initial_call, state_tm):
         if initial_call:
-            self.switch_smooth = [self.DRIVE_BY_SWITCH_POINT[0]+0.5,
+            if self.fms_switch == 'L':
+                direction = 1
+            else:
+                direction = -1
+            self.switch_smooth = [self.DRIVE_BY_SWITCH_POINT[0]+0.5*direction,
                                   self.DRIVE_BY_SWITCH_POINT[1]]
             self.motion.set_trajectory([
                 self.current_waypoint,
@@ -313,23 +317,24 @@ class SwitchScaleBase(OverallBase):
                 end_speed=self.DRIVE_BY_SPEED)
             self.lifter_automation.engage(initial_state='move_switch')
             self.cube_number += 1
-        if self.motion.waypoint_idx == 1:
-                self.intake_automation.engage(initial_state='eject_cube', force=True)
-                self.next_state_now('switch_to_cube')
+        if state_tm > 1:
+            self.intake_automation.engage(initial_state='eject_cube', force=True)
+            self.next_state_now('switch_to_cube')
 
     @state
     def switch_to_cube(self, initial_call):
         if initial_call:
-            self.cube = CUBE_PICKUP_1
+            self.cube = self.CUBE_PICKUP_1
             pickup_waypoint = [self.PICKUP_WAYPOINT_X, self.cube[1]]
             self.motion.set_trajectory([
                 self.current_waypoint,
                 self.switch_smooth,
                 self.CROSS_POINT,
-                self.pickup_waypoint],
-                end_heading = self.CUBE_PICKUP_ORIENTATION,
+                pickup_waypoint],
+                end_heading=self.CUBE_PICKUP_ORIENTATION,
                 start_speed=self.chassis.speed,
                 end_speed=0.5,
+                smooth=False,
                 waypoint_corner_radius=0.3)
             self.reset_mechanisms = False
         if self.motion.waypoint_idx == 1 and not self.reset_mechanisms:
@@ -353,13 +358,13 @@ class SwitchScaleBase(OverallBase):
     @state
     def deposit_switch(self, initial_call):
         """Deposit the cube on the switch."""
+        self.chassis.set_inputs(0, 0, 0)
         if initial_call:
-            self.chassis.set_inputs(0, 0, 0)
             self.cube_number += 1
             self.cube_inside = False
             self.deposited = False
             self.lifter_automation.engage(initial_state='move_switch')
-        if not self.lifter_automation.is_executing():
+        if not self.lifter_automation.is_executing:
             self.intake_automation.engage(initial_state='eject_cube')
             self.deposited = True
         if not self.intake_automation.is_executing and self.deposited:
@@ -385,7 +390,6 @@ class LeftSwitchScale(SwitchScaleBase):
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
             self.CUBE_PICKUP_ORIENTATION *= -1
-            self.PICKUP_WAYPOINT[1] *= -1
             self.DRIVE_BY_SWITCH_POINT[1] *= -1
             self.DRIVE_BY_ORIENTATION *= -1
         if self.fms_scale == 'R':
@@ -408,7 +412,6 @@ class RightSwitchScale(SwitchScaleBase):
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
             # self.CUBE_PICKUP_ORIENTATION *= -1
-            self.PICKUP_WAYPOINT[1] *= -1
             self.DRIVE_BY_SWITCH_POINT[1] *= -1
             self.DRIVE_BY_ORIENTATION *= -1
         if self.fms_scale == 'R':
