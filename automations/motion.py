@@ -38,7 +38,7 @@ class ChassisMotion:
         pass
 
     def set_trajectory(self, waypoints: np.ndarray, end_heading,
-                       start_speed=0.0, end_speed=0.0, smooth=True,
+                       start_speed=0.0, end_speed=0.25, smooth=True,
                        motion_params=(2.5, 2, 1.5), waypoint_corner_radius=None):
         """ Pass as set of waypoints for the chassis to follow.
 
@@ -92,14 +92,11 @@ class ChassisMotion:
         # this ensures we always rotate the same way going from the switch to
         # the scale, but that we do not do 360s while maniuplating cubes at the
         # switch
-        if abs(heading) > math.pi / 2:
-            delta = constrain_angle(self.end_heading - heading)
-            end_heading = heading + delta
-        else:
-            end_heading = self.end_heading
+        delta = constrain_angle(self.end_heading - heading)
+        end_heading = heading + delta
         self.heading_function, self.heading_traj_tm = generate_trapezoidal_function(
                                                             heading, 0, end_heading, 0,
-                                                            v_max=3, a_pos=3, a_neg=3)
+                                                            v_max=3, a_pos=2, a_neg=2)
         self.last_heading_error = 0
         self.heading_error_i = 0
 
@@ -152,7 +149,7 @@ class ChassisMotion:
 
         profile_tm = time.monotonic() - self.start_segment_tm
         if profile_tm > self.distance_traj_tm:
-            return 0.5
+            return 0.25
 
         linear_seg = self.speed_function(profile_tm)
         if linear_seg is None:

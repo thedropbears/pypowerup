@@ -37,8 +37,6 @@ class Robot(magicbot.MagicRobot):
     lifter: Lifter
 
     module_drive_free_speed: float = 7800.  # encoder ticks / 100 ms
-    length: float = 0.88
-    width: float = 1  # TODO: actually put in a width value
 
     def createObjects(self):
         """Create non-components here."""

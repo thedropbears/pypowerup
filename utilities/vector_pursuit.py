@@ -86,7 +86,7 @@ class VectorPursuit:
         SmartDashboard.putNumber('track_error', np.linalg.norm(position-projected_point))
 
         # define look ahead distance
-        look_ahead_distance = 0.15  # + 0.1 * speed
+        look_ahead_distance = 0.25  # + 0.1 * speed
 
         # iterate over the segments from our current projected position until
         # we exhaust the lookahead distance

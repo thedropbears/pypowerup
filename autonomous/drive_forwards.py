@@ -18,4 +18,3 @@ class CrossBaseline(AutonomousStateMachine):
     @state
     def stopping(self):
         self.chassis.set_inputs(0, 0, 0)
-        self.done()

@@ -119,7 +119,7 @@ class SwerveChassis:
         input_vz = 0
         if self.vz is not None:
             input_vz = self.vz
-        if pid_z < 0.05 and math.hypot(self.vx, self.vy) < 0.01:
+        if pid_z < 0.1 and math.hypot(self.vx, self.vy) < 0.01:
             pid_z = 0
         vz = input_vz + pid_z
 
@@ -175,7 +175,7 @@ class SwerveChassis:
         lstsq_ret = np.linalg.lstsq(self.A, odometry_outputs,
                                     rcond=None)
         x, y, theta = lstsq_ret[0].reshape(3)
-        x_field, y_field = self.field_orient(x, y, angle - z_vel*(1/50))
+        x_field, y_field = self.field_orient(x, y, angle + z_vel*(1/100))
         return x_field, y_field, theta
 
     def set_velocity_heading(self, vx, vy, heading):
