@@ -40,7 +40,8 @@ class OverallBase(AutonomousStateMachine):
     # Coordinates of various objectives no the field
     # Default to those for LEFT HAND SIDE of the field
     # TODO: determine how far forward/back of this we want to go
-    SCALE_DEPOSIT = [7.6, 1.8]
+    SCALE_DEPOSIT = [7.6, 2]
+    SCALE_DEPOSIT_WAYPOINT = [6, 2]
     CUBE_PICKUP_1 = [5+robot_length / 2, 1.6]
     CUBE_PICKUP_2 = [5+robot_length / 2, 1.2]
     SWITCH_DEPOSIT = [5+robot_length / 2, 1.2]
@@ -115,12 +116,21 @@ class OverallBase(AutonomousStateMachine):
             elif self.cube_number >= 2:
                 self.cube = np.array(self.CUBE_PICKUP_2)
             pickup_waypoint = [self.PICKUP_WAYPOINT_X, self.cube[1]]
-            self.motion.set_trajectory([
-                self.current_waypoint,
-                pickup_waypoint,
-                self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, end_speed=1,
-                # DO NOT SMOOTH WAYPONTS HERE (it breaks things)
-                smooth=False, motion_params=self.CUBE_RUN_MOTION)
+            if self.chassis.odometry_x > 6.0:
+                self.motion.set_trajectory([
+                    self.current_waypoint,
+                    self.SCALE_DEPOSIT_WAYPOINT,
+                    pickup_waypoint,
+                    self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, end_speed=1,
+                    # DO NOT SMOOTH WAYPONTS HERE (it breaks things)
+                    smooth=False, motion_params=self.CUBE_RUN_MOTION)
+            else:
+                self.motion.set_trajectory([
+                    self.current_waypoint,
+                    pickup_waypoint,
+                    self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, end_speed=1,
+                    # DO NOT SMOOTH WAYPONTS HERE (it breaks things)
+                    smooth=False, motion_params=self.CUBE_RUN_MOTION)
             self.intake_automation.engage(initial_state='intake_cube', force=True)
         # if self.intake.is_cube_contained():
         #     print("Cube contained in nav to cube")
@@ -187,11 +197,13 @@ class OverallBase(AutonomousStateMachine):
             if self.slow_scale:
                 self.motion.set_trajectory([
                     self.current_waypoint,
+                    self.SCALE_DEPOSIT_WAYPOINT,
                     self.SCALE_DEPOSIT
                     ], end_heading=0, motion_params=self.CUBE_RUN_MOTION)
             else:
                 self.motion.set_trajectory([
                     self.current_waypoint,
+                    self.SCALE_DEPOSIT_WAYPOINT,
                     self.SCALE_DEPOSIT
                     ], end_heading=0)
             self.lifter_automation.engage(initial_state='move_upper_scale')
@@ -262,6 +274,7 @@ class LeftDoubleScale(DoubleScaleBase):
         if self.fms_scale == 'R':
             print("FMS Scale Right")
             self.SCALE_DEPOSIT[1] *= -1
+            self.SCALE_DEPOSIT_WAYPOINT[1] *= -1
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
             self.CUBE_PICKUP_ORIENTATION *= -1
@@ -282,6 +295,7 @@ class RightDoubleScale(DoubleScaleBase):
         if self.fms_scale == 'R':
             print("FMS Scale Right")
             self.SCALE_DEPOSIT[1] *= -1
+            self.SCALE_DEPOSIT_WAYPOINT[1] *= -1
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
             self.CUBE_PICKUP_ORIENTATION *= -1
@@ -322,7 +336,7 @@ class SwitchScaleBase(OverallBase):
                 end_speed=self.DRIVE_BY_SPEED, motion_params=self.CUBE_RUN_MOTION)
             self.lifter_automation.engage(initial_state='move_switch')
             self.cube_number += 1
-        if state_tm > 1:
+        if self.chassis.odometry_x > self.DRIVE_BY_SWITCH_POINT[0]:
             self.intake_automation.engage(initial_state='eject_cube', force=True)
             self.next_state_now('switch_to_cube')
 
@@ -404,6 +418,7 @@ class LeftSwitchScale(SwitchScaleBase):
             self.SWITCH_TO_CUBE_POINT[1] *= -1
         if self.fms_scale == 'R':
             self.SCALE_DEPOSIT[1] *= -1
+            self.SCALE_DEPOSIT_WAYPOINT[1] *= -1
 
 
 class RightSwitchScale(SwitchScaleBase):
@@ -428,6 +443,7 @@ class RightSwitchScale(SwitchScaleBase):
             self.SWITCH_TO_CUBE_POINT[1] *= -1
         if self.fms_scale == 'R':
             self.SCALE_DEPOSIT[1] *= -1
+            self.SCALE_DEPOSIT_WAYPOINT[1] *= -1
 
         self.start_side = 'R'
         self.current_side = self.start_side
