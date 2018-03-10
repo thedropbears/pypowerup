@@ -75,6 +75,8 @@ class OverallBase(AutonomousStateMachine):
     OPP_CROSS_POINT = [4.5, -1]
     """
 
+    SWITCH_TO_CUBE_POINT = [PICKUP_WAYPOINT_X, 1.8]
+
     DRIVE_BY_ORIENTATION = -math.pi / 2
     DRIVE_BY_SPEED = 1
 
