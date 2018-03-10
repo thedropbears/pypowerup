@@ -433,17 +433,3 @@ class RightSwitchScale(SwitchScaleBase):
         self.current_side = self.start_side
         self.done_switch = False
         self.cube_inside = True
-
-
-class PickupCubeAuto(OverallBase):
-    MODE_NAME = "Vision Pickup Test"
-
-    @state(first=True)
-    def start(self):
-        self.cube = [3, 0]
-        self.chassis.odometry_y = 0
-        self.chassis.odometry_x = 6
-        self.next_state_now('pick_up_cube')
-
-    def next_objective(self):
-        self.done()
