@@ -190,7 +190,7 @@ class SwerveModule:
         """
 
         if math.hypot(self.vx, self.vy) != 0 and math.hypot(vx, vy) == 0:
-            self.drive_motor.setIntegralAccumulator(0, 0, 10)
+            self.drive_motor.setIntegralAccumulator(0, 0, 0)
             self.drive_motor.neutralOutput()
             self.steer_motor.neutralOutput()
 
@@ -262,7 +262,8 @@ class SwerveModule:
         # self.measured_azimuth = 0
         # self.wheel_vel = 0
         # return
-        drive_pos, drive_vel = self.drive_motor.getQuadratureSensor()
+        drive_pos = self.drive_motor.getSelectedSensorPosition(0)
+        drive_vel = self.drive_motor.getSelectedSensorVelocity(0)
         self.wheel_vel = drive_vel / self.drive_velocity_to_native_units
         steer_pos = self.steer_motor.getSelectedSensorPosition(0)
         self.measured_azimuth = constrain_angle(float(steer_pos - self.steer_enc_offset)
