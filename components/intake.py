@@ -52,8 +52,10 @@ class Intake:
 
         if self.clamp_on != self.last_clamp_on:
             self.clamp_arm.set(not self.clamp_on)
+            print(f"Clamp {self.clamp_on}")
         if self.push_on != self.last_push_on:
             self.intake_kicker.set(self.push_on)
+            print(f"Push {self.push_on}")
         if self.last_extension_on != self.extension_on:
             self.left_extension.set(self.extension_on)
             extension_double = wpilib.DoubleSolenoid.Value.kForward if self.extension_on else wpilib.DoubleSolenoid.Value.kReverse

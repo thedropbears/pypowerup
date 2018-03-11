@@ -10,21 +10,29 @@ class LifterAutomation(StateMachine):
 
     @state(first=True, must_finish=True)
     def move_upper_scale(self):
+        self.intake.extend(False)
+        self.intake.push(False)
         self.move_height = self.lifter.UPPER_SCALE
         self.next_state("arms_out")
 
     @state(must_finish=True)
     def move_balanced_scale(self):
+        self.intake.extend(False)
+        self.intake.push(False)
         self.move_height = self.lifter.BALANCED_SCALE
         self.next_state("arms_out")
 
     @state(must_finish=True)
     def move_lower_scale(self):
+        self.intake.extend(False)
+        self.intake.push(False)
         self.move_height = self.lifter.LOWER_SCALE
         self.next_state("arms_out")
 
     @state(must_finish=True)
     def move_switch(self):
+        self.intake.extend(False)
+        self.intake.push(False)
         self.move_height = self.lifter.SWITCH
         self.next_state("arms_out")
 
@@ -42,6 +50,10 @@ class LifterAutomation(StateMachine):
             self.lifter.move(self.move_height)
         if self.lifter.at_pos():
             self.done()
+
+    @timed_state(must_finish=True, duration=1, next_state='reset')
+    def reset_wait(self):
+        pass
 
     @state(must_finish=True)
     def reset(self, initial_call):

@@ -15,6 +15,7 @@ class IntakeAutomation(StateMachine):
     def start(self):
         """Get the intake arms out of their starting position."""
         self.intake.extend(True)
+        self.intake.push(False)
         self.intake.clamp(False)
         self.intake.rotate(1)
         self.intake.arms_out = True
@@ -22,6 +23,7 @@ class IntakeAutomation(StateMachine):
     @state(first=True, must_finish=True)
     def intake_cube(self, state_tm):
         """Start the intake motors and wait for the cube to fall into the containment mechanism."""
+        self.lifter.reset()
         self.intake.rotate(-1)
         self.intake.extend(True)
         self.intake.clamp(False)
@@ -46,10 +48,7 @@ class IntakeAutomation(StateMachine):
 
     @state(must_finish=True)
     def exchange(self, initial_call):
-        if initial_call:
-            self.lifter.move(0)
-        if self.lifter.at_pos():
-            self.next_state_now('deposit_exchange')
+        self.next_state_now('deposit_exchange')
 
     @state(must_finish=True)
     def deposit_exchange(self, state_tm):
@@ -60,12 +59,6 @@ class IntakeAutomation(StateMachine):
         # if (self.intake.get_cube_distance() > 1):
         if state_tm > 2:
             self.next_state_now('stop')
-
-    @timed_state(must_finish=True, duration=1, next_state="stop")
-    def push_out_cube(self):
-        self.intake.rotate(1)
-        self.intake.extend(False)
-        self.intake.push(False)
 
     @timed_state(must_finish=True, duration=0.4, next_state="reset_containment")
     def eject_cube(self):

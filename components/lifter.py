@@ -25,7 +25,7 @@ class Lifter:
     HEIGHT_FROM_FLOOR = 0.17  # height from floor to initial lift pos when reset in m
     CONTAINMENT_SIZE = 0  # height needed for the mechanism to work properly in m
 
-    CUBE_HEIGHT = 0.4
+    CUBE_HEIGHT = 0.3
 
     UPPER_SCALE = 1.8288 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE + CUBE_HEIGHT  # in m
     BALANCED_SCALE = 1.524 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE + CUBE_HEIGHT
@@ -59,7 +59,7 @@ class Lifter:
         # TODO tune motion profiling
         self.motor.selectProfileSlot(0, 0)
         self.motor.config_kF(0, 1023/self.FREE_SPEED, timeoutMs=10)
-        self.motor.config_kP(0, 0.7, timeoutMs=10)
+        self.motor.config_kP(0, 2, timeoutMs=10)
         self.motor.config_kI(0, 0, timeoutMs=10)
         self.motor.config_kD(0, 1, timeoutMs=10)
 
@@ -85,7 +85,7 @@ class Lifter:
         # if self.motor.isRevLimitSwitchClosed():
         #     self.motor.setSelectedSensorPosition(self.metres_to_counts(self.BOTTOM_HEIGHT), 0, timeoutMs=10)
 
-        if self.set_pos is not None and self.set_pos > 0:
+        if self.set_pos is not None and not self.at_pos():
             if self.compressor_on:
                 self.compressor.stop()
                 self.compressor_on = False
@@ -126,6 +126,9 @@ class Lifter:
     def get_velocity(self) -> float:
         """Get the current velocity of the lift."""
         return self.motor.getSelectedSensorVelocity(0) / self.COUNTS_PER_METRE
+
+    def get_current(self) -> float:
+        return self.motor.getOutputCurrent()
 
     def at_pos(self):
         """Finds if cube location is at setops and within threshold

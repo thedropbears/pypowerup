@@ -35,25 +35,26 @@ class OverallBase(AutonomousStateMachine):
     intake_automation: IntakeAutomation
     lifter_automation: LifterAutomation
 
-    START_Y_COORDINATE = 3.3 - robot_width / 2
+    START_Y_COORDINATE = 3.4 - robot_width / 2
 
     # Coordinates of various objectives no the field
     # Default to those for LEFT HAND SIDE of the field
     # TODO: determine how far forward/back of this we want to go
-    SCALE_DEPOSIT = [7.6, 2]
-    SCALE_DEPOSIT_WAYPOINT = [6, 2]
-    CUBE_PICKUP_1 = [5+robot_length / 2, 1.6]
-    CUBE_PICKUP_2 = [5+robot_length / 2, 1.2]
+    SCALE_DEPOSIT = [7.8, 2]
+    SCALE_DEPOSIT_WAYPOINT = [6, 1.9]
+    CUBE_PICKUP_1 = [5+robot_length / 2, 1.75]
+    CUBE_PICKUP_2 = [5+robot_length / 2, 1.03]
     SWITCH_DEPOSIT = [5+robot_length / 2, 1.2]
+    SCALE_INIT_WAYPOINT = [5.5, 3]
 
     SWITCH_DEPOSIT_ORIENTATION = -math.pi
 
     CUBE_PICKUP_ORIENTATION = -math.pi
 
-    PICKUP_WAYPOINT_X = 5.6
+    PICKUP_WAYPOINT_X = 6
     CROSS_POINT = [6, START_Y_COORDINATE]
     OPP_CROSS_POINT = [6, -START_Y_COORDINATE]
-    DRIVE_BY_SWITCH_POINT = [3.6, 1.9+robot_length / 2]
+    DRIVE_BY_SWITCH_POINT = [3.6, 2+robot_length / 2]
     """
     START_Y_COORDINATE = 1
     SCALE_DEPOSIT = [6-robot_length / 2, 1]
@@ -194,7 +195,16 @@ class OverallBase(AutonomousStateMachine):
         """Navigate to the scale. Raise the lift"""
         if initial_call:
             self.done_switch = True
-            if self.slow_scale:
+            self.slow_engage = False
+            if self.chassis.odometry_x < 1:
+                self.slow_engage = True
+                self.motion.set_trajectory([
+                    self.current_waypoint,
+                    self.SCALE_INIT_WAYPOINT,
+                    self.SCALE_DEPOSIT_WAYPOINT,
+                    self.SCALE_DEPOSIT
+                    ], end_heading=0)
+            elif self.slow_scale:
                 self.motion.set_trajectory([
                     self.current_waypoint,
                     self.SCALE_DEPOSIT_WAYPOINT,
@@ -206,6 +216,10 @@ class OverallBase(AutonomousStateMachine):
                     self.SCALE_DEPOSIT_WAYPOINT,
                     self.SCALE_DEPOSIT
                     ], end_heading=0)
+            if not self.slow_engage:
+                self.lifter_automation.engage(initial_state='move_upper_scale')
+            print(f'Lifter slow engage {self.slow_engage}')
+        if self.motion.linear_position > 5 and self.slow_engage:
             self.lifter_automation.engage(initial_state='move_upper_scale')
         # if not self.motion.trajectory_executing and state_tm > 4:
         if not self.motion.trajectory_executing:
@@ -220,13 +234,15 @@ class OverallBase(AutonomousStateMachine):
                 self.OPP_CROSS_POINT,
                 self.SCALE_DEPOSIT
                 ], end_heading=0)
-        if state_tm > 1:
+        if self.motion.linear_position > 8:
+            if not self.lifter_automation.is_executing:
+                print('Lifter engage')
             self.lifter_automation.engage(initial_state='move_upper_scale')
         if not self.motion.trajectory_executing:
             self.next_state_now("deposit_scale")
 
     @state
-    def deposit_scale(self, initial_call):
+    def deposit_scale(self, initial_call, state_tm):
         """Deposit the cube on the scale."""
         if initial_call:
             self.chassis.set_inputs(0, 0, 0)
@@ -234,8 +250,9 @@ class OverallBase(AutonomousStateMachine):
             self.cube_inside = False
             self.intake_automation.engage(initial_state='eject_cube', force=True)
             print("Ejecting Cube")
-        if not self.intake_automation.is_executing:
-            self.lifter.reset()
+        if not self.intake_automation.is_executing and state_tm > 0.04:
+            print(f'Deposited {state_tm}')
+            self.lifter_automation.engage(initial_state='reset_wait', force=True)
             self.next_state_now('nav_to_cube')
 
     @property
@@ -278,6 +295,7 @@ class LeftDoubleScale(DoubleScaleBase):
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
             self.CUBE_PICKUP_ORIENTATION *= -1
+            self.SCALE_INIT_WAYPOINT[1] *= -1
 
 
 class RightDoubleScale(DoubleScaleBase):
@@ -299,6 +317,7 @@ class RightDoubleScale(DoubleScaleBase):
             self.CUBE_PICKUP_1[1] *= -1
             self.CUBE_PICKUP_2[1] *= -1
             self.CUBE_PICKUP_ORIENTATION *= -1
+            self.SCALE_INIT_WAYPOINT[1] *= -1
 
 
 class SwitchScaleBase(OverallBase):
@@ -385,14 +404,17 @@ class SwitchScaleBase(OverallBase):
         if initial_call:
             self.cube_number += 1
             self.cube_inside = False
-            self.deposited = False
             self.lifter_automation.engage(initial_state='move_switch')
-        if not self.lifter_automation.is_executing:
+        if not self.lifter_automation.is_executing and not initial_call:
             self.intake_automation.engage(initial_state='eject_cube')
-            self.deposited = True
-        if not self.intake_automation.is_executing and self.deposited:
-            self.lifter.reset()
-            self.next_state_now('nav_to_cube')
+            self.next_state_now('wait_for_deposit')
+
+    @state
+    def wait_for_deposit(self, initial_call, state_tm):
+        if not initial_call:
+            if not self.intake_automation.is_executing:
+                self.lifter.reset()
+                self.next_state_now('nav_to_cube')
 
 
 class LeftSwitchScale(SwitchScaleBase):
@@ -419,6 +441,7 @@ class LeftSwitchScale(SwitchScaleBase):
         if self.fms_scale == 'R':
             self.SCALE_DEPOSIT[1] *= -1
             self.SCALE_DEPOSIT_WAYPOINT[1] *= -1
+            self.SCALE_INIT_WAYPOINT[1] *= -1
 
 
 class RightSwitchScale(SwitchScaleBase):
@@ -444,6 +467,7 @@ class RightSwitchScale(SwitchScaleBase):
         if self.fms_scale == 'R':
             self.SCALE_DEPOSIT[1] *= -1
             self.SCALE_DEPOSIT_WAYPOINT[1] *= -1
+            self.SCALE_INIT_WAYPOINT[1] *= -1
 
         self.start_side = 'R'
         self.current_side = self.start_side

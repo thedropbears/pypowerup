@@ -39,7 +39,8 @@ class ChassisMotion:
 
     def set_trajectory(self, waypoints: np.ndarray, end_heading,
                        start_speed=0.0, end_speed=0.25, smooth=True,
-                       motion_params=(2.5, 2, 1.5), waypoint_corner_radius=None):
+                       # motion_params=(2.5, 2, 1.5), waypoint_corner_radius=None):
+                       motion_params=(1.5, 1, 1), waypoint_corner_radius=None):
         """ Pass as set of waypoints for the chassis to follow.
 
         Args:

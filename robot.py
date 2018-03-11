@@ -157,9 +157,8 @@ class Robot(magicbot.MagicRobot):
         # super().robotPeriodic()
         if self.lifter.set_pos is not None:
             self.sd.putNumber("lift/set_pos", self.lifter.set_pos)
+        # self.sd.putNumber('lift_current', self.lifter.get_current())
         self.sd.putNumber("imu_heading", self.imu.getAngle())
-        self.sd.putNumber("odometry_x", self.chassis.odometry_x)
-        self.sd.putNumber("odometry_y", self.chassis.odometry_y)
 
 
 if __name__ == '__main__':
