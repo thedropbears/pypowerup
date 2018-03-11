@@ -6,8 +6,7 @@ import numpy as np
 import wpilib
 from magicbot.state_machine import AutonomousStateMachine, state
 
-from automations.intake import IntakeAutomation
-from automations.lifter import LifterAutomation
+from automations.cube import CubeManager
 from automations.motion import ChassisMotion
 from components.lifter import Lifter
 from components.intake import Intake
@@ -32,8 +31,7 @@ class OverallBase(AutonomousStateMachine):
 
     # automations
     motion: ChassisMotion
-    intake_automation: IntakeAutomation
-    lifter_automation: LifterAutomation
+    cubeman: CubeManager
 
     START_Y_COORDINATE = 3.4 - robot_width / 2
 
@@ -54,7 +52,7 @@ class OverallBase(AutonomousStateMachine):
     PICKUP_WAYPOINT_X = 6
     CROSS_POINT = [6, START_Y_COORDINATE]
     OPP_CROSS_POINT = [6, -START_Y_COORDINATE]
-    DRIVE_BY_SWITCH_POINT = [3.6, 2+robot_length / 2]
+    DRIVE_BY_SWITCH_POINT = [4, 2+robot_length / 2]
     """
     START_Y_COORDINATE = 1
     SCALE_DEPOSIT = [6-robot_length / 2, 1]
@@ -77,7 +75,7 @@ class OverallBase(AutonomousStateMachine):
     OPP_CROSS_POINT = [4.5, -1]
     """
 
-    SWITCH_TO_CUBE_POINT = [PICKUP_WAYPOINT_X, 1.8]
+    SWITCH_TO_CUBE_POINT = [PICKUP_WAYPOINT_X, 2.5]
 
     DRIVE_BY_ORIENTATION = -math.pi / 2
     DRIVE_BY_SPEED = 1
@@ -101,8 +99,7 @@ class OverallBase(AutonomousStateMachine):
 
         self.cube_number = 0
 
-        self.intake.clamp(True)
-        self.intake.push(False)
+        self.cubeman.engage()
 
         self.slow_scale = False
 
@@ -132,11 +129,6 @@ class OverallBase(AutonomousStateMachine):
                     self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, end_speed=1,
                     # DO NOT SMOOTH WAYPONTS HERE (it breaks things)
                     smooth=False, motion_params=self.CUBE_RUN_MOTION)
-            self.intake_automation.engage(initial_state='intake_cube', force=True)
-        # if self.intake.is_cube_contained():
-        #     print("Cube contained in nav to cube")
-        #     self.next_objective()
-        #     return
         if not self.motion.trajectory_executing:
             # TODO: navigate via vision once we get odometry-based movement
             # working well
@@ -149,7 +141,7 @@ class OverallBase(AutonomousStateMachine):
         angle towards the cube"""
 
         if initial_call:
-            self.intake_automation.engage(initial_state='intake_cube')
+            self.cubeman.engage(initial_state='intaking_cube')
             self.pickup_start_pos = self.chassis.position
 
         if self.intake.is_cube_contained():
@@ -160,7 +152,6 @@ class OverallBase(AutonomousStateMachine):
         vision_angle = self.vision.largest_cube()
         heading = self.imu.getAngle()
         if vision_angle is None:
-            print("Don't see cube in vision")
             return
         alignment_direction = heading + vision_angle * 1.5
         self.chassis.field_oriented = True
@@ -217,10 +208,9 @@ class OverallBase(AutonomousStateMachine):
                     self.SCALE_DEPOSIT
                     ], end_heading=0)
             if not self.slow_engage:
-                self.lifter_automation.engage(initial_state='move_upper_scale')
-            print(f'Lifter slow engage {self.slow_engage}')
+                self.cubeman.engage(initial_state='lifting_scale', force=True)
         if self.motion.linear_position > 5 and self.slow_engage:
-            self.lifter_automation.engage(initial_state='move_upper_scale')
+            self.cubeman.engage(initial_state='lifting_scale', force=True)
         # if not self.motion.trajectory_executing and state_tm > 4:
         if not self.motion.trajectory_executing:
             self.next_state_now('deposit_scale')
@@ -235,9 +225,9 @@ class OverallBase(AutonomousStateMachine):
                 self.SCALE_DEPOSIT
                 ], end_heading=0)
         if self.motion.linear_position > 8:
-            if not self.lifter_automation.is_executing:
+            if not self.cubeman.is_executing:
                 print('Lifter engage')
-            self.lifter_automation.engage(initial_state='move_upper_scale')
+            self.cubeman.engage(initial_state='lifting_scale')
         if not self.motion.trajectory_executing:
             self.next_state_now("deposit_scale")
 
@@ -248,11 +238,10 @@ class OverallBase(AutonomousStateMachine):
             self.chassis.set_inputs(0, 0, 0)
             self.cube_number += 1
             self.cube_inside = False
-            self.intake_automation.engage(initial_state='eject_cube', force=True)
+            self.cubeman.engage(initial_state='ejecting_cube', force=True)
             print("Ejecting Cube")
-        if not self.intake_automation.is_executing and state_tm > 0.04:
-            print(f'Deposited {state_tm}')
-            self.lifter_automation.engage(initial_state='reset_wait', force=True)
+        if not self.cubeman.is_executing and state_tm > 0.04:
+            self.cubeman.engage(initial_state='waiting_to_reset', force=True)
             self.next_state_now('nav_to_cube')
 
     @property
@@ -351,12 +340,18 @@ class SwitchScaleBase(OverallBase):
             self.motion.set_trajectory([
                 self.current_waypoint,
                 self.DRIVE_BY_SWITCH_POINT,
-                self.switch_smooth], end_heading=self.DRIVE_BY_ORIENTATION,
-                end_speed=self.DRIVE_BY_SPEED, motion_params=self.CUBE_RUN_MOTION)
-            self.lifter_automation.engage(initial_state='move_switch')
+                ], end_heading=self.DRIVE_BY_ORIENTATION,
+                motion_params=self.CUBE_RUN_MOTION)
             self.cube_number += 1
-        if self.chassis.odometry_x > self.DRIVE_BY_SWITCH_POINT[0]:
-            self.intake_automation.engage(initial_state='eject_cube', force=True)
+        if state_tm > 0.5:
+            self.cubeman.engage(initial_state='lifting_switch', force=True)
+        if not self.motion.trajectory_executing:
+            self.cubeman.engage(initial_state='ejecting_cube', force=True)
+            self.next_state('wait_for_switch')
+
+    @state
+    def wait_for_switch(self):
+        if not self.cubeman.is_executing:
             self.next_state_now('switch_to_cube')
 
     @state
@@ -367,12 +362,10 @@ class SwitchScaleBase(OverallBase):
             pickup_waypoint_2 = [self.PICKUP_WAYPOINT_X-0.2, self.cube[1]]
             self.motion.set_trajectory([
                 self.current_waypoint,
-                self.switch_smooth,
                 self.SWITCH_TO_CUBE_POINT,
                 pickup_waypoint,
                 pickup_waypoint_2],
                 end_heading=self.CUBE_PICKUP_ORIENTATION,
-                start_speed=self.chassis.speed,
                 end_speed=0.5,
                 motion_params=(2, 1, 1),
                 smooth=False,
@@ -380,7 +373,7 @@ class SwitchScaleBase(OverallBase):
             self.reset_mechanisms = False
         if self.motion.waypoint_idx == 1 and not self.reset_mechanisms:
             self.reset_mechanisms = True
-            self.lifter_automation.engage(initial_state='reset', force=True)
+            self.cubeman.engage(initial_state='reset_cube', force=True)
         if not self.motion.trajectory_executing:
             print(f'chassis odom x {self.chassis.odometry_x} y {self.chassis.odometry_y}')
             self.next_state_now('pick_up_cube')
@@ -404,16 +397,16 @@ class SwitchScaleBase(OverallBase):
         if initial_call:
             self.cube_number += 1
             self.cube_inside = False
-            self.lifter_automation.engage(initial_state='move_switch')
-        if not self.lifter_automation.is_executing and not initial_call:
-            self.intake_automation.engage(initial_state='eject_cube')
+            self.cubeman.engage(initial_state='lifting_switch', force=True)
+        if not self.cubeman.is_executing and not initial_call:
+            self.cubeman.engage(initial_state='ejecting_cube', force=True)
             self.next_state_now('wait_for_deposit')
 
     @state
     def wait_for_deposit(self, initial_call, state_tm):
         if not initial_call:
-            if not self.intake_automation.is_executing:
-                self.lifter.reset()
+            if not self.cubeman.is_executing:
+                self.cubeman.engage(initial_state='reset_cube', force=True)
                 self.next_state_now('nav_to_cube')
 
 

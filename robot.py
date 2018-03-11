@@ -3,8 +3,7 @@
 import ctre
 import magicbot
 import wpilib
-from automations.intake import IntakeAutomation
-from automations.lifter import LifterAutomation
+from automations.cube import CubeManager
 from automations.motion import ChassisMotion
 from components.intake import Intake
 from components.lifter import Lifter
@@ -28,8 +27,7 @@ class Robot(magicbot.MagicRobot):
 
     # Automations
     motion: ChassisMotion
-    intake_automation: IntakeAutomation
-    lifter_automation: LifterAutomation
+    cubeman: CubeManager
 
     # Actuators
     chassis: SwerveChassis
@@ -97,38 +95,32 @@ class Robot(magicbot.MagicRobot):
         This is run each iteration of the control loop before magicbot components are executed.
         """
 
-        if self.joystick.getRawButtonPressed(12):
-            self.intake.clamp_on = not self.intake.clamp_on
+        if self.gamepad.getBumperPressed(wpilib.interfaces.GenericHID.Hand.kLeft):
+            self.intake.push(not self.intake.push_on)
 
-        if self.joystick.getRawButtonPressed(11):
-            self.intake.push_on = not self.intake.push_on
+        if self.gamepad.getBumperPressed(wpilib.interfaces.GenericHID.Hand.kRight):
+            self.intake.extend(not self.intake.extension_on)
 
         if self.joystick.getTrigger():
-            self.intake_automation.engage(initial_state="intake_cube", force=True)
+            self.cubeman.engage(initial_state="intaking_cube", force=True)
 
         if self.joystick.getRawButtonPressed(4) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kRight) > 0.5:
-            self.intake_automation.engage(initial_state="eject_cube", force=True)
+            self.cubeman.engage(initial_state="ejecting_cube", force=True)
 
         if self.joystick.getRawButtonPressed(2) or self.gamepad.getStartButtonPressed():
-            self.intake_automation.engage(initial_state="stop", force=True)
+            self.cubeman.engage(initial_state="reset_cube", force=True)
 
         if self.joystick.getRawButtonPressed(3) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kLeft) > 0.5:
-            self.intake_automation.engage(initial_state="exchange", force=True)
+            self.cubeman.engage(initial_state="ejecting_exchange", force=True)
 
         if self.gamepad.getAButtonPressed():
-            self.lifter_automation.engage(initial_state="move_upper_scale", force=True)
-
-        if self.gamepad.getBButtonPressed():
-            self.lifter_automation.engage(initial_state="move_balanced_scale", force=True)
-
-        if self.gamepad.getYButtonPressed():
-            self.lifter_automation.engage(initial_state="move_lower_scale", force=True)
+            self.cubeman.engage(initial_state="lifting_scale", force=True)
 
         if self.gamepad.getXButtonPressed():
-            self.lifter_automation.engage(initial_state="move_switch", force=True)
+            self.cubeman.engage(initial_state="lifting_switch", force=True)
 
         if self.gamepad.getBackButtonPressed():
-            self.lifter_automation.engage(initial_state="reset", force=True)
+            self.cubeman.engage(initial_state="reset_cube", force=True)
 
         if self.joystick.getRawButtonPressed(10):
             self.imu.resetHeading()
@@ -143,8 +135,6 @@ class Robot(magicbot.MagicRobot):
         vy = -rescale_js(self.joystick.getX(), deadzone=0.1, exponential=1.5, rate=4)
         vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=20.0, rate=self.spin_rate)
         self.chassis.set_inputs(vx, vy, vz)
-
-        self.loop_timer.measure()
 
     def testPeriodic(self):
         if self.gamepad.getStartButtonPressed():
