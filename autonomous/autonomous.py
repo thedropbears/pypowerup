@@ -311,7 +311,7 @@ class RightDoubleScale(DoubleScaleBase):
 
 class SwitchScaleBase(OverallBase):
 
-    @state(first=True)
+    @state
     def decide_objectives(self):
         # first call, decide objective list
         if (self.current_side == self.fms_scale
@@ -436,6 +436,10 @@ class LeftSwitchScale(SwitchScaleBase):
             self.SCALE_DEPOSIT_WAYPOINT[1] *= -1
             self.SCALE_INIT_WAYPOINT[1] *= -1
 
+    @state(first=True)
+    def first_state(self):
+        self.next_state_now('decide_objectives')
+
 
 class RightSwitchScale(SwitchScaleBase):
     MODE_NAME = 'Right Switch & Scale'
@@ -461,6 +465,80 @@ class RightSwitchScale(SwitchScaleBase):
             self.SCALE_DEPOSIT[1] *= -1
             self.SCALE_DEPOSIT_WAYPOINT[1] *= -1
             self.SCALE_INIT_WAYPOINT[1] *= -1
+
+        self.start_side = 'R'
+        self.current_side = self.start_side
+        self.done_switch = False
+        self.cube_inside = True
+
+    @state(first=True)
+    def first_state(self):
+        self.next_state_now('decide_objectives')
+
+
+class SameSideBase(SwitchScaleBase):
+
+    @state(first=True)
+    def same_side_decide(self):
+        if self.current_side == self.fms_scale and self.current_side == self.fms_switch:
+            self.next_state_now('decide_objectives')
+            return
+        elif self.current_side == self.fms_scale:
+            self.second_objective = 'scale'
+            self.last_objective = 'scale'
+            self.next_state_now('go_to_scale')
+            return
+        elif self.current_side == self.fms_switch:
+            self.second_objective = 'switch'
+            self.last_objective = 'switch'
+            self.next_state_now('drive_by_switch')
+            return
+        else:
+            self.motion.set_trajectory([self.current_waypoint,
+                                       [3, self.chassis.odometry_y]], 0)
+            self.next_state_now('moving_forward')
+            return
+
+    @state
+    def moving_forward(self):
+        if not self.motion.trajectory_executing:
+            self.done()
+
+
+class LeftSameSide(SameSideBase):
+    MODE_NAME = 'Left Same Side Auto'
+
+    def on_enable(self):
+        super().on_enable()
+        self.start_side = 'L'
+        self.current_side = self.start_side
+        self.done_switch = False
+        self.cube_inside = True
+
+        self.chassis.odometry_y = self.START_Y_COORDINATE
+
+
+class RightSameSide(SameSideBase):
+    MODE_NAME = 'Right Same Side Auto'
+
+    def on_enable(self):
+        super().on_enable()
+        self.CROSS_POINT, self.OPP_CROSS_POINT = self.OPP_CROSS_POINT, self.CROSS_POINT
+        self.chassis.odometry_y = -self.START_Y_COORDINATE
+
+        print("FMS Switch %s" % self.fms_switch)
+        print("FMS Scale %s" % self.fms_scale)
+        self.SWITCH_DEPOSIT[1] *= -1
+        self.SWITCH_DEPOSIT_ORIENTATION *= -1
+        self.CUBE_PICKUP_1[1] *= -1
+        self.CUBE_PICKUP_2[1] *= -1
+        # self.CUBE_PICKUP_ORIENTATION *= -1
+        self.DRIVE_BY_SWITCH_POINT[1] *= -1
+        self.DRIVE_BY_ORIENTATION *= -1
+        self.SWITCH_TO_CUBE_POINT[1] *= -1
+        self.SCALE_DEPOSIT[1] *= -1
+        self.SCALE_DEPOSIT_WAYPOINT[1] *= -1
+        self.SCALE_INIT_WAYPOINT[1] *= -1
 
         self.start_side = 'R'
         self.current_side = self.start_side
