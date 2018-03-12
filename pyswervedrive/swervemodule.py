@@ -140,7 +140,7 @@ class SwerveModule:
         This is intended to be called by the SwerveChassis in order to track
         odometry.
         """
-        self.zero_azimuth = self.current_measured_azimuth
+        self.zero_azimuth = self.measured_azimuth
         self.zero_drive_pos = self.wheel_pos
 
     def get_encoder_delta(self):
@@ -149,7 +149,7 @@ class SwerveModule:
         This is intended to be called by the SwerveChassis in order to track
         odometry.
         """
-        steer_delta = constrain_angle(self.current_measured_azimuth
+        steer_delta = constrain_angle(self.measured_azimuth
                                       - self.zero_azimuth)
         drive_delta = self.wheel_pos - self.zero_drive_pos
         return steer_delta, drive_delta
@@ -162,7 +162,7 @@ class SwerveModule:
         """
         azimuth_delta, drive_delta = self.get_encoder_delta()
 
-        avg_azimuth = self.current_measured_azimuth - (azimuth_delta / 2)
+        avg_azimuth = self.measured_azimuth - (azimuth_delta / 2)
 
         if abs(azimuth_delta) > 0.0001:
             # correct for the fact that when we are rotating the modules move in
@@ -175,8 +175,8 @@ class SwerveModule:
         return (drive_x_delta, drive_y_delta)
 
     def get_cartesian_vel(self):
-        azimuth = self.current_measured_azimuth
-        drive_speed = self.current_speed
+        azimuth = self.measured_azimuth
+        drive_speed = self.wheel_vel
 
         drive_x_vel = drive_speed * math.cos(azimuth)
         drive_y_vel = drive_speed * math.sin(azimuth)
@@ -208,10 +208,10 @@ class SwerveModule:
             # Calculate a delta to from the module's current setpoint (wrapped
             # to between +-pi), representing required rotation to get to our
             # desired angle
-            delta = constrain_angle(desired_azimuth - self.current_measured_azimuth)
+            delta = constrain_angle(desired_azimuth - self.measured_azimuth)
         else:
             # figure out the most efficient way to get the module to the desired direction
-            # current_unwound_azimuth = constrain_angle(self.current_measured_azimuth)
+            # current_unwound_azimuth = constrain_angle(self.measured_azimuth)
             current_unwound_azimuth = constrain_angle(self.current_azimuth_sp)
             delta = self.min_angular_displacement(current_unwound_azimuth, desired_azimuth)
 
@@ -228,7 +228,7 @@ class SwerveModule:
 
         if not self.absolute_rotation:
             # logic to only move the modules when we are close to the corret angle
-            azimuth_error = constrain_angle(self.current_measured_azimuth - desired_azimuth)
+            azimuth_error = constrain_angle(self.measured_azimuth - desired_azimuth)
             if abs(azimuth_error) < math.pi / 3.0:
                 # if we are nearing the correct angle with the module forwards
                 self.drive_motor.set(ctre.ControlMode.Velocity,
@@ -246,16 +246,6 @@ class SwerveModule:
     @property
     def steer_enc_offset(self):
         return int(self.steer_enc_offset_entry.getDouble(0))
-
-    @property
-    def current_measured_azimuth(self):
-        """Return the azimuth of the wheel as measured by the encoder."""
-        return self.measured_azimuth
-
-    @property
-    def current_speed(self):
-        """Return the current speed of the module's wheel"""
-        return self.wheel_vel
 
     def update_odometry(self):
         # self.wheel_pos = 0

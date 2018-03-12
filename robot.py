@@ -76,7 +76,7 @@ class Robot(magicbot.MagicRobot):
         self.joystick = wpilib.Joystick(0)
         self.gamepad = wpilib.XboxController(1)
 
-        self.spin_rate = 1
+        self.spin_rate = 1.5
 
         self.sd = NetworkTables.getTable("SmartDashboard")
 
@@ -100,6 +100,9 @@ class Robot(magicbot.MagicRobot):
 
         if self.gamepad.getBumperPressed(wpilib.interfaces.GenericHID.Hand.kRight):
             self.intake.extend(not self.intake.extension_on)
+
+        if self.gamepad.getBButtonPressed():
+            self.intake.clamp(not self.intake.clamp_on)
 
         if self.joystick.getTrigger():
             self.cubeman.engage(initial_state="intaking_cube", force=True)

@@ -38,12 +38,13 @@ class OverallBase(AutonomousStateMachine):
     # Coordinates of various objectives no the field
     # Default to those for LEFT HAND SIDE of the field
     # TODO: determine how far forward/back of this we want to go
-    SCALE_DEPOSIT = [7.8, 2]
+    SCALE_DEPOSIT = [7.8, 1.8]
     SCALE_DEPOSIT_WAYPOINT = [6, 1.9]
     # CUBE_PICKUP_1 = [5.5+robot_length / 2, 1.75]
     # CUBE_PICKUP_2 = [5.5+robot_length / 2, 1.03]
-    CUBE_PICKUP_1 = [5.0, 1.75]
-    CUBE_PICKUP_2 = [5.0, 1.03]
+    # CUBE_PICKUP_1 = [5.7, 1.75]
+    CUBE_PICKUP_1 = [5.4, 1.6]
+    CUBE_PICKUP_2 = [5.4, 1.03]
     SWITCH_DEPOSIT = [5+robot_length / 2, 1.2]
     SCALE_INIT_WAYPOINT = [5.5, 3]
 
@@ -83,7 +84,8 @@ class OverallBase(AutonomousStateMachine):
     DRIVE_BY_SPEED = 1
 
     # CUBE_RUN_MOTION = (1.5, 1.5, 1.5)
-    CUBE_RUN_MOTION = (1, 1, 1)
+    CUBE_RUN_MOTION = (0.8, 1, 0.8)
+    BACK_RUN_MOTION = (1.5, 1.5, 1.5)
 
     def on_enable(self):
         # self.lifter.reset() do we need this?
@@ -122,14 +124,14 @@ class OverallBase(AutonomousStateMachine):
                     self.current_waypoint,
                     self.SCALE_DEPOSIT_WAYPOINT,
                     pickup_waypoint,
-                    self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, end_speed=1,
+                    self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, end_speed=0.4,
                     # DO NOT SMOOTH WAYPONTS HERE (it breaks things)
                     smooth=False, motion_params=self.CUBE_RUN_MOTION)
             else:
                 self.motion.set_trajectory([
                     self.current_waypoint,
                     pickup_waypoint,
-                    self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, end_speed=1,
+                    self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, end_speed=0.4,
                     # DO NOT SMOOTH WAYPONTS HERE (it breaks things)
                     smooth=False, motion_params=self.CUBE_RUN_MOTION)
         self.cubeman.engage(initial_state='intaking_cube')
@@ -213,7 +215,7 @@ class OverallBase(AutonomousStateMachine):
                     self.current_waypoint,
                     self.SCALE_DEPOSIT_WAYPOINT,
                     self.SCALE_DEPOSIT
-                    ], end_heading=0, motion_params=self.CUBE_RUN_MOTION)
+                    ], end_heading=0, motion_params=self.BACK_RUN_MOTION)
             else:
                 self.motion.set_trajectory([
                     self.current_waypoint,
