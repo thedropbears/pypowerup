@@ -82,6 +82,8 @@ class Robot(magicbot.MagicRobot):
 
         self.range_finder_counter = wpilib.Counter(4, mode=wpilib.Counter.Mode.kPulseLength)
 
+        wpilib.CameraServer.launch("vision.py:main")
+
     def teleopInit(self):
         '''Called when teleop starts; optional'''
         self.motion.enabled = False
