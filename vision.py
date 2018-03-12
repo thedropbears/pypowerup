@@ -16,7 +16,7 @@ def main():
     camera.getProperty('vertical_flip').set(True)
     camera.getProperty('horizontal_flip').set(True)
     camera.getProperty('gain_automatic').set(False)
-    camera.getProperty('gain').set(30)
+    camera.getProperty('gain').set(0)
     camera.getProperty('saturation').set(32)
 
     sink = cs.getVideo(camera=camera)
@@ -46,7 +46,7 @@ def main():
 
 
 def process(frame: np.ndarray, mask: np.ndarray = None, hsv: np.ndarray = None, *,
-            lower=(20, 125, 125), upper=(35, 255, 255),
+            lower=(20, 100, 100), upper=(35, 255, 255),
             min_area_prop=1/64, focal_length=208.5):
     """Find cubes using our vision algorithm.
     Args
