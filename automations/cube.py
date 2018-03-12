@@ -90,3 +90,13 @@ class CubeManager(StateMachine):
             self.lifter.move(self.lifter.BOTTOM_HEIGHT)
         if self.lifter.at_pos():
             self.done()
+
+    @state(must_finish=True)
+    def panicking(self):
+        self.lifter.manual_down()
+        self.intake.clamp(False)
+        self.intake.push(False)
+        self.intake.extend(False)
+        if self.lifter.switch_pressed():
+            self.lifter.stop()
+            self.done()

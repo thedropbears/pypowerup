@@ -69,7 +69,6 @@ class SwerveChassis:
         self.hold_heading = False
 
     def on_enable(self):
-        self.imu.resetHeading()
         self.heading_hold_on()
 
         self.A = np.array([

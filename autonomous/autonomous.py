@@ -40,8 +40,10 @@ class OverallBase(AutonomousStateMachine):
     # TODO: determine how far forward/back of this we want to go
     SCALE_DEPOSIT = [7.8, 2]
     SCALE_DEPOSIT_WAYPOINT = [6, 1.9]
-    CUBE_PICKUP_1 = [5+robot_length / 2, 1.75]
-    CUBE_PICKUP_2 = [5+robot_length / 2, 1.03]
+    # CUBE_PICKUP_1 = [5.5+robot_length / 2, 1.75]
+    # CUBE_PICKUP_2 = [5.5+robot_length / 2, 1.03]
+    CUBE_PICKUP_1 = [5.0, 1.75]
+    CUBE_PICKUP_2 = [5.0, 1.03]
     SWITCH_DEPOSIT = [5+robot_length / 2, 1.2]
     SCALE_INIT_WAYPOINT = [5.5, 3]
 
@@ -49,7 +51,7 @@ class OverallBase(AutonomousStateMachine):
 
     CUBE_PICKUP_ORIENTATION = -math.pi
 
-    PICKUP_WAYPOINT_X = 6
+    PICKUP_WAYPOINT_X = 6.5
     CROSS_POINT = [6, START_Y_COORDINATE]
     OPP_CROSS_POINT = [6, -START_Y_COORDINATE]
     DRIVE_BY_SWITCH_POINT = [4, 2+robot_length / 2]
@@ -100,6 +102,7 @@ class OverallBase(AutonomousStateMachine):
         self.cube_number = 0
 
         self.cubeman.engage()
+        self.imu.resetHeading()
 
         self.slow_scale = False
 
@@ -129,10 +132,20 @@ class OverallBase(AutonomousStateMachine):
                     self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, end_speed=1,
                     # DO NOT SMOOTH WAYPONTS HERE (it breaks things)
                     smooth=False, motion_params=self.CUBE_RUN_MOTION)
+        self.cubeman.engage(initial_state='intaking_cube')
+        if self.intake.is_cube_contained():
+            self.next_state_now('wait_for_intake')
         if not self.motion.trajectory_executing:
             # TODO: navigate via vision once we get odometry-based movement
             # working well
-            self.next_state_now('pick_up_cube')
+            # self.next_state_now('pick_up_cube')
+            self.next_state_now('wait_for_intake')
+
+    @state
+    def wait_for_intake(self):
+        self.chassis.set_inputs(0, 0, 0)
+        if not self.cubeman.is_executing:
+            self.next_state_now('stop')
 
     @state
     def pick_up_cube(self, initial_call):
@@ -224,7 +237,7 @@ class OverallBase(AutonomousStateMachine):
                 self.OPP_CROSS_POINT,
                 self.SCALE_DEPOSIT
                 ], end_heading=0)
-        if self.motion.linear_position > 8:
+        if self.motion.linear_position > 6.5:
             if not self.cubeman.is_executing:
                 print('Lifter engage')
             self.cubeman.engage(initial_state='lifting_scale')
@@ -481,7 +494,12 @@ class SameSideBase(SwitchScaleBase):
     @state(first=True)
     def same_side_decide(self):
         if self.current_side == self.fms_scale and self.current_side == self.fms_switch:
-            self.next_state_now('decide_objectives')
+            if self.priority == 'switch':
+                self.second_objective = 'scale'
+                self.last_objective = 'switch'
+                self.next_state_now('drive_by_switch')
+            else:
+                self.next_state_now('decide_objectives')
             return
         elif self.current_side == self.fms_scale:
             self.second_objective = 'scale'
@@ -506,7 +524,6 @@ class SameSideBase(SwitchScaleBase):
 
 
 class LeftSameSide(SameSideBase):
-    MODE_NAME = 'Left Same Side Auto'
 
     def on_enable(self):
         super().on_enable()
@@ -518,8 +535,23 @@ class LeftSameSide(SameSideBase):
         self.chassis.odometry_y = self.START_Y_COORDINATE
 
 
+class LeftSameSideSwitch(LeftSameSide):
+    MODE_NAME = 'Left Same Side Switch'
+
+    def on_enable(self):
+        super().on_enable()
+        self.priority = 'switch'
+
+
+class LeftSameSideScale(LeftSameSide):
+    MODE_NAME = 'Left Same Side Scale'
+
+    def on_enable(self):
+        super().on_enable()
+        self.priority = 'scale'
+
+
 class RightSameSide(SameSideBase):
-    MODE_NAME = 'Right Same Side Auto'
 
     def on_enable(self):
         super().on_enable()
@@ -544,3 +576,19 @@ class RightSameSide(SameSideBase):
         self.current_side = self.start_side
         self.done_switch = False
         self.cube_inside = True
+
+
+class RightSameSideSwitch(RightSameSide):
+    MODE_NAME = 'Right Same Side Switch'
+
+    def on_enable(self):
+        super().on_enable()
+        self.priority = 'switch'
+
+
+class RightSameSideScale(RightSameSide):
+    MODE_NAME = 'Right Same Side Scale'
+
+    def on_enable(self):
+        super().on_enable()
+        self.priority = 'scale'

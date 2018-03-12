@@ -33,8 +33,8 @@ class Lifter:
     # SWITCH = 0.47625 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE
     SWITCH = 1.0 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE
 
-    UPWARD_ACCELERATION = FREE_SPEED // 2
-    DOWNWARD_ACCELERATION = FREE_SPEED // 2
+    UPWARD_ACCELERATION = FREE_SPEED
+    DOWNWARD_ACCELERATION = FREE_SPEED
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
@@ -51,8 +51,7 @@ class Lifter:
         self.motor.overrideSoftLimitsEnable(True)
         self.motor.configForwardSoftLimitEnable(True, timeoutMs=10)
         self.motor.configForwardSoftLimitThreshold(self.metres_to_counts(self.TOP_HEIGHT), timeoutMs=10)
-        self.motor.configReverseSoftLimitEnable(True, timeoutMs=10)
-        self.motor.configReverseSoftLimitThreshold(self.metres_to_counts(self.BOTTOM_HEIGHT), timeoutMs=10)
+        self.motor.configReverseSoftLimitEnable(False, timeoutMs=10)
 
         self.motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, timeoutMs=10)
 
@@ -64,12 +63,13 @@ class Lifter:
         self.motor.config_kD(0, 1, timeoutMs=10)
 
         self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=10)
-        self.motor.configMotionCruiseVelocity(int(self.FREE_SPEED*0.5), timeoutMs=10)
+        self.motor.configMotionCruiseVelocity(int(self.FREE_SPEED*0.7), timeoutMs=10)
 
         self.compressor_on = True
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
+        self.compressor.start()
 
     def on_disable(self):
         """This is called whenever the robot transitions to disabled mode."""
@@ -82,8 +82,9 @@ class Lifter:
         #     self.motor.setSelectedSensorPosition(self.metres_to_counts(self.SWITCH), 0, timeoutMs=10)
         # if not self.top_switch.get():
         #     self.motor.setSelectedSensorPosition(self.metres_to_counts(self.BALANCED_SCALE), 0, timeoutMs=10)
-        # if self.motor.isRevLimitSwitchClosed():
-        #     self.motor.setSelectedSensorPosition(self.metres_to_counts(self.BOTTOM_HEIGHT), 0, timeoutMs=10)
+        if self.motor.isRevLimitSwitchClosed():
+            self.motor.setQuadraturePosition(0, timeoutMs=0)
+        return
 
         if self.set_pos is not None and not self.at_pos():
             if self.compressor_on:
@@ -129,6 +130,15 @@ class Lifter:
 
     def get_current(self) -> float:
         return self.motor.getOutputCurrent()
+
+    def manual_down(self):
+        self.motor.set(ctre.ControlMode.PercentOutput, -0.5)
+
+    def switch_pressed(self):
+        return self.motor.isRevLimitSwitchClosed()
+
+    def zero_encoder(self):
+        self.motor.setQuadraturePosition(0, timeoutMs=0)
 
     def at_pos(self):
         """Finds if cube location is at setops and within threshold

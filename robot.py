@@ -107,8 +107,9 @@ class Robot(magicbot.MagicRobot):
         if self.joystick.getRawButtonPressed(4) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kRight) > 0.5:
             self.cubeman.engage(initial_state="ejecting_cube", force=True)
 
-        if self.joystick.getRawButtonPressed(2) or self.gamepad.getStartButtonPressed():
-            self.cubeman.engage(initial_state="reset_cube", force=True)
+        # if self.joystick.getRawButtonPressed(2) or self.gamepad.getStartButtonPressed():
+        if self.gamepad.getStartButtonPressed():
+            self.cubeman.engage(initial_state="panicking", force=True)
 
         if self.joystick.getRawButtonPressed(3) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kLeft) > 0.5:
             self.cubeman.engage(initial_state="ejecting_exchange", force=True)
@@ -148,6 +149,8 @@ class Robot(magicbot.MagicRobot):
         if self.lifter.set_pos is not None:
             self.sd.putNumber("lift/set_pos", self.lifter.set_pos)
         # self.sd.putNumber('lift_current', self.lifter.get_current())
+        # self.sd.putNumber("lift_pos", self.lifter.get_pos())
+        # self.sd.putBoolean('lift_switch', self.lifter.switch_pressed())
         self.sd.putNumber("imu_heading", self.imu.getAngle())
 
 
