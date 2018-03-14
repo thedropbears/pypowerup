@@ -82,7 +82,7 @@ class Robot(magicbot.MagicRobot):
 
         self.range_finder_counter = wpilib.Counter(4, mode=wpilib.Counter.Mode.kPulseLength)
 
-        wpilib.CameraServer.launch("vision.py:main")
+        # wpilib.CameraServer.launch("vision.py:main")
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
@@ -132,13 +132,15 @@ class Robot(magicbot.MagicRobot):
             self.imu.resetHeading()
             self.chassis.set_heading_sp(0)
 
+        throttle = (1-self.joystick.getThrottle())/2
+
         # this is where the joystick inputs get converted to numbers that are sent
         # to the chassis component. we rescale them using the rescale_js function,
         # in order to make their response exponential, and to set a dead zone -
         # which just means if it is under a certain value a 0 will be sent
         # TODO: Tune these constants for whatever robot they are on
-        vx = -rescale_js(self.joystick.getY(), deadzone=0.1, exponential=1.5, rate=4)
-        vy = -rescale_js(self.joystick.getX(), deadzone=0.1, exponential=1.5, rate=4)
+        vx = -rescale_js(self.joystick.getY(), deadzone=0.1, exponential=1.5, rate=4*throttle)
+        vy = -rescale_js(self.joystick.getX(), deadzone=0.1, exponential=1.5, rate=4*throttle)
         vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=20.0, rate=self.spin_rate)
         self.chassis.set_inputs(vx, vy, vz)
 
