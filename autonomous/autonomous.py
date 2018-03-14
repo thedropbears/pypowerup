@@ -43,7 +43,7 @@ class OverallBase(AutonomousStateMachine):
     # CUBE_PICKUP_1 = [5.5+robot_length / 2, 1.75]
     # CUBE_PICKUP_2 = [5.5+robot_length / 2, 1.03]
     # CUBE_PICKUP_1 = [5.7, 1.75]
-    CUBE_PICKUP_1 = [5.4, 1.6]
+    CUBE_PICKUP_1 = [5.4, 1.7]
     CUBE_PICKUP_2 = [5.4, 1.03]
     SWITCH_DEPOSIT = [5+robot_length / 2, 1.2]
     SCALE_INIT_WAYPOINT = [5.5, 3]
@@ -53,8 +53,8 @@ class OverallBase(AutonomousStateMachine):
     CUBE_PICKUP_ORIENTATION = -math.pi
 
     PICKUP_WAYPOINT_X = 6.5
-    CROSS_POINT = [6, START_Y_COORDINATE]
-    OPP_CROSS_POINT = [6, -START_Y_COORDINATE]
+    CROSS_POINT = [6.2, START_Y_COORDINATE]
+    OPP_CROSS_POINT = [6.2, -START_Y_COORDINATE]
     DRIVE_BY_SWITCH_POINT = [4, 2+robot_length / 2]
     """
     START_Y_COORDINATE = 1
