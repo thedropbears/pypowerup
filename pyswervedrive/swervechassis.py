@@ -52,25 +52,6 @@ class SwerveChassis:
         self.odometry_y_vel = 0
         self.odometry_z_vel = 0
 
-    def set_heading_sp_current(self):
-        self.set_heading_sp(self.imu.getAngle())
-
-    def set_heading_sp(self, setpoint):
-        self.heading_pid.setSetpoint(setpoint)
-        self.heading_pid.enable()
-
-    def heading_hold_on(self):
-        self.set_heading_sp_current()
-        self.heading_pid.reset()
-        self.hold_heading = True
-
-    def heading_hold_off(self):
-        self.heading_pid.disable()
-        self.hold_heading = False
-
-    def on_enable(self):
-        self.heading_hold_on()
-
         self.A = np.array([
             [1, 0, 1],
             [0, 1, 1],
@@ -96,6 +77,28 @@ class SwerveChassis:
 
             module.reset_encoder_delta()
             module.read_steer_pos()
+
+        # TODO: re-enable if we end up not using callback method
+        self.imu.imu.ahrs.registerCallback(self.update_odometry)
+
+    def set_heading_sp_current(self):
+        self.set_heading_sp(self.imu.getAngle())
+
+    def set_heading_sp(self, setpoint):
+        self.heading_pid.setSetpoint(setpoint)
+        self.heading_pid.enable()
+
+    def heading_hold_on(self):
+        self.set_heading_sp_current()
+        self.heading_pid.reset()
+        self.hold_heading = True
+
+    def heading_hold_off(self):
+        self.heading_pid.disable()
+        self.hold_heading = False
+
+    def on_enable(self):
+        self.heading_hold_on()
 
         self.last_heading = self.imu.getAngle()
         self.odometry_updated = False
@@ -124,8 +127,9 @@ class SwerveChassis:
 
         angle = self.imu.getAngle()
 
-        self.update_odometry()
-        self.odometry_updated = False  # reset for next timestep
+        # TODO: re-enable if we end up not using callback method
+        # self.update_odometry()
+        # self.odometry_updated = False  # reset for next timestep
 
         for module in self.modules:
             # Calculate the additional vx and vy components for this module
@@ -139,9 +143,10 @@ class SwerveChassis:
                 vx, vy = self.vx, self.vy
             module.set_velocity(vx+vz_x, vy+vz_y)
 
-    def update_odometry(self):
-        if self.odometry_updated:
-            return
+    def update_odometry(self, o, sensor_timestamp):
+        # TODO: re-enable if we end up not using callback method
+        # if self.odometry_updated:
+        #     return
         heading = self.imu.getAngle()
 
         odometry_outputs = np.zeros((8, 1))
@@ -174,7 +179,9 @@ class SwerveChassis:
         lstsq_ret = np.linalg.lstsq(self.A, odometry_outputs,
                                     rcond=None)
         x, y, theta = lstsq_ret[0].reshape(3)
-        x_field, y_field = self.field_orient(x, y, angle + z_vel*(1/100))
+        # TODO: re-enable if we move back to running in the same thread
+        # x_field, y_field = self.field_orient(x, y, angle + z_vel*(1/100))
+        x_field, y_field = self.field_orient(x, y, angle)
         return x_field, y_field, theta
 
     def set_velocity_heading(self, vx, vy, heading):

@@ -248,10 +248,6 @@ class SwerveModule:
         return int(self.steer_enc_offset_entry.getDouble(0))
 
     def update_odometry(self):
-        # self.wheel_pos = 0
-        # self.measured_azimuth = 0
-        # self.wheel_vel = 0
-        # return
         drive_pos = self.drive_motor.getSelectedSensorPosition(0)
         drive_vel = self.drive_motor.getSelectedSensorVelocity(0)
         self.wheel_vel = drive_vel / self.drive_velocity_to_native_units

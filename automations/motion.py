@@ -123,7 +123,8 @@ class ChassisMotion:
         if self.enabled:
             self.chassis.field_oriented = True
             self.chassis.hold_heading = False
-            self.chassis.update_odometry()
+            # TODO: re-enable if we end up not using callback method
+            # self.chassis.update_odometry()
 
             direction_of_motion, next_seg, over = self.pursuit.get_output(self.chassis.position.reshape(2),
                                                                           self.chassis.speed)
