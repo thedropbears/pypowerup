@@ -35,7 +35,7 @@ class Lifter:
     SWITCH = 1.0 - HEIGHT_FROM_FLOOR + CONTAINMENT_SIZE
 
     UPWARD_ACCELERATION = FREE_SPEED
-    DOWNWARD_ACCELERATION = FREE_SPEED
+    DOWNWARD_ACCELERATION = FREE_SPEED*2
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
@@ -67,7 +67,7 @@ class Lifter:
         self.motor.config_kD(0, 1, timeoutMs=10)
 
         self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=10)
-        self.motor.configMotionCruiseVelocity(int(self.FREE_SPEED*0.7), timeoutMs=10)
+        self.motor.configMotionCruiseVelocity(int(self.FREE_SPEED), timeoutMs=10)
 
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
