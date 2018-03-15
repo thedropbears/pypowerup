@@ -69,8 +69,6 @@ class Lifter:
         self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=10)
         self.motor.configMotionCruiseVelocity(int(self.FREE_SPEED*0.7), timeoutMs=10)
 
-        self.compressor_on = True
-
     def on_enable(self):
         """This is called whenever the robot transitions to being enabled."""
         self.compressor.start()
@@ -81,16 +79,6 @@ class Lifter:
 
     def execute(self):
         """Run at the end of every control loop iteration."""
-        return
-
-        if self.set_pos is not None and not self.at_pos():
-            if self.compressor_on:
-                self.compressor.stop()
-                self.compressor_on = False
-        else:
-            if not self.compressor_on:
-                self.compressor.start()
-                self.compressor_on = True
 
     def metres_to_counts(self, metres):
         return int(metres * self.COUNTS_PER_METRE)
