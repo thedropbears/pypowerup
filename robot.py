@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import math
 
 import ctre
 import magicbot
@@ -12,7 +13,7 @@ from components.range_finder import RangeFinder
 from pyswervedrive.swervechassis import SwerveChassis
 from pyswervedrive.swervemodule import SwerveModule
 from utilities.imu import IMU
-from utilities.functions import rescale_js
+from utilities.functions import rescale_js, constrain_angle
 from robotpy_ext.misc.looptimer import LoopTimer
 from networktables import NetworkTables
 
@@ -139,10 +140,24 @@ class Robot(magicbot.MagicRobot):
         # in order to make their response exponential, and to set a dead zone -
         # which just means if it is under a certain value a 0 will be sent
         # TODO: Tune these constants for whatever robot they are on
-        vx = -rescale_js(self.joystick.getY(), deadzone=0.1, exponential=1.5, rate=4*throttle)
-        vy = -rescale_js(self.joystick.getX(), deadzone=0.1, exponential=1.5, rate=4*throttle)
-        vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=20.0, rate=self.spin_rate)
-        self.chassis.set_inputs(vx, vy, vz)
+        joystick_vx = -rescale_js(self.joystick.getY(), deadzone=0.1, exponential=1.5, rate=4*throttle)
+        joystick_vy = -rescale_js(self.joystick.getX(), deadzone=0.1, exponential=1.5, rate=4*throttle)
+        joystick_vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=20.0, rate=self.spin_rate)
+        joystick_hat = self.joystick.getPOV()
+
+        gamepad_vx = rescale_js(self.gamepad.getX(10), deadzone=0.01, exponential=0.5, rate=1)
+        gamepad_vy = rescale_js(self.gamepad.getY(10), deadzone=0.01, exponential=0.5, rate=1)
+        # TODO Tune these terms for the gamepad.
+
+        if joystick_vx or joystick_vy or joystick_vz:
+            self.chassis.set_inputs(joystick_vx, joystick_vy, joystick_vz)
+        elif gamepad_vx or gamepad_vy:
+            self.chassis.set_inputs(gamepad_vx, gamepad_vy, 0)
+        elif joystick_hat != -1:
+            constrained_angle = -constrain_angle(math.radians(joystick_hat))
+            self.chassis.set_heading_sp(constrained_angle)
+        else:
+            self.chassis.set_inputs(0, 0, 0)
 
     def testPeriodic(self):
         if self.gamepad.getStartButtonPressed():
