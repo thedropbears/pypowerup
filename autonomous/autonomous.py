@@ -40,11 +40,8 @@ class OverallBase(AutonomousStateMachine):
     # TODO: determine how far forward/back of this we want to go
     SCALE_DEPOSIT = [7.8, 1.8]
     SCALE_DEPOSIT_WAYPOINT = [6, 1.9]
-    # CUBE_PICKUP_1 = [5.5+robot_length / 2, 1.75]
-    # CUBE_PICKUP_2 = [5.5+robot_length / 2, 1.03]
-    # CUBE_PICKUP_1 = [5.7, 1.75]
-    CUBE_PICKUP_1 = [5.4, 1.7]
-    CUBE_PICKUP_2 = [5.4, 1.03]
+    CUBE_PICKUP_1 = [6.3, 1.7]
+    CUBE_PICKUP_2 = [6.3, 1.03]
     SWITCH_DEPOSIT = [5+robot_length / 2, 1.2]
     SCALE_INIT_WAYPOINT = [5.5, 3]
 
@@ -83,8 +80,7 @@ class OverallBase(AutonomousStateMachine):
     DRIVE_BY_ORIENTATION = -math.pi / 2
     DRIVE_BY_SPEED = 1
 
-    # CUBE_RUN_MOTION = (1.5, 1.5, 1.5)
-    CUBE_RUN_MOTION = (0.8, 1, 0.8)
+    CUBE_RUN_MOTION = (1, 1, 1)
     BACK_RUN_MOTION = (1.5, 1.5, 1.5)
 
     def on_enable(self):
@@ -135,13 +131,8 @@ class OverallBase(AutonomousStateMachine):
                     # DO NOT SMOOTH WAYPONTS HERE (it breaks things)
                     smooth=False, motion_params=self.CUBE_RUN_MOTION)
         self.cubeman.engage(initial_state='intaking_cube')
-        if self.intake.is_cube_contained():
-            self.next_state_now('wait_for_intake')
         if not self.motion.trajectory_executing:
-            # TODO: navigate via vision once we get odometry-based movement
-            # working well
-            # self.next_state_now('pick_up_cube')
-            self.next_state_now('wait_for_intake')
+            self.next_state_now('pick_up_cube')
 
     @state
     def wait_for_intake(self):
