@@ -1,5 +1,6 @@
 import ctre
 import wpilib
+import hal
 
 
 class Lifter:
@@ -53,6 +54,9 @@ class Lifter:
         self.motor.configForwardSoftLimitThreshold(self.metres_to_counts(self.TOP_HEIGHT), timeoutMs=10)
         self.motor.configReverseSoftLimitEnable(False, timeoutMs=10)
 
+        if not hal.isSimulation():
+            self.motor.configSetParameter(ctre.TalonSRX.ParamEnum.eClearPositionOnLimitR, 1, 0, 0, timeoutMs=10)
+
         self.motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, timeoutMs=10)
 
         # TODO tune motion profiling
@@ -77,13 +81,6 @@ class Lifter:
 
     def execute(self):
         """Run at the end of every control loop iteration."""
-
-        # if not self.centre_switch.get():
-        #     self.motor.setSelectedSensorPosition(self.metres_to_counts(self.SWITCH), 0, timeoutMs=10)
-        # if not self.top_switch.get():
-        #     self.motor.setSelectedSensorPosition(self.metres_to_counts(self.BALANCED_SCALE), 0, timeoutMs=10)
-        if self.motor.isRevLimitSwitchClosed():
-            self.motor.setQuadraturePosition(0, timeoutMs=0)
         return
 
         if self.set_pos is not None and not self.at_pos():
