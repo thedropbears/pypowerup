@@ -41,7 +41,8 @@ class Robot(magicbot.MagicRobot):
         """Create non-components here."""
 
         self.module_a = SwerveModule(  # top left module
-            "a", steer_talon=ctre.TalonSRX(48), drive_talon=ctre.TalonSRX(49),
+            # "a", steer_talon=ctre.TalonSRX(48), drive_talon=ctre.TalonSRX(49),
+            "a", steer_talon=ctre.TalonSRX(40), drive_talon=ctre.TalonSRX(41),
             x_pos=0.25, y_pos=0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_b = SwerveModule(  # bottom left modulet
@@ -145,19 +146,25 @@ class Robot(magicbot.MagicRobot):
         joystick_vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=20.0, rate=self.spin_rate)
         joystick_hat = self.joystick.getPOV()
 
-        gamepad_vx = rescale_js(self.gamepad.getX(10), deadzone=0.01, exponential=0.5, rate=1)
-        gamepad_vy = rescale_js(self.gamepad.getY(10), deadzone=0.01, exponential=0.5, rate=1)
+        gamepad_vx = -rescale_js(self.gamepad.getY(10), deadzone=0.1, exponential=1.5, rate=1)
+        gamepad_vy = -rescale_js(self.gamepad.getX(10), deadzone=0.1, exponential=1.5, rate=1)
         # TODO Tune these terms for the gamepad.
 
         if joystick_vx or joystick_vy or joystick_vz:
+            if self.joystick.getRawButton(6):
+                self.chassis.field_oriented = True
+            else:
+                self.chassis.field_oriented = False
             self.chassis.set_inputs(joystick_vx, joystick_vy, joystick_vz)
-        elif gamepad_vx or gamepad_vy:
+        elif (gamepad_vx or gamepad_vy) and self.gamepad.getYButton():
+            self.chassis.field_oriented = False
             self.chassis.set_inputs(gamepad_vx, gamepad_vy, 0)
-        elif joystick_hat != -1:
-            constrained_angle = -constrain_angle(math.radians(joystick_hat))
-            self.chassis.set_heading_sp(constrained_angle)
         else:
             self.chassis.set_inputs(0, 0, 0)
+
+        if joystick_hat != -1:
+            constrained_angle = -constrain_angle(math.radians(joystick_hat))
+            self.chassis.set_heading_sp(constrained_angle)
 
     def testPeriodic(self):
         if self.gamepad.getStartButtonPressed():
