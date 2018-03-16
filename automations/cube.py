@@ -7,14 +7,19 @@ class CubeManager(StateMachine):
     lifter: Lifter
     intake: Intake
 
-    @timed_state(first=True, must_finish=True, duration=0.5, next_state="grabbing_cube")
+    @timed_state(first=True, must_finish=True, duration=0.8, next_state="drop_cube_initialize")
     def initialize_auto_cube(self):
         """Get the intake arms out of their starting position."""
         self.intake.extend(True)
         self.intake.push(False)
-        self.intake.clamp(False)
+        self.intake.clamp(True)
         self.intake.rotate(1)
         self.intake.arms_out = True
+
+    @timed_state(must_finish=True, duration=0.5, next_state="grabbing_cube")
+    def drop_cube_initialize(self):
+        self.intake.clamp(False)
+        self.intake.rotate(0)
 
     @timed_state(must_finish=True, duration=0.2, next_state="hovering_cube")
     def grabbing_cube(self):
@@ -84,7 +89,7 @@ class CubeManager(StateMachine):
     @state(must_finish=True)
     def reset_cube(self, initial_call):
         if initial_call:
-            self.intake.clamp(False)
+            # self.intake.clamp(False)
             self.intake.push(False)
             self.intake.extend(False)
             self.lifter.move(self.lifter.BOTTOM_HEIGHT)

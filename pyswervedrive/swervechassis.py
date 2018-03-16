@@ -180,8 +180,8 @@ class SwerveChassis:
                                     rcond=None)
         x, y, theta = lstsq_ret[0].reshape(3)
         # TODO: re-enable if we move back to running in the same thread
-        # x_field, y_field = self.field_orient(x, y, angle + z_vel*(1/100))
-        x_field, y_field = self.field_orient(x, y, angle)
+        x_field, y_field = self.field_orient(x, y, angle + z_vel*(1/200))
+        # x_field, y_field = self.field_orient(x, y, angle)
         return x_field, y_field, theta
 
     def set_velocity_heading(self, vx, vy, heading):

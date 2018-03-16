@@ -43,15 +43,15 @@ class OverallBase(AutonomousStateMachine):
     CUBE_PICKUP_1 = [6.3, 1.7]
     CUBE_PICKUP_2 = [6.3, 1.03]
     SWITCH_DEPOSIT = [5+robot_length / 2, 1.2]
-    SCALE_INIT_WAYPOINT = [5.5, 3]
+    SCALE_INIT_WAYPOINT = [6, 3]
 
     SWITCH_DEPOSIT_ORIENTATION = -math.pi
 
     CUBE_PICKUP_ORIENTATION = -math.pi
 
     PICKUP_WAYPOINT_X = 6.5
-    CROSS_POINT = [6.2, START_Y_COORDINATE]
-    OPP_CROSS_POINT = [6.2, -START_Y_COORDINATE]
+    CROSS_POINT = [6.3, START_Y_COORDINATE]
+    OPP_CROSS_POINT = [6.3, -START_Y_COORDINATE]
     DRIVE_BY_SWITCH_POINT = [4, 2+robot_length / 2]
     """
     START_Y_COORDINATE = 1
@@ -147,7 +147,7 @@ class OverallBase(AutonomousStateMachine):
         angle towards the cube"""
 
         if initial_call:
-            self.cubeman.engage(initial_state='intaking_cube')
+            self.cubeman.engage(initial_state='intaking_cube', force=True)
             self.pickup_start_pos = self.chassis.position
 
         if self.intake.is_cube_contained():
@@ -158,6 +158,7 @@ class OverallBase(AutonomousStateMachine):
         vision_angle = self.vision.largest_cube()
         heading = self.imu.getAngle()
         if vision_angle is None:
+            print('dont see cube')
             return
         alignment_direction = heading + vision_angle * 1.5
         self.chassis.field_oriented = True
@@ -179,6 +180,7 @@ class OverallBase(AutonomousStateMachine):
         vx = speed*math.cos(alignment_direction)
         vy = speed*math.sin(alignment_direction)
         self.chassis.set_velocity_heading(vx, vy, math.pi)
+        # self.chassis.set_inputs(vx, vy, 0)
 
     @state
     def stop(self, initial_call, state_tm):
@@ -585,3 +587,37 @@ class RightSameSideScale(RightSameSide):
     def on_enable(self):
         super().on_enable()
         self.priority = 'scale'
+
+
+class PickupCubeAuto(OverallBase):
+    MODE_NAME = "Vision Pickup Test DON'T USE"
+
+    @state(first=True)
+    def start(self):
+        self.cube = [3, 0]
+        self.chassis.odometry_y = 0
+        self.chassis.odometry_x = 6
+        self.next_state_now('pick_up_cube')
+
+    @state
+    def deposit_switch(self, initial_call):
+        """Deposit the cube on the switch."""
+        self.chassis.set_inputs(0, 0, 0)
+        if initial_call:
+            self.cube_number += 1
+            self.cube_inside = False
+            self.cubeman.engage(initial_state='lifting_switch', force=True)
+        if not self.cubeman.is_executing and not initial_call:
+            self.cubeman.engage(initial_state='ejecting_cube', force=True)
+            self.next_state_now('wait_for_deposit')
+
+    @state
+    def wait_for_deposit(self, initial_call, state_tm):
+        if not initial_call:
+            if not self.cubeman.is_executing:
+                self.cubeman.engage(initial_state='reset_cube', force=True)
+                self.done()
+
+    def next_objective(self):
+        self.next_state_now('deposit_switch')
+        print('next obj called')

@@ -27,8 +27,10 @@ class PhysicsEngine:
         self.drive_velocity_to_native_units = self.drive_counts_per_meter*0.1
 
         # for modules [a, b, c, d]. used to iterate over them
+        # self.module_steer_can_ids = [48, 46, 44, 42]
+        # self.module_drive_can_ids = [49, 47, 45, 43]
         self.module_steer_can_ids = [48, 46, 44, 42]
-        self.module_drive_can_ids = [49, 47, 45, 43]
+        self.module_drive_can_ids = [41, 47, 45, 43]
         self.module_steer_offsets = [0] * 4
         x_off = self.X_WHEELBASE / 2
         y_off = self.Y_WHEELBASE / 2
