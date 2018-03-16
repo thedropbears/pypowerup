@@ -151,10 +151,7 @@ class Robot(magicbot.MagicRobot):
         # TODO Tune these terms for the gamepad.
 
         if joystick_vx or joystick_vy or joystick_vz:
-            if self.joystick.getRawButton(6):
-                self.chassis.field_oriented = False
-            else:
-                self.chassis.field_oriented = True
+            self.chassis.field_oriented = not self.joystick.getRawButton(6)
             self.chassis.set_inputs(joystick_vx, joystick_vy, joystick_vz)
         elif (gamepad_vx or gamepad_vy) and self.gamepad.getRawButton(9):
             self.chassis.field_oriented = True
@@ -164,6 +161,8 @@ class Robot(magicbot.MagicRobot):
 
         if joystick_hat != -1:
             constrained_angle = -constrain_angle(math.radians(joystick_hat))
+            if self.imu.getAngle() < 0 and constrained_angle == math.pi:
+                constrained_angle = -math.pi
             self.chassis.set_heading_sp(constrained_angle)
 
     def testPeriodic(self):
