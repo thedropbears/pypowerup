@@ -38,7 +38,7 @@ class OverallBase(AutonomousStateMachine):
     # Coordinates of various objectives no the field
     # Default to those for LEFT HAND SIDE of the field
     # TODO: determine how far forward/back of this we want to go
-    SCALE_DEPOSIT = [7.6, 1.7]
+    SCALE_DEPOSIT = [7.6, 1.75]
     SCALE_DEPOSIT_WAYPOINT = [6, 1.9]
     CUBE_PICKUP_1 = [6.4, 1.4]
     CUBE_PICKUP_2 = [6.4, 1.03]
@@ -46,6 +46,7 @@ class OverallBase(AutonomousStateMachine):
     SCALE_INIT_WAYPOINT = [6, 3]
 
     SWITCH_DEPOSIT_ORIENTATION = -math.pi
+    SCALE_DEPOSIT_ORIENTATION = -math.pi/9
 
     CUBE_PICKUP_ORIENTATION = -math.pi
 
@@ -205,19 +206,20 @@ class OverallBase(AutonomousStateMachine):
                     self.SCALE_INIT_WAYPOINT,
                     self.SCALE_DEPOSIT_WAYPOINT,
                     self.SCALE_DEPOSIT
-                    ], end_heading=0)
+                    ], end_heading=self.SCALE_DEPOSIT_ORIENTATION)
             elif self.slow_scale:
                 self.motion.set_trajectory([
                     self.current_waypoint,
                     self.SCALE_DEPOSIT_WAYPOINT,
                     self.SCALE_DEPOSIT
-                    ], end_heading=0, motion_params=self.BACK_RUN_MOTION)
+                    ], end_heading=self.SCALE_DEPOSIT_ORIENTATION,
+                    motion_params=self.BACK_RUN_MOTION)
             else:
                 self.motion.set_trajectory([
                     self.current_waypoint,
                     self.SCALE_DEPOSIT_WAYPOINT,
                     self.SCALE_DEPOSIT
-                    ], end_heading=0)
+                    ], end_heading=self.SCALE_DEPOSIT_ORIENTATION)
             if not self.slow_engage:
                 self.cubeman.engage(initial_state='lifting_scale', force=True)
         if self.motion.linear_position > 3 and self.slow_engage:
@@ -234,7 +236,7 @@ class OverallBase(AutonomousStateMachine):
                 self.CROSS_POINT,
                 self.OPP_CROSS_POINT,
                 self.SCALE_DEPOSIT
-                ], end_heading=0)
+                ], end_heading=self.SCALE_DEPOSIT_ORIENTATION)
         if self.motion.linear_position > 6.5:
             if not self.cubeman.is_executing:
                 print('Lifter engage')
@@ -296,6 +298,7 @@ class LeftDoubleScale(DoubleScaleBase):
             self.CUBE_PICKUP_2[1] *= -1
             self.CUBE_PICKUP_ORIENTATION *= -1
             self.SCALE_INIT_WAYPOINT[1] *= -1
+            self.SCALE_DEPOSIT_ORIENTATION *= -1
 
 
 class RightDoubleScale(DoubleScaleBase):
@@ -318,6 +321,7 @@ class RightDoubleScale(DoubleScaleBase):
             self.CUBE_PICKUP_2[1] *= -1
             self.CUBE_PICKUP_ORIENTATION *= -1
             self.SCALE_INIT_WAYPOINT[1] *= -1
+            self.SCALE_DEPOSIT_ORIENTATION *= -1
 
 
 class SwitchScaleBase(OverallBase):
@@ -448,6 +452,7 @@ class LeftSwitchScale(SwitchScaleBase):
             self.SCALE_DEPOSIT[1] *= -1
             self.SCALE_DEPOSIT_WAYPOINT[1] *= -1
             self.SCALE_INIT_WAYPOINT[1] *= -1
+            self.SCALE_DEPOSIT_ORIENTATION *= -1
 
     @state(first=True)
     def first_state(self):
@@ -478,6 +483,7 @@ class RightSwitchScale(SwitchScaleBase):
             self.SCALE_DEPOSIT[1] *= -1
             self.SCALE_DEPOSIT_WAYPOINT[1] *= -1
             self.SCALE_INIT_WAYPOINT[1] *= -1
+            self.SCALE_DEPOSIT_ORIENTATION *= -1
 
         self.start_side = 'R'
         self.current_side = self.start_side
@@ -571,6 +577,7 @@ class RightSameSide(SameSideBase):
         self.SCALE_DEPOSIT[1] *= -1
         self.SCALE_DEPOSIT_WAYPOINT[1] *= -1
         self.SCALE_INIT_WAYPOINT[1] *= -1
+        self.SCALE_DEPOSIT_ORIENTATION *= -1
 
         self.start_side = 'R'
         self.current_side = self.start_side
