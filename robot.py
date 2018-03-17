@@ -46,11 +46,11 @@ class Robot(magicbot.MagicRobot):
             x_pos=0.25, y_pos=0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_b = SwerveModule(  # bottom left modulet
-            "b", steer_talon=ctre.TalonSRX(46), drive_talon=ctre.TalonSRX(47),
+            "b", steer_talon=ctre.TalonSRX(50), drive_talon=ctre.TalonSRX(51),
             x_pos=-0.25, y_pos=0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_c = SwerveModule(  # bottom right modulet
-            "c", steer_talon=ctre.TalonSRX(44), drive_talon=ctre.TalonSRX(45),
+            "c", steer_talon=ctre.TalonSRX(52), drive_talon=ctre.TalonSRX(53),
             x_pos=-0.25, y_pos=-0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_d = SwerveModule(  # top right modulet
@@ -146,8 +146,8 @@ class Robot(magicbot.MagicRobot):
         joystick_vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=20.0, rate=self.spin_rate)
         joystick_hat = self.joystick.getPOV()
 
-        gamepad_vx = -rescale_js(self.gamepad.getY(10), deadzone=0.1, exponential=1.5, rate=0.5)
-        gamepad_vy = -rescale_js(self.gamepad.getX(10), deadzone=0.1, exponential=1.5, rate=0.5)
+        gamepad_vx = -rescale_js(self.gamepad.getY(wpilib.XboxController.Button.kStickRight), deadzone=0.1, exponential=1.5, rate=0.5)
+        gamepad_vy = -rescale_js(self.gamepad.getX(wpilib.XboxController.Button.kStickRight), deadzone=0.1, exponential=1.5, rate=0.5)
         # TODO Tune these terms for the gamepad.
 
         if joystick_vx or joystick_vy or joystick_vz:
