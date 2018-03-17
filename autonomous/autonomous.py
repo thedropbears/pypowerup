@@ -38,10 +38,10 @@ class OverallBase(AutonomousStateMachine):
     # Coordinates of various objectives no the field
     # Default to those for LEFT HAND SIDE of the field
     # TODO: determine how far forward/back of this we want to go
-    SCALE_DEPOSIT = [7.8, 1.8]
+    SCALE_DEPOSIT = [7.6, 1.7]
     SCALE_DEPOSIT_WAYPOINT = [6, 1.9]
-    CUBE_PICKUP_1 = [6.3, 1.6]
-    CUBE_PICKUP_2 = [6.3, 1.03]
+    CUBE_PICKUP_1 = [6.4, 1.4]
+    CUBE_PICKUP_2 = [6.4, 1.03]
     SWITCH_DEPOSIT = [5+robot_length / 2, 1.2]
     SCALE_INIT_WAYPOINT = [6, 3]
 
@@ -50,8 +50,8 @@ class OverallBase(AutonomousStateMachine):
     CUBE_PICKUP_ORIENTATION = -math.pi
 
     PICKUP_WAYPOINT_X = 6.5
-    CROSS_POINT = [6.3, START_Y_COORDINATE]
-    OPP_CROSS_POINT = [6.3, -START_Y_COORDINATE]
+    CROSS_POINT = [6.1, START_Y_COORDINATE]
+    OPP_CROSS_POINT = [6.1, -START_Y_COORDINATE]
     DRIVE_BY_SWITCH_POINT = [4, 2+robot_length / 2]
     """
     START_Y_COORDINATE = 1
@@ -80,8 +80,8 @@ class OverallBase(AutonomousStateMachine):
     DRIVE_BY_ORIENTATION = -math.pi / 2
     DRIVE_BY_SPEED = 1
 
-    CUBE_RUN_MOTION = (1, 1, 1)
-    BACK_RUN_MOTION = (1.5, 1.5, 1.5)
+    CUBE_RUN_MOTION = (1.5, 1, 1)
+    BACK_RUN_MOTION = (1, 1, 1)
 
     def on_enable(self):
         # self.lifter.reset() do we need this?
@@ -158,9 +158,11 @@ class OverallBase(AutonomousStateMachine):
         vision_angle = self.vision.largest_cube()
         heading = self.imu.getAngle()
         if vision_angle is None:
-            print('dont see cube')
+            if initial_call:
+                print('Initial call pick up cube, not seeing cube')
+            self.chassis.set_inputs(0.1, 0, 0)
             return
-        alignment_direction = heading + vision_angle * 1.5
+        alignment_direction = heading + vision_angle * 1.7
         self.chassis.field_oriented = True
 
         # speed controller
@@ -179,6 +181,7 @@ class OverallBase(AutonomousStateMachine):
 
         vx = speed*math.cos(alignment_direction)
         vy = speed*math.sin(alignment_direction)
+        # TODO: change this to hold a heading via PID
         # self.chassis.set_velocity_heading(vx, vy, math.pi)
         self.chassis.set_inputs(vx, vy, 0)
 
@@ -217,7 +220,7 @@ class OverallBase(AutonomousStateMachine):
                     ], end_heading=0)
             if not self.slow_engage:
                 self.cubeman.engage(initial_state='lifting_scale', force=True)
-        if self.motion.linear_position > 4 and self.slow_engage:
+        if self.motion.linear_position > 3 and self.slow_engage:
             self.cubeman.engage(initial_state='lifting_scale', force=True)
         # if not self.motion.trajectory_executing and state_tm > 4:
         if not self.motion.trajectory_executing:
@@ -402,17 +405,20 @@ class SwitchScaleBase(OverallBase):
     def deposit_switch(self, initial_call):
         """Deposit the cube on the switch."""
         if initial_call:
-            self.chassis.set_inputs(0, 0, 0)
+            self.chassis.set_inputs(0.5, 0, 0)
             self.cube_number += 1
             self.cube_inside = False
             self.cubeman.engage(initial_state='lifting_switch', force=True)
         elif not self.cubeman.is_executing:
-            self.cubeman.engage(initial_state='ejecting_cube', force=True)
+            print('eject cube')
             self.next_state('wait_for_deposit')
 
     @state
     def wait_for_deposit(self, initial_call, state_tm):
-        if not self.cubeman.is_executing:
+        self.chassis.set_inputs(0.0, 0, 0)
+        if initial_call:
+            self.cubeman.engage(initial_state='ejecting_cube', force=True)
+        elif not self.cubeman.is_executing:
             self.cubeman.engage(initial_state='reset_cube', force=True)
             self.next_state_now('nav_to_cube')
 
@@ -602,19 +608,21 @@ class PickupCubeAuto(OverallBase):
     def deposit_switch(self, initial_call):
         """Deposit the cube on the switch."""
         if initial_call:
-            self.chassis.set_inputs(0, 0, 0)
+            self.chassis.set_inputs(0.5, 0, 0)
             self.cube_number += 1
             self.cube_inside = False
             self.cubeman.engage(initial_state='lifting_switch', force=True)
         elif not self.cubeman.is_executing:
-            self.cubeman.engage(initial_state='ejecting_cube', force=True)
+            print('eject cube')
             self.next_state('wait_for_deposit')
 
     @state
     def wait_for_deposit(self, initial_call, state_tm):
-        if not self.cubeman.is_executing:
+        self.chassis.set_inputs(0.0, 0, 0)
+        if initial_call:
+            self.cubeman.engage(initial_state='ejecting_cube', force=True)
+        elif not self.cubeman.is_executing:
             self.cubeman.engage(initial_state='reset_cube', force=True)
-            self.next_state_now('nav_to_cube')
             self.done()
 
     def next_objective(self):
