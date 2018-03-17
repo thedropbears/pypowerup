@@ -46,7 +46,7 @@ class Robot(magicbot.MagicRobot):
             x_pos=0.25, y_pos=0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_b = SwerveModule(  # bottom left modulet
-            "b", steer_talon=ctre.TalonSRX(50), drive_talon=ctre.TalonSRX(51),
+            "b", steer_talon=ctre.TalonSRX(58), drive_talon=ctre.TalonSRX(51),
             x_pos=-0.25, y_pos=0.31,
             drive_free_speed=Robot.module_drive_free_speed)
         self.module_c = SwerveModule(  # bottom right modulet
