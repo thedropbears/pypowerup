@@ -161,8 +161,6 @@ class Robot(magicbot.MagicRobot):
 
         if joystick_hat != -1:
             constrained_angle = -constrain_angle(math.radians(joystick_hat))
-            if self.imu.getAngle() < 0 and constrained_angle == math.pi:
-                constrained_angle = -math.pi
             self.chassis.set_heading_sp(constrained_angle)
 
     def testPeriodic(self):

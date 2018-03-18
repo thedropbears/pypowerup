@@ -63,6 +63,7 @@ class SwerveModule:
         self.drive_free_speed = drive_free_speed
 
         self.absolute_rotation = False
+        self.aligned = False
         self.vx = 0
         self.vy = 0
 
@@ -233,12 +234,15 @@ class SwerveModule:
                 # if we are nearing the correct angle with the module forwards
                 self.drive_motor.set(ctre.ControlMode.Velocity,
                                      velocity*self.drive_velocity_to_native_units)
+                self.aligned = True
             elif abs(azimuth_error) > math.pi - math.pi / 3.0:
                 # if we are nearing the correct angle with the module backwards
                 self.drive_motor.set(ctre.ControlMode.Velocity,
                                      -velocity*self.drive_velocity_to_native_units)
+                self.aligned = True
             else:
                 self.drive_motor.set(ctre.ControlMode.Velocity, 0)
+                self.aligned = False
         else:
             self.drive_motor.set(ctre.ControlMode.Velocity,
                                  velocity*self.drive_velocity_to_native_units)

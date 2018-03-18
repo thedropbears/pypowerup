@@ -40,13 +40,14 @@ class OverallBase(AutonomousStateMachine):
     # TODO: determine how far forward/back of this we want to go
     SCALE_DEPOSIT = [7.6, 1.75]
     SCALE_DEPOSIT_WAYPOINT = [6, 1.9]
-    CUBE_PICKUP_1 = [6.4, 1.4]
-    CUBE_PICKUP_2 = [6.4, 1.03]
+    # CUBE_PICKUP_1 = [6.2, 1.7]
+    CUBE_PICKUP_1 = [6.2, 0.9]
+    CUBE_PICKUP_2 = [6.2, 1.03]
     SWITCH_DEPOSIT = [5+robot_length / 2, 1.2]
     SCALE_INIT_WAYPOINT = [6, 3]
 
     SWITCH_DEPOSIT_ORIENTATION = -math.pi
-    SCALE_DEPOSIT_ORIENTATION = -math.pi/9
+    SCALE_DEPOSIT_ORIENTATION = -math.pi / 20
 
     CUBE_PICKUP_ORIENTATION = -math.pi
 
@@ -81,7 +82,7 @@ class OverallBase(AutonomousStateMachine):
     DRIVE_BY_ORIENTATION = -math.pi / 2
     DRIVE_BY_SPEED = 1
 
-    CUBE_RUN_MOTION = (1.5, 1, 1)
+    CUBE_RUN_MOTION = (1, 1, 1)
     BACK_RUN_MOTION = (1, 1, 1)
 
     def on_enable(self):
@@ -123,7 +124,8 @@ class OverallBase(AutonomousStateMachine):
                     pickup_waypoint,
                     self.cube], end_heading=self.CUBE_PICKUP_ORIENTATION, end_speed=0.4,
                     # DO NOT SMOOTH WAYPONTS HERE (it breaks things)
-                    smooth=False, motion_params=self.CUBE_RUN_MOTION)
+                    # smooth=False, motion_params=self.CUBE_RUN_MOTION, wait_for_rotate=True)
+                    smooth=False, motion_params=self.CUBE_RUN_MOTION, wait_for_rotate=False)
             else:
                 self.motion.set_trajectory([
                     self.current_waypoint,
@@ -150,6 +152,7 @@ class OverallBase(AutonomousStateMachine):
         if initial_call:
             self.cubeman.engage(initial_state='intaking_cube', force=True)
             self.pickup_start_pos = self.chassis.position
+            self.seen_cube = False
 
         if self.intake.is_cube_contained() or self.intake.get_cube_distance() < 0.55:
             print("Intaking cube, finish vision navigation")
@@ -161,8 +164,14 @@ class OverallBase(AutonomousStateMachine):
         if vision_angle is None:
             if initial_call:
                 print('Initial call pick up cube, not seeing cube')
-            self.chassis.set_inputs(0.1, 0, 0)
+            self.chassis.set_velocity_heading(0.5, 0, self.CUBE_PICKUP_ORIENTATION)
+            # if not self.seen_cube:
+            #     self.chassis.set_inputs(0.0, 0, 0)
+            # else:
+            #     self.chassis.set_inputs(0.3, 0, 0)
             return
+        else:
+            self.seen_cube = True
         alignment_direction = heading + vision_angle * 1.7
         self.chassis.field_oriented = True
 
@@ -175,7 +184,7 @@ class OverallBase(AutonomousStateMachine):
             dist_along_segment = 0
         # slowly ramp down the speed as we approach the cube
 
-        speed = 1
+        speed = 0.5
         SmartDashboard.putNumber('cube_pickup_speed', speed)
         SmartDashboard.putNumber('vision_angle', vision_angle)
         SmartDashboard.putNumber('vision_alignment_heading', alignment_direction)
@@ -183,8 +192,8 @@ class OverallBase(AutonomousStateMachine):
         vx = speed*math.cos(alignment_direction)
         vy = speed*math.sin(alignment_direction)
         # TODO: change this to hold a heading via PID
-        # self.chassis.set_velocity_heading(vx, vy, math.pi)
-        self.chassis.set_inputs(vx, vy, 0)
+        self.chassis.set_velocity_heading(vx, vy, self.CUBE_PICKUP_ORIENTATION)
+        # self.chassis.set_inputs(vx, vy, 0)
 
     @state
     def stop(self, initial_call, state_tm):
@@ -208,12 +217,13 @@ class OverallBase(AutonomousStateMachine):
                     self.SCALE_DEPOSIT
                     ], end_heading=self.SCALE_DEPOSIT_ORIENTATION)
             elif self.slow_scale:
+                print('back run scale')
                 self.motion.set_trajectory([
                     self.current_waypoint,
                     self.SCALE_DEPOSIT_WAYPOINT,
                     self.SCALE_DEPOSIT
                     ], end_heading=self.SCALE_DEPOSIT_ORIENTATION,
-                    motion_params=self.BACK_RUN_MOTION)
+                    motion_params=self.BACK_RUN_MOTION, smooth=True)
             else:
                 self.motion.set_trajectory([
                     self.current_waypoint,
@@ -238,8 +248,6 @@ class OverallBase(AutonomousStateMachine):
                 self.SCALE_DEPOSIT
                 ], end_heading=self.SCALE_DEPOSIT_ORIENTATION)
         if self.motion.linear_position > 6.5:
-            if not self.cubeman.is_executing:
-                print('Lifter engage')
             self.cubeman.engage(initial_state='lifting_scale')
         if not self.motion.trajectory_executing:
             self.next_state_now("deposit_scale")

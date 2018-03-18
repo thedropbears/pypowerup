@@ -121,7 +121,7 @@ class SwerveChassis:
         input_vz = 0
         if self.vz is not None:
             input_vz = self.vz
-        if pid_z < 0.1 and math.hypot(self.vx, self.vy) < 0.01:
+        if abs(pid_z) < 0.1 and math.hypot(self.vx, self.vy) < 0.01:
             pid_z = 0
         vz = input_vz + pid_z
 
@@ -180,7 +180,7 @@ class SwerveChassis:
                                     rcond=None)
         x, y, theta = lstsq_ret[0].reshape(3)
         # TODO: re-enable if we move back to running in the same thread
-        x_field, y_field = self.field_orient(x, y, angle + z_vel*(1/100))
+        x_field, y_field = self.field_orient(x, y, angle + z_vel*(1/200))
         # x_field, y_field = self.field_orient(x, y, angle)
         return x_field, y_field, theta
 
@@ -254,6 +254,10 @@ class SwerveChassis:
     @property
     def speed(self):
         return math.hypot(self.odometry_x_vel, self.odometry_y_vel)
+
+    @property
+    def all_aligned(self):
+        return all(module.aligned for module in self.modules)
 
 
 class ChassisPIDOutput(PIDOutput):

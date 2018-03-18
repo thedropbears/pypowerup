@@ -39,8 +39,7 @@ class ChassisMotion:
 
     def set_trajectory(self, waypoints: np.ndarray, end_heading,
                        start_speed=0.0, end_speed=0.25, smooth=True,
-                       # motion_params=(2.5, 2, 1.5), waypoint_corner_radius=None):
-                       motion_params=(2.5, 2.0, 1.5), waypoint_corner_radius=None):
+                       motion_params=(2.5, 2, 1.5), waypoint_corner_radius=None, wait_for_rotate=False):
         """ Pass as set of waypoints for the chassis to follow.
 
         Args:
@@ -56,6 +55,7 @@ class ChassisMotion:
         else:
             waypoints_smoothed = [np.array(point) for point in waypoints]
         print(f'smoothed_waypoints {waypoints_smoothed}')
+        print(f'end_heading {end_heading}')
         trajectory_length = sum([np.linalg.norm(waypoints_smoothed[i] - waypoints_smoothed[i-1])
                                  for i in range(1, len(waypoints_smoothed))])
         self.end_heading = end_heading
@@ -67,6 +67,10 @@ class ChassisMotion:
 
         self.waypoints = waypoints_smoothed
         self.pursuit.set_waypoints(waypoints_smoothed)
+
+        self.wait_for_rotate = wait_for_rotate
+        self.started_moving = False
+        print(f'Wait for rotate {self.wait_for_rotate}')
 
         self.enabled = True
         if self.distance_traj_tm < self.heading_traj_tm:
@@ -130,10 +134,16 @@ class ChassisMotion:
                                                                           self.chassis.speed)
 
             speed_sp = self.run_speed_controller()
-            heading_output = self.run_heading_controller()
+            heading_output, heading_error = self.run_heading_controller()
 
             vx = speed_sp * math.cos(direction_of_motion)
             vy = speed_sp * math.sin(direction_of_motion)
+
+            if not self.started_moving:
+                if self.chassis.all_aligned:
+                    self.started_moving = True
+                else:
+                    self.chassis.set_inputs(vx/100, vy/100, heading_output/100)
 
             self.chassis.set_inputs(vx, vy, heading_output)
 
@@ -141,9 +151,15 @@ class ChassisMotion:
             SmartDashboard.putNumber('vector_pursuit_speed', speed_sp)
 
             if over:
-                print("Motion over")
-                self.enabled = False
-                self.chassis.set_inputs(0, 0, 0)
+                if not self.wait_for_rotate:
+                    print(f"Motion over at {self.chassis.position.reshape(2)}, heading {self.imu.getAngle()}")
+                    self.enabled = False
+                    self.chassis.set_inputs(0, 0, 0)
+                else:
+                    if abs(heading_error) < 0.1:
+                        print(f"Motion over at {self.chassis.position.reshape(2)}, heading {self.imu.getAngle()}")
+                        self.enabled = False
+                        self.chassis.set_inputs(0, 0, 0)
 
     def run_speed_controller(self):
         chassis_pos = self.chassis.position.reshape(2)
@@ -215,7 +231,7 @@ class ChassisMotion:
         SmartDashboard.putNumber('heading_mp_sp', heading_seg[0])
         SmartDashboard.putNumber('heading_mp_error', heading_error)
 
-        return heading_output
+        return heading_output, heading_error
 
     @property
     def waypoint_idx(self):
