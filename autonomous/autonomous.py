@@ -85,15 +85,10 @@ class OverallBase(AutonomousStateMachine):
 
     def on_enable(self):
         # self.lifter.reset() do we need this?
-        self.game_data_message = self.ds.getGameSpecificMessage()
+        game_data = self.ds.getGameSpecificMessage()
 
-        if len(self.game_data_message) == 3:
-            self.fms_scale = self.game_data_message[1]  # L or R
-            self.fms_switch = self.game_data_message[0]  # L or R
-        else:
-            # need defaults
-            self.fms_scale = 'R'
-            self.fms_switch = 'R'
+        self.fms_scale = game_data[1]  # L or R
+        self.fms_switch = game_data[0]  # L or R
 
         self.chassis.odometry_x = self.robot_length / 2
 
