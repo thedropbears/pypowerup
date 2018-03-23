@@ -146,14 +146,14 @@ class Robot(magicbot.MagicRobot):
         joystick_vz = -rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=20.0, rate=self.spin_rate)
         joystick_hat = self.joystick.getPOV()
 
-        gamepad_vx = -rescale_js(self.gamepad.getY(wpilib.XboxController.Button.kStickRight), deadzone=0.1, exponential=1.5, rate=0.5)
-        gamepad_vy = -rescale_js(self.gamepad.getX(wpilib.XboxController.Button.kStickRight), deadzone=0.1, exponential=1.5, rate=0.5)
-        # TODO Tune these terms for the gamepad.
-
         if joystick_vx or joystick_vy or joystick_vz:
             self.chassis.field_oriented = not self.joystick.getRawButton(6)
             self.chassis.set_inputs(joystick_vx, joystick_vy, joystick_vz)
-        elif (gamepad_vx or gamepad_vy) and self.gamepad.getRawButton(9):
+        elif self.gamepad.getStickButton(self.gamepad.Hand.kLeft):
+            # TODO Tune these constants for the gamepad.
+            gamepad_vx = -rescale_js(self.gamepad.getY(self.gamepad.Hand.kRight), deadzone=0.1, exponential=1.5, rate=0.5)
+            gamepad_vy = -rescale_js(self.gamepad.getX(self.gamepad.Hand.kRight), deadzone=0.1, exponential=1.5, rate=0.5)
+
             self.chassis.field_oriented = True
             self.chassis.set_inputs(gamepad_vx, gamepad_vy, 0)
         else:
