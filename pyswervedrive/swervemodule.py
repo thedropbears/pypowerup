@@ -117,6 +117,7 @@ class SwerveModule:
 
         self.drive_motor.configPeakCurrentLimit(50, timeoutMs=10)
         self.drive_motor.configContinuousCurrentLimit(40, timeoutMs=10)
+        self.drive_motor.configPeakCurrentDuration(500, timeoutMs=10)
         self.drive_motor.enableCurrentLimit(True)
 
     def set_rotation_mode(self, rotation_mode):
