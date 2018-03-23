@@ -30,12 +30,13 @@ class Intake:
 
     def setup(self):
         """This is called after variables are injected by magicbot."""
-        self.left_motor.configPeakCurrentLimit(50, timeoutMs=10)
-        self.left_motor.configContinuousCurrentLimit(15, timeoutMs=10)
-        self.left_motor.enableCurrentLimit(True)
-        self.left_motor.setNeutralMode(ctre.NeutralMode.Coast)
+        for motor in self.left_motor, self.right_motor:
+            motor.setNeutralMode(ctre.NeutralMode.Coast)
+            motor.configPeakCurrentLimit(50, timeoutMs=10)
+            motor.configContinuousCurrentLimit(50, timeoutMs=10)
+            motor.configPeakCurrentDuration(500, timeoutMs=10)
+            motor.enableCurrentLimit(True)
 
-        self.right_motor.setNeutralMode(ctre.NeutralMode.Coast)
         self.right_motor.follow(self.left_motor)
         self.right_motor.setInverted(True)
 
