@@ -19,6 +19,7 @@ from wpilib import SmartDashboard
 
 class OverallBase(AutonomousStateMachine):
     """statemachine designed to intelegently respond to possible situations in auto"""
+
     vision: Vision
     lifter: Lifter
     intake: Intake
@@ -26,14 +27,11 @@ class OverallBase(AutonomousStateMachine):
     chassis: SwerveChassis
     ds: wpilib.DriverStation
 
-    robot_width = 1
-    robot_length = 0.88
-
     # automations
     motion: ChassisMotion
     cubeman: CubeManager
 
-    START_Y_COORDINATE = 3.4 - robot_width / 2
+    START_Y_COORDINATE = 3.4 - SwerveChassis.WIDTH/2
 
     # Coordinates of various objectives no the field
     # Default to those for LEFT HAND SIDE of the field
@@ -43,7 +41,7 @@ class OverallBase(AutonomousStateMachine):
     # CUBE_PICKUP_1 = [6.2, 1.7]
     CUBE_PICKUP_1 = [6.2, 0.9]
     CUBE_PICKUP_2 = [6.2, 1.03]
-    SWITCH_DEPOSIT = [5+robot_length / 2, 1.2]
+    SWITCH_DEPOSIT = [5 + SwerveChassis.LENGTH/2, 1.2]
     SCALE_INIT_WAYPOINT = [6, 3]
 
     SWITCH_DEPOSIT_ORIENTATION = -math.pi
@@ -54,16 +52,16 @@ class OverallBase(AutonomousStateMachine):
     PICKUP_WAYPOINT_X = 6.5
     CROSS_POINT = [6.1, START_Y_COORDINATE]
     OPP_CROSS_POINT = [6.1, -START_Y_COORDINATE]
-    DRIVE_BY_SWITCH_POINT = [4, 2+robot_length / 2]
+    DRIVE_BY_SWITCH_POINT = [4, 2 + SwerveChassis.LENGTH/2]
     """
     START_Y_COORDINATE = 1
-    SCALE_DEPOSIT = [6-robot_length / 2, 1]
-    # CUBE_PICKUP_1 = [3+robot_length / 2, 0.5]
-    # CUBE_PICKUP_2 = [3+robot_length / 2, -0.5]
+    SCALE_DEPOSIT = [6 - SwerveChassis.LENGTH/2, 1]
+    # CUBE_PICKUP_1 = [3 + SwerveChassis.LENGTH/2, 0.5]
+    # CUBE_PICKUP_2 = [3 + SwerveChassis.LENGTH/2, -0.5]
     # CUBE_PICKUP_1 = [3+1, 0.5]
     CUBE_PICKUP_1 = [3+1, 0.5]
     CUBE_PICKUP_2 = [3+1, -0.5]
-    SWITCH_DEPOSIT = [3+robot_length / 2, 0]
+    SWITCH_DEPOSIT = [3 + SwerveChassis.LENGTH/2, 0]
 
     SWITCH_DEPOSIT_ORIENTATION = -math.pi
 
@@ -72,7 +70,7 @@ class OverallBase(AutonomousStateMachine):
     PICKUP_WAYPOINT_X = 5
     SWITCH_TO_CUBE_POINT = [PICKUP_WAYPOINT_X, 0.8]
 
-    DRIVE_BY_SWITCH_POINT = [2, 0.5+robot_length/2]
+    DRIVE_BY_SWITCH_POINT = [2, 0.5 + SwerveChassis.LENGTH/2]
     CROSS_POINT = [4.5, 1]
     OPP_CROSS_POINT = [4.5, -1]
     """

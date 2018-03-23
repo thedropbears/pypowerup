@@ -8,6 +8,8 @@ from pyswervedrive.swervemodule import SwerveModule
 
 
 class SwerveChassis:
+    WIDTH = 1
+    LENGTH = 0.88
 
     imu: IMU
     module_a: SwerveModule
