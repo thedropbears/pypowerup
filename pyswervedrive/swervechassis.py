@@ -138,7 +138,6 @@ class SwerveChassis:
             # required to achieve our desired angular velocity
             vz_x = -module.dist*vz*math.sin(module.angle)
             vz_y = module.dist*vz*math.cos(module.angle)
-            # TODO: re enable this and test field-oriented mode
             if self.field_oriented:
                 vx, vy = self.robot_orient(self.vx, self.vy, angle)
             else:
@@ -199,20 +198,19 @@ class SwerveChassis:
         self.vz = None
         self.set_heading_sp(heading)
 
-    def set_inputs(self, vx, vy, vz):
+    def set_inputs(self, vx: float, vy: float, vz: float, *, field_oriented: bool = True):
         """Set chassis vx, vy, and vz components of inputs.
         Args:
             vx: (forward) component of the robot's desired velocity. In m/s.
             vy: (leftward) component of the robot's desired velocity. In m/s.
             vz: The vz (counter-clockwise rotation) component of the robot's
                 desired [angular] velocity. In radians/s.
+            field_oriented: Whether the inputs are field or robot oriented.
         """
         self.last_vx, self.last_vy = self.vx, self.vy
         self.vx = vx
         self.vy = vy
         self.vz = vz
-
-    def set_field_oriented(self, field_oriented):
         self.field_oriented = field_oriented
 
     @staticmethod

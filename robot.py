@@ -147,15 +147,14 @@ class Robot(magicbot.MagicRobot):
         joystick_hat = self.joystick.getPOV()
 
         if joystick_vx or joystick_vy or joystick_vz:
-            self.chassis.field_oriented = not self.joystick.getRawButton(6)
-            self.chassis.set_inputs(joystick_vx, joystick_vy, joystick_vz)
+            self.chassis.set_inputs(joystick_vx, joystick_vy, joystick_vz,
+                                    field_oriented=not self.joystick.getRawButton(6))
         elif self.gamepad.getStickButton(self.gamepad.Hand.kLeft):
             # TODO Tune these constants for the gamepad.
             gamepad_vx = -rescale_js(self.gamepad.getY(self.gamepad.Hand.kRight), deadzone=0.1, exponential=1.5, rate=0.5)
             gamepad_vy = -rescale_js(self.gamepad.getX(self.gamepad.Hand.kRight), deadzone=0.1, exponential=1.5, rate=0.5)
 
-            self.chassis.field_oriented = True
-            self.chassis.set_inputs(gamepad_vx, gamepad_vy, 0)
+            self.chassis.set_inputs(gamepad_vx, gamepad_vy, 0, field_oriented=True)
         else:
             self.chassis.set_inputs(0, 0, 0)
 
