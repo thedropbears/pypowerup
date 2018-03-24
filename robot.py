@@ -171,11 +171,6 @@ class Robot(magicbot.MagicRobot):
 
     def robotPeriodic(self):
         # super().robotPeriodic()
-        if self.lifter.set_pos is not None:
-            self.sd.putNumber("lift/set_pos", self.lifter.set_pos)
-        # self.sd.putNumber('lift_current', self.lifter.get_current())
-        # self.sd.putNumber("lift_pos", self.lifter.get_pos())
-        # self.sd.putBoolean('lift_switch', self.lifter.switch_pressed())
         self.sd.putNumber("imu_heading", self.imu.getAngle())
 
 
