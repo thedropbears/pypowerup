@@ -90,7 +90,7 @@ class OverallBase(AutonomousStateMachine):
         self.fms_scale = game_data[1]  # L or R
         self.fms_switch = game_data[0]  # L or R
 
-        self.chassis.odometry_x = self.robot_length / 2
+        self.chassis.odometry_x = SwerveChassis.LENGTH / 2
 
         self.cube_number = 0
 
