@@ -103,10 +103,10 @@ class Robot(magicbot.MagicRobot):
             self.intake.push(not self.intake.push_on)
 
         if self.gamepad.getBumperPressed(wpilib.interfaces.GenericHID.Hand.kRight):
-            self.intake.extend(not self.intake.extension_on)
+            self.intake.toggle_arms()
 
         if self.gamepad.getBButtonPressed():
-            self.intake.clamp(not self.intake.clamp_on)
+            self.intake.toggle_clamp()
 
         if self.joystick.getTrigger():
             self.cubeman.engage(initial_state="intaking_cube", force=True)
