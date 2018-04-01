@@ -4,7 +4,6 @@ import hal
 
 
 class Lifter:
-    compressor: wpilib.Compressor
     motor: ctre.TalonSRX
     centre_switch: wpilib.DigitalInput
     top_switch: wpilib.DigitalInput
@@ -69,10 +68,6 @@ class Lifter:
         self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=10)
         self.motor.configMotionCruiseVelocity(int(self.FREE_SPEED), timeoutMs=10)
 
-    def on_enable(self):
-        """This is called whenever the robot transitions to being enabled."""
-        self.compressor.start()
-
     def on_disable(self):
         """This is called whenever the robot transitions to disabled mode."""
         self.stop()
@@ -121,9 +116,6 @@ class Lifter:
 
     def switch_pressed(self):
         return self.motor.isRevLimitSwitchClosed()
-
-    def zero_encoder(self):
-        self.motor.setQuadraturePosition(0, timeoutMs=0)
 
     def at_pos(self):
         """Finds if cube location is at setops and within threshold

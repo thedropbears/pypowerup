@@ -45,10 +45,6 @@ class Intake:
         self.last_extension_on = None
         self.last_motor_output = None
 
-    def on_disable(self):
-        """This is called whenever the robot transitions to disabled mode."""
-        pass
-
     def execute(self):
         """Run at the end of every control loop iteration."""
         if self.motor_output != self.last_motor_output:

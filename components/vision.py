@@ -16,14 +16,6 @@ class Vision:
         self.time = 0
         self.data = []
 
-    def on_enable(self):
-        """This is called whenever the robot transitions to being enabled."""
-        pass
-
-    def on_disable(self):
-        """This is called whenever the robot transitions to disabled mode."""
-        pass
-
     def execute(self):
         """Run at the end of every control loop iteration."""
         pass
