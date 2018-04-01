@@ -7,6 +7,10 @@ class CubeManager(StateMachine):
     lifter: Lifter
     intake: Intake
 
+    def start_match(self):
+        """Initialise the intake system at the start of the match."""
+        self.engage()
+
     @timed_state(first=True, must_finish=True, duration=0.8, next_state="drop_cube_initialize")
     def initialize_auto_cube(self):
         """Get the intake arms out of their starting position."""
@@ -24,10 +28,14 @@ class CubeManager(StateMachine):
         self.intake.retract_arms()
         self.intake.clamp()
 
-    @state(must_finish=True)
+    @state
     def hovering_cube(self, initial_call):
         self.lifter.move(0.1)
         self.done()
+
+    def start_intake(self, force=False):
+        """Intake a cube."""
+        self.engage(initial_state='intaking_cube', force=force)
 
     @state(must_finish=True)
     def intaking_cube(self, initial_call):
@@ -44,6 +52,10 @@ class CubeManager(StateMachine):
         if state_tm > 0.2:
             self.intake.retract_arms()
 
+    def lift_to_scale(self, force=False):
+        """Lift the cube to scale height."""
+        self.engage(initial_state='lifting_scale', force=force)
+
     @state(must_finish=True)
     def lifting_scale(self, initial_call):
         if initial_call:
@@ -52,6 +64,10 @@ class CubeManager(StateMachine):
             self.lifter.move(self.lifter.UPPER_SCALE)
         if self.lifter.at_pos():
             self.done()
+
+    def lift_to_switch(self, force=False):
+        """Lift the cube to switch height."""
+        self.engage(initial_state='lifting_scale', force=force)
 
     @state(must_finish=True)
     def lifting_switch(self, initial_call):
@@ -62,10 +78,16 @@ class CubeManager(StateMachine):
         if self.lifter.at_pos():
             self.done()
 
+    def deposit_exchange(self, force=False):
+        self.engage(initial_state='ejecting_exchange', force=force)
+
     @timed_state(must_finish=True, duration=1.0, next_state="reset_cube")
     def ejecting_exchange(self):
         self.intake.outtake()
         self.intake.kick()
+
+    def eject(self, force=False):
+        self.engage(initial_state='ejecting_cube', force=force)
 
     @timed_state(must_finish=True, duration=0.4, next_state="resetting_containment")
     def ejecting_cube(self):
@@ -81,6 +103,9 @@ class CubeManager(StateMachine):
     def waiting_to_reset(self):
         pass
 
+    def reset(self, force=False):
+        self.engage(initial_state='reset_cube', force=force)
+
     @state(must_finish=True)
     def reset_cube(self, initial_call):
         if initial_call:
@@ -90,6 +115,9 @@ class CubeManager(StateMachine):
             self.lifter.move(self.lifter.BOTTOM_HEIGHT)
         if self.lifter.at_pos():
             self.done()
+
+    def panic(self):
+        self.engage(initial_state='panicking', force=True)
 
     @state(must_finish=True)
     def panicking(self):

@@ -109,26 +109,26 @@ class Robot(magicbot.MagicRobot):
             self.intake.toggle_clamp()
 
         if self.joystick.getTrigger():
-            self.cubeman.engage(initial_state="intaking_cube", force=True)
+            self.cubeman.start_intake(force=True)
 
         if self.joystick.getRawButtonPressed(4) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kRight) > 0.5:
-            self.cubeman.engage(initial_state="ejecting_cube", force=True)
+            self.cubeman.eject(force=True)
 
         # if self.joystick.getRawButtonPressed(2) or self.gamepad.getStartButtonPressed():
         if self.gamepad.getStartButtonPressed():
-            self.cubeman.engage(initial_state="panicking", force=True)
+            self.cubeman.panic()
 
         if self.joystick.getRawButtonPressed(3) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kLeft) > 0.5:
-            self.cubeman.engage(initial_state="ejecting_exchange", force=True)
+            self.cubeman.deposit_exchange(force=True)
 
         if self.gamepad.getAButtonPressed():
-            self.cubeman.engage(initial_state="lifting_scale", force=True)
+            self.cubeman.lift_to_scale(force=True)
 
         if self.gamepad.getXButtonPressed():
-            self.cubeman.engage(initial_state="lifting_switch", force=True)
+            self.cubeman.lift_to_switch(force=True)
 
         if self.gamepad.getBackButtonPressed():
-            self.cubeman.engage(initial_state="reset_cube", force=True)
+            self.cubeman.reset(force=True)
 
         if self.joystick.getRawButtonPressed(10):
             self.imu.resetHeading()
