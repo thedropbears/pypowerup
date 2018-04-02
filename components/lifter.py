@@ -75,8 +75,9 @@ class Lifter:
     def execute(self):
         """Run at the end of every control loop iteration."""
 
-    def metres_to_counts(self, metres):
-        return int(metres * self.COUNTS_PER_METRE)
+    @classmethod
+    def metres_to_counts(cls, metres):
+        return int(metres * cls.COUNTS_PER_METRE)
 
     def stop(self):
         """Stop the lift motor"""
