@@ -4,6 +4,8 @@ import math
 import ctre
 import magicbot
 import wpilib
+from robotpy_ext.misc.looptimer import LoopTimer
+
 from automations.cube import CubeManager
 from automations.motion import ChassisMotion
 from components.intake import Intake
@@ -12,10 +14,8 @@ from components.vision import Vision
 from components.range_finder import RangeFinder
 from pyswervedrive.swervechassis import SwerveChassis
 from pyswervedrive.swervemodule import SwerveModule
-from utilities.imu import IMU
+from utilities.navx import NavX
 from utilities.functions import rescale_js, constrain_angle
-from robotpy_ext.misc.looptimer import LoopTimer
-from networktables import NetworkTables
 
 
 class Robot(magicbot.MagicRobot):
@@ -72,15 +72,14 @@ class Robot(magicbot.MagicRobot):
         self.intake_cube_switch = wpilib.DigitalInput(3)
 
         # create the imu object
-        self.imu = IMU('navx')
+        self.imu = NavX()
+        wpilib.SmartDashboard.putData('IMU', self.imu.ahrs)
 
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)
         self.gamepad = wpilib.XboxController(1)
 
         self.spin_rate = 1.5
-
-        self.sd = NetworkTables.getTable("SmartDashboard")
 
         self.range_finder_counter = wpilib.Counter(4, mode=wpilib.Counter.Mode.kPulseLength)
 
@@ -171,7 +170,7 @@ class Robot(magicbot.MagicRobot):
 
     def robotPeriodic(self):
         # super().robotPeriodic()
-        self.sd.putNumber("imu_heading", self.imu.getAngle())
+        wpilib.SmartDashboard.updateValues()
 
 
 if __name__ == '__main__':

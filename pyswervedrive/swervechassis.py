@@ -81,7 +81,7 @@ class SwerveChassis:
             module.read_steer_pos()
 
         # TODO: re-enable if we end up not using callback method
-        self.imu.imu.ahrs.registerCallback(self.update_odometry)
+        self.imu.ahrs.registerCallback(self.update_odometry)
 
     def set_heading_sp_current(self):
         self.set_heading_sp(self.imu.getAngle())
