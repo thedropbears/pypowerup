@@ -162,19 +162,16 @@ class OverallBase(AutonomousStateMachine):
                 self.cube = np.array(self.cube_pickup_2)
             pickup_waypoint = (self.PICKUP_WAYPOINT_X, self.cube[1])
             if self.chassis.odometry_x > 6.0:
-                self.motion.set_trajectory([
-                    self.current_waypoint,
-                    self.scale_deposit_waypoint,
-                    pickup_waypoint,
-                    self.cube], end_heading=self.cube_pickup_orientation, end_speed=0.4,
+                self.motion.set_trajectory(
+                    [self.current_waypoint, self.scale_deposit_waypoint, pickup_waypoint, self.cube],
+                    end_heading=self.cube_pickup_orientation, end_speed=0.4,
                     # DO NOT SMOOTH WAYPONTS HERE (it breaks things)
                     # smooth=False, motion_params=self.CUBE_RUN_MOTION, wait_for_rotate=True)
                     smooth=False, motion_params=self.CUBE_RUN_MOTION, wait_for_rotate=False)
             else:
-                self.motion.set_trajectory([
-                    self.current_waypoint,
-                    pickup_waypoint,
-                    self.cube], end_heading=self.cube_pickup_orientation, end_speed=0.4,
+                self.motion.set_trajectory(
+                    [self.current_waypoint, pickup_waypoint, self.cube],
+                    end_heading=self.cube_pickup_orientation, end_speed=0.4,
                     # DO NOT SMOOTH WAYPONTS HERE (it breaks things)
                     smooth=False, motion_params=self.CUBE_RUN_MOTION)
         self.cubeman.start_intake()
@@ -259,21 +256,19 @@ class OverallBase(AutonomousStateMachine):
                     self.scale_init_waypoint,
                     self.scale_deposit_waypoint,
                     self.scale_deposit
-                    ], end_heading=self.scale_deposit_orientation)
+                ], end_heading=self.scale_deposit_orientation)
             elif self.slow_scale:
                 print('back run scale')
-                self.motion.set_trajectory([
-                    self.current_waypoint,
-                    self.scale_deposit_waypoint,
-                    self.scale_deposit
-                    ], end_heading=self.scale_deposit_orientation,
+                self.motion.set_trajectory(
+                    [self.current_waypoint, self.scale_deposit_waypoint, self.scale_deposit],
+                    end_heading=self.scale_deposit_orientation,
                     motion_params=self.BACK_RUN_MOTION, smooth=True)
             else:
                 self.motion.set_trajectory([
                     self.current_waypoint,
                     self.scale_deposit_waypoint,
                     self.scale_deposit
-                    ], end_heading=self.scale_deposit_orientation)
+                ], end_heading=self.scale_deposit_orientation)
             if not self.slow_engage:
                 self.cubeman.lift_to_scale(force=True)
         if self.motion.linear_position > 3 and self.slow_engage:
@@ -290,7 +285,7 @@ class OverallBase(AutonomousStateMachine):
                 self.cross_point,
                 self.opp_cross_point,
                 self.scale_deposit
-                ], end_heading=self.scale_deposit_orientation)
+            ], end_heading=self.scale_deposit_orientation)
         if self.motion.linear_position > 6.5:
             self.cubeman.lift_to_scale()
         if not self.motion.trajectory_executing:
@@ -373,12 +368,9 @@ class SwitchScaleBase(OverallBase):
     @state
     def drive_by_switch(self, initial_call, state_tm):
         if initial_call:
-            self.switch_smooth = (self.drive_by_switch_point[0]+0.5,
-                                  self.drive_by_switch_point[1])
-            self.motion.set_trajectory([
-                self.current_waypoint,
-                self.drive_by_switch_point,
-                ], end_heading=self.drive_by_orientation,
+            self.motion.set_trajectory(
+                [self.current_waypoint, self.drive_by_switch_point],
+                end_heading=self.drive_by_orientation,
                 motion_params=self.CUBE_RUN_MOTION)
             self.cube_number += 1
         if state_tm > 0.5:
@@ -398,16 +390,11 @@ class SwitchScaleBase(OverallBase):
             self.cube = self.cube_pickup_1
             pickup_waypoint = (self.PICKUP_WAYPOINT_X+0.3, self.cube[1])
             pickup_waypoint_2 = (self.PICKUP_WAYPOINT_X-0.2, self.cube[1])
-            self.motion.set_trajectory([
-                self.current_waypoint,
-                self.switch_to_cube_point,
-                pickup_waypoint,
-                pickup_waypoint_2],
-                end_heading=self.cube_pickup_orientation,
-                end_speed=0.5,
+            self.motion.set_trajectory(
+                [self.current_waypoint, self.switch_to_cube_point, pickup_waypoint, pickup_waypoint_2],
+                end_heading=self.cube_pickup_orientation, end_speed=0.5,
                 motion_params=(2, 1, 1),
-                smooth=False,
-                waypoint_corner_radius=0.2)
+                smooth=False, waypoint_corner_radius=0.2)
             self.reset_mechanisms = False
         if self.motion.waypoint_idx == 1 and not self.reset_mechanisms:
             self.reset_mechanisms = True
@@ -500,8 +487,7 @@ class SameSideBase(SwitchScaleBase):
             self.next_state_now('drive_by_switch')
             return
         else:
-            self.motion.set_trajectory([self.current_waypoint,
-                                       (3, self.chassis.odometry_y)], 0)
+            self.motion.set_trajectory([self.current_waypoint, (3, self.chassis.odometry_y)], 0)
             self.next_state_now('moving_forward')
             return
 
