@@ -1,13 +1,15 @@
 import math
+
 import numpy as np
 from magicbot import tunable
 from wpilib import PIDController
 from wpilib.interfaces import PIDOutput
+
 from utilities.imu import IMU
-from pyswervedrive.swervemodule import SwerveModule
+from .module import SwerveModule
 
 
-class SwerveChassis:
+class Chassis:
     WIDTH = 1
     LENGTH = 0.88
 

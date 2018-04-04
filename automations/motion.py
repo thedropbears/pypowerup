@@ -1,17 +1,19 @@
 import math
+import time
+
 import numpy as np
-from pyswervedrive.swervechassis import SwerveChassis
+from wpilib import SmartDashboard
+
+from pyswervedrive.chassis import Chassis
 from utilities.imu import IMU
 from utilities.vector_pursuit import VectorPursuit
 from utilities.profile_generator import generate_trapezoidal_function, smooth_waypoints
 from utilities.functions import constrain_angle
-from wpilib import SmartDashboard
-import time
 
 
 class ChassisMotion:
 
-    chassis: SwerveChassis
+    chassis: Chassis
     imu: IMU
 
     # heading motion feedforward/back gains

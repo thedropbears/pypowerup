@@ -1,11 +1,11 @@
 from magicbot.state_machine import AutonomousStateMachine, state
 from automations.cube import CubeManager
-from pyswervedrive.swervechassis import SwerveChassis
+from pyswervedrive.chassis import Chassis
 
 
 class CrossBaseline(AutonomousStateMachine):
 
-    chassis: SwerveChassis
+    chassis: Chassis
     cubeman: CubeManager
     MODE_NAME = 'Drive forwards'
     DEFAULT = True

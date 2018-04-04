@@ -12,8 +12,8 @@ from components.intake import Intake
 from components.lifter import Lifter
 from components.vision import Vision
 from components.range_finder import RangeFinder
-from pyswervedrive.swervechassis import SwerveChassis
-from pyswervedrive.swervemodule import SwerveModule
+from pyswervedrive.chassis import Chassis
+from pyswervedrive.module import SwerveModule
 from utilities.navx import NavX
 from utilities.functions import rescale_js, constrain_angle
 
@@ -31,7 +31,7 @@ class Robot(magicbot.MagicRobot):
     cubeman: CubeManager
 
     # Actuators
-    chassis: SwerveChassis
+    chassis: Chassis
     intake: Intake
     lifter: Lifter
 
