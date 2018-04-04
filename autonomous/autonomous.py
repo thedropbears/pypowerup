@@ -353,9 +353,9 @@ class SwitchScaleBase(OverallBase):
     def decide_objectives(self):
         # first call, decide objective list
         if (self.current_side == self.fms_scale
-           or not self.current_side == self.fms_switch):
+           or self.current_side != self.fms_switch):
             self.second_objective = 'switch'
-            if not self.current_side == self.fms_scale:
+            if self.current_side != self.fms_scale:
                 self.next_state_now('cross_to_scale')
                 self.last_objective = 'scale'
             else:
@@ -481,7 +481,7 @@ class SameSideBase(SwitchScaleBase):
 
     @state(first=True)
     def same_side_decide(self):
-        if self.current_side == self.fms_scale and self.current_side == self.fms_switch:
+        if self.current_side == self.fms_scale == self.fms_switch:
             if self.priority == 'switch':
                 self.second_objective = 'scale'
                 self.last_objective = 'switch'
