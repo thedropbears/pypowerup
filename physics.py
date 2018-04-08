@@ -1,6 +1,7 @@
 
 import math
 
+import ctre
 import numpy as np
 
 from pyswervedrive.swervemodule import SwerveModule
@@ -44,11 +45,15 @@ class PhysicsEngine:
 
     def update_sim(self, hal_data, now, tm_diff):
         """Update pyfrc simulator.
+
         Args:
             hal_data: Data about motors and other components
             now: Current time in ms
             tm_diff: Difference between current time and time when last checked
         """
+        # only simulate things if the robot is enabled
+        if not hal_data['control']['enabled']:
+            return
 
         steer_positions = []
         for can_id, offset in zip(self.module_steer_can_ids, self.module_steer_offsets):
@@ -61,10 +66,14 @@ class PhysicsEngine:
 
         motor_speeds = []
         for i, can_id in enumerate(self.module_drive_can_ids):
-            enc_speed = hal_data['CAN'][can_id]['pid0_target']
+            talon = hal_data['CAN'][can_id]
+            if talon['control_mode'] == ctre.ControlMode.Velocity:
+                enc_speed = talon['pid0_target']
+            else:
+                enc_speed = 0
             speed = enc_speed / SwerveModule.drive_velocity_to_native_units
-            hal_data['CAN'][can_id]['quad_position'] += int(enc_speed*tm_diff*10)
-            hal_data['CAN'][can_id]['quad_velocity'] = int(enc_speed)
+            talon['quad_position'] += int(enc_speed*tm_diff*10)
+            talon['quad_velocity'] = int(enc_speed)
             motor_speeds.append(speed)
 
         lf_speed, lr_speed, rr_speed, rf_speed = motor_speeds
