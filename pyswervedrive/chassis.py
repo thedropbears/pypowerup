@@ -251,7 +251,7 @@ class Chassis:
 
     @property
     def position(self):
-        return np.array([[self.odometry_x], [self.odometry_y]], dtype=float)
+        return np.array([self.odometry_x, self.odometry_y], dtype=float)
 
     @property
     def speed(self):

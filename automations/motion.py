@@ -89,7 +89,7 @@ class ChassisMotion:
                                                             a_pos=motion_params[1],
                                                             a_neg=motion_params[2])
         self.linear_position = 0
-        self.last_position = self.chassis.position.reshape(2)
+        self.last_position = self.chassis.position
         print(f'start_position {self.last_position}')
         self.last_linear_error = 0
         self.linear_error_i = 0
@@ -132,7 +132,7 @@ class ChassisMotion:
             # TODO: re-enable if we end up not using callback method
             # self.chassis.update_odometry()
 
-            direction_of_motion, next_seg, over = self.pursuit.get_output(self.chassis.position.reshape(2),
+            direction_of_motion, next_seg, over = self.pursuit.get_output(self.chassis.position,
                                                                           self.chassis.speed)
 
             speed_sp = self.run_speed_controller()
@@ -154,17 +154,17 @@ class ChassisMotion:
 
             if over:
                 if not self.wait_for_rotate:
-                    print(f"Motion over at {self.chassis.position.reshape(2)}, heading {self.imu.getAngle()}")
+                    print(f"Motion over at {self.chassis.position}, heading {self.imu.getAngle()}")
                     self.enabled = False
                     self.chassis.set_inputs(0, 0, 0)
                 else:
                     if abs(heading_error) < 0.1:
-                        print(f"Motion over at {self.chassis.position.reshape(2)}, heading {self.imu.getAngle()}")
+                        print(f"Motion over at {self.chassis.position}, heading {self.imu.getAngle()}")
                         self.enabled = False
                         self.chassis.set_inputs(0, 0, 0)
 
     def run_speed_controller(self):
-        chassis_pos = self.chassis.position.reshape(2)
+        chassis_pos = self.chassis.position
         self.linear_position += np.linalg.norm(chassis_pos - self.last_position)
 
         profile_tm = time.monotonic() - self.start_segment_tm

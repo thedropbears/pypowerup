@@ -218,7 +218,7 @@ class OverallBase(AutonomousStateMachine):
 
         # speed controller
         segment = self.cube - self.pickup_start_pos
-        displacement = self.cube - self.chassis.position.reshape(2)
+        displacement = self.cube - self.chassis.position
         total_dist = np.linalg.norm(segment)
         dist_along_segment = total_dist - np.linalg.norm(displacement)
         if dist_along_segment < 0:
