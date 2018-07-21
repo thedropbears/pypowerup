@@ -120,7 +120,7 @@ class SwerveModule:
 
     def read_steer_pos(self):
         sp = self.steer_motor.getSelectedSensorPosition(0)
-        self.current_azimuth_sp = float(sp - self.steer_enc_offset) / self.STEER_COUNTS_PER_RADIAN
+        self.current_azimuth_sp = (sp - self.steer_enc_offset) / self.STEER_COUNTS_PER_RADIAN
 
     def store_steer_offsets(self):
         """Store the current steer positions as the offsets."""
@@ -245,17 +245,14 @@ class SwerveModule:
         drive_vel = self.drive_motor.getSelectedSensorVelocity(0)
         self.wheel_vel = drive_vel / self.drive_velocity_to_native_units
         steer_pos = self.steer_motor.getSelectedSensorPosition(0)
-        self.measured_azimuth = constrain_angle(float(steer_pos - self.steer_enc_offset)
+        self.measured_azimuth = constrain_angle((steer_pos - self.steer_enc_offset)
                                                 / self.STEER_COUNTS_PER_RADIAN)
         self.wheel_pos = (drive_pos / self.drive_counts_per_metre)
 
     @staticmethod
     def min_angular_displacement(current, target):
-        """Return the minimum (signed) angular displacement to get from :param current:
-        to :param target:. In radians."""
-        target = constrain_angle(target)
+        """Get the minimum (signed) angular displacement from `current` to `target` in radians."""
         opp_target = constrain_angle(target + math.pi)
-        current = constrain_angle(current)
         diff = constrain_angle(target - current)
         opp_diff = constrain_angle(opp_target - current)
 
