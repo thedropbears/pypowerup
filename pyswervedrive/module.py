@@ -1,6 +1,8 @@
 import math
+
 import ctre
 from networktables import NetworkTables
+
 from utilities.functions import constrain_angle
 
 
@@ -41,8 +43,7 @@ class SwerveModule:
                  reverse_steer_direction: bool = True,
                  reverse_steer_encoder: bool = False,
                  reverse_drive_direction: bool = False,
-                 reverse_drive_encoder: bool = False):
-
+                 reverse_drive_encoder: bool = False) -> None:
         self.name = name
 
         nt = NetworkTables.getTable("SwerveConfig").getSubTable(name)
@@ -63,7 +64,7 @@ class SwerveModule:
         self.drive_free_speed = drive_free_speed
 
         self.aligned = False
-        self.last_speed = 0
+        self.last_speed = 0.
 
         self.update_odometry()
 
@@ -71,8 +72,7 @@ class SwerveModule:
         # motors, the last argument is the timeout in milliseconds. See
         # robotpy-ctre documentation for details.
 
-        self.steer_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.
-                                                      CTRE_MagEncoder_Absolute, 0, 10)
+        self.steer_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.CTRE_MagEncoder_Absolute, 0, 10)
         # changes direction of motor encoder
         self.steer_motor.setSensorPhase(self.reverse_steer_encoder)
         # changes sign of motor throttle vilues
@@ -127,8 +127,8 @@ class SwerveModule:
         self.steer_enc_offset_entry.setDouble(self.steer_motor.getSelectedSensorPosition(0))
 
     def reset_encoder_delta(self):
-        """Re-zero the encoder deltas as returned from
-        get_encoder_delta.
+        """Re-zero the encoder deltas as returned from get_encoder_delta.
+
         This is intended to be called by the SwerveChassis in order to track
         odometry.
         """
