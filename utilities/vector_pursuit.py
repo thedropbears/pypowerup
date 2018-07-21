@@ -1,6 +1,5 @@
 import math
 import numpy as np
-from numpy.linalg import norm
 from wpilib import SmartDashboard
 
 
@@ -52,7 +51,7 @@ class VectorPursuit:
         if position is None:
             position = self.waypoints_xy[self.segment_idx]
         # end_speed = self.waypoints[self.segment_idx+1][3]
-        # self.start_to_end = norm(position - self.waypoints_xy[self.segment_idx+1])
+        # self.start_to_end = np.linalg.norm(position - self.waypoints_xy[self.segment_idx+1])
         # self.speed_function, end_tm = generate_trapezoidal_function(
         #         0, start_speed, self.start_to_end, end_speed,
         #         self.top_speed, self.top_accel, self.top_decel, time_mode=True)
@@ -99,14 +98,14 @@ class VectorPursuit:
             segment = segment_end - segment_start
 
             # unit vector of the segment we are iterating over
-            segment_normalised = segment / norm(segment)
+            segment_normalised = segment / np.linalg.norm(segment)
 
             look_ahead_point = (projected_point + look_ahead_remaining
                                 * segment_normalised)
 
             # take away from the remaining look ahead the amount we have travelled
             # along the segment
-            look_ahead_remaining -= norm(segment_end-projected_point)
+            look_ahead_remaining -= np.linalg.norm(segment_end - projected_point)
             if (look_ahead_waypoint == len(self.waypoints)-2 or
                     look_ahead_remaining <= 0):
                 break
@@ -128,7 +127,7 @@ class VectorPursuit:
 
         over = False
 
-        if (norm(position - self.waypoints_xy[-1]) < 0.1
+        if (np.linalg.norm(position - self.waypoints_xy[-1]) < 0.1
            or (scale >= 1 and self.segment_idx == len(self.waypoints)-2)):
             over = True
 
