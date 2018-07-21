@@ -1,9 +1,11 @@
 import math
 import numpy as np
-from wpilib import SmartDashboard
+from networktables.util import ntproperty
 
 
 class VectorPursuit:
+    track_error = ntproperty('/SmartDashboard/track_error', 0)
+    theta = ntproperty('/SmartDashboard/pursuit_theta', 0)
 
     def set_waypoints(self, waypoints: np.array):
         """Set the waypoints the controller should drive the robot through.
@@ -82,7 +84,7 @@ class VectorPursuit:
         # calculate projected point
         projected_point = (self.waypoints_xy[self.segment_idx]
                            + scale * self.segment)
-        SmartDashboard.putNumber('track_error', np.linalg.norm(position-projected_point))
+        self.track_error = np.linalg.norm(position - projected_point)
 
         # define look ahead distance
         look_ahead_distance = 0.5  # + 0.1 * speed
@@ -123,7 +125,7 @@ class VectorPursuit:
         # calculate angle of look ahead from oreintation
         new_x, new_y = look_ahead_point - position
         theta = math.atan2(new_y, new_x)
-        SmartDashboard.putNumber('pursuit_theta', theta)
+        self.theta = theta
 
         over = False
 
