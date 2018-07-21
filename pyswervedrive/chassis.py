@@ -22,7 +22,6 @@ class Chassis:
     # tunables here purely for debugging
     odometry_x = tunable(0)
     odometry_y = tunable(0)
-    # odometry_theta = tunable(0)
     # odometry_x_vel = tunable(0)
     # odometry_y_vel = tunable(0)
     # odometry_z_vel = tunable(0)
@@ -31,7 +30,6 @@ class Chassis:
         self.vx = 0
         self.vy = 0
         self.vz = 0
-        self.last_vx, self.last_vy = self.vx, self.vy
         self.field_oriented = True
         self.hold_heading = True
         self.momentum = False
@@ -51,7 +49,6 @@ class Chassis:
 
         self.odometry_x = 0
         self.odometry_y = 0
-        self.odometry_theta = 0
         self.odometry_x_vel = 0
         self.odometry_y_vel = 0
         self.odometry_z_vel = 0
@@ -209,7 +206,6 @@ class Chassis:
                 desired [angular] velocity. In radians/s.
             field_oriented: Whether the inputs are field or robot oriented.
         """
-        self.last_vx, self.last_vy = self.vx, self.vy
         self.vx = vx
         self.vy = vy
         self.vz = vz
@@ -265,9 +261,3 @@ class Chassis:
 class ChassisPIDOutput(PIDOutput):
     def pidWrite(self, output):
         self.output = output
-
-    def reset_odometry(self):
-        """Reset all 3 odometry variables to a value of 0."""
-        self.odometry_x = 0
-        self.odometry_y = 0
-        self.odometry_theta = 0
