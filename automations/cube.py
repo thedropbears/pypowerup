@@ -67,7 +67,7 @@ class CubeManager(StateMachine):
 
     def lift_to_switch(self, force=False):
         """Lift the cube to switch height."""
-        self.engage(initial_state='lifting_scale', force=force)
+        self.engage(initial_state='lifting_switch', force=force)
 
     @state(must_finish=True)
     def lifting_switch(self, initial_call):
