@@ -41,7 +41,7 @@ class CubeManager(StateMachine):
     def intaking_cube(self, initial_call):
         self.intake.unclamp()
         self.intake.retract_kicker()
-        self.intake.retract_arms()
+        self.intake.extend_arms()
         self.intake.intake()
         if self.intake.is_cube_contained():
             self.next_state_now('pulling_in_cube')
