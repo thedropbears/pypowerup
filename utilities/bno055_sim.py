@@ -24,11 +24,12 @@ class BNO055Sim(I2CSimBase):
         if 'bno055' in hal_data['robot']:
             self.heading = math.radians(-hal_data['robot']['bno055'])
 
-        if data_to_send[0] == BNO055.Register.EULER_HEADING_LSB:
+        register = data_to_send[0]
+        if register == BNO055.Register.EULER_HEADING_LSB:
             struct.pack_into('<h', data_received, 0, int(self.heading * 900.0))
-        if data_to_send[0] == BNO055.Register.EULER_PITCH_LSB:
+        if register == BNO055.Register.EULER_PITCH_LSB:
             struct.pack_into('<h', data_received, 0, int(self.pitch * 900.0))
-        if data_to_send[0] == BNO055.Register.EULER_ROLL_LSB:
+        if register == BNO055.Register.EULER_ROLL_LSB:
             struct.pack_into('<h', data_received, 0, int(self.roll * 900.0))
 
         return receive_size
