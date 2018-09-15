@@ -47,8 +47,10 @@ class Lifter:
         self.motor.setNeutralMode(ctre.NeutralMode.Brake)
 
         self.motor.overrideLimitSwitchesEnable(False)
-        self.motor.configReverseLimitSwitchSource(ctre.TalonSRX.LimitSwitchSource.FeedbackConnector, ctre.TalonSRX.LimitSwitchNormal.NormallyOpen, deviceID=0, timeoutMs=10)
-        self.motor.configForwardLimitSwitchSource(ctre.TalonSRX.LimitSwitchSource.Deactivated, ctre.TalonSRX.LimitSwitchNormal.Disabled, deviceID=0, timeoutMs=10)
+        self.motor.configReverseLimitSwitchSource(
+            ctre.LimitSwitchSource.FeedbackConnector,
+            ctre.LimitSwitchNormal.NormallyOpen,
+            deviceID=0, timeoutMs=10)
 
         self.motor.overrideSoftLimitsEnable(True)
         self.motor.configForwardSoftLimitEnable(True, timeoutMs=10)
@@ -56,7 +58,7 @@ class Lifter:
         self.motor.configReverseSoftLimitEnable(False, timeoutMs=10)
 
         if not hal.isSimulation():
-            self.motor.configSetParameter(ctre.TalonSRX.ParamEnum.eClearPositionOnLimitR, 1, 0, 0, timeoutMs=10)
+            self.motor.configSetParameter(ctre.ParamEnum.eClearPositionOnLimitR, 1, 0, 0, timeoutMs=10)
 
         self.motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, timeoutMs=10)
 
@@ -82,26 +84,26 @@ class Lifter:
         return int(metres * cls.COUNTS_PER_METRE)
 
     def stop(self):
-        """Stop the lift motor"""
+        """Stop the lift motor."""
         self.set_pos = None
         self.motor.neutralOutput()
 
     def reset(self):
         self.move(self.BOTTOM_HEIGHT)
 
-    def move(self, input_setpos):
-        """Move lift to height on encoder
+    def move(self, height: float) -> None:
+        """Move the lift to the desired height.
 
         Args:
-            input_setpos (int): Encoder position to move lift to in m.
+            height: Height to move the lift to, in m.
         """
-        self.set_pos = input_setpos
-        if self.set_pos - self.get_pos() < 0:
+        if height < self.get_pos():
             self.motor.configMotionAcceleration(self.DOWNWARD_ACCELERATION, timeoutMs=0)
         else:
             self.motor.configMotionAcceleration(self.UPWARD_ACCELERATION, timeoutMs=0)
 
-        self.motor.set(ctre.ControlMode.MotionMagic, self.metres_to_counts(self.set_pos))
+        self.motor.set(ctre.ControlMode.MotionMagic, self.metres_to_counts(height))
+        self.set_pos = height
 
     def get_pos(self) -> float:
         """Get the current height of the lift."""
@@ -120,12 +122,8 @@ class Lifter:
     def switch_pressed(self):
         return self.motor.isRevLimitSwitchClosed()
 
-    def at_pos(self):
-        """Finds if cube location is at setops and within threshold
-
-        Returns:
-            bool: If the encoder is at the pos
-        """
+    def at_pos(self) -> bool:
+        """Determine if the lift is within a threshold to the desired height."""
         if self.set_pos is None:
             return False
         return abs(self.set_pos - self.get_pos()) < self.THRESHOLD
