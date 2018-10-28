@@ -60,12 +60,12 @@ class BNO055(IMU):
         GYRO_DATA_Z_LSB = 0x18
         GYRO_DATA_Z_MSB = 0x19
 
-        EULER_H_LSB = 0x1A  # euler heading, least significant bit
-        EULER_H_MSB = 0x1B  # euler heading, most significant bit
-        EULER_P_LSB = 0x1C  # euler pitch, least significant bit
-        EULER_P_MSB = 0x1D  # euler pitch, most significant bit
-        EULER_R_LSB = 0x1E  # euler roll, least significant bit
-        EULER_R_MSB = 0x1F  # euler roll, most significant bit
+        EULER_HEADING_LSB = 0x1A  # yaw
+        EULER_HEADING_MSB = 0x1B
+        EULER_ROLL_LSB = 0x1C
+        EULER_ROLL_MSB = 0x1D
+        EULER_PITCH_LSB = 0x1E
+        EULER_PITCH_MSB = 0x1F
 
         QUATERNION_DATA_W_LSB = 0x20
         QUATERNION_DATA_W_MSB = 0x21
@@ -96,16 +96,13 @@ class BNO055(IMU):
         SELFTEST_RESULT = 0x36
         INTR_STAT = 0x37
 
-        SYS_CLK_STAT = 0x38
-        SYS_STAT = 0x39
+        SYS_CLK_STATUS = 0x38
+        SYS_STATUS = 0x39
         SYS_ERR = 0x3A
 
         UNIT_SEL = 0x3B  # address used to select the unit outputs
-
-        DATA_SELECT = 0x3C
-
+        #DATA_SELECT = 0x3C
         OPR_MODE = 0x3D  # the address used to select what sensors to use for the gyro outputs
-
         PWR_MODE = 0x3E
 
         SYS_TRIGGER = 0x3F
@@ -159,6 +156,37 @@ class BNO055(IMU):
         MAG_RADIUS_LSB = 0x69
         MAG_RADIUS_MSB = 0x6A
 
+    class Page1Register(enum.IntEnum):
+        """Page 1 register addresses. Set Register.PAGE_ID to access these."""
+
+        # Configuration registers
+        ACCEL_CONFIG = 0x08
+        MAG_CONFIG = 0x09
+        GYRO_CONFIG = 0x0A
+        GYRO_MODE_CONFIG = 0x0B
+        ACCEL_SLEEP_CONFIG = 0x0C
+        GYRO_SLEEP_CONFIG = 0x0D
+        MAG_SLEEP_CONFIG = 0x0E
+
+        # Interrupt registers
+        INT_MASK = 0x0F
+        INT = 0x10
+        ACCEL_ANY_MOTION_THRES = 0x11
+        ACCEL_INTR_SETTINGS = 0x12
+        ACCEL_HIGH_G_DURN = 0x13
+        ACCEL_HIGH_G_THRES = 0x14
+        ACCEL_NO_MOTION_THRES = 0x15
+        ACCEL_NO_MOTION_SET = 0x16
+        GYRO_INTR_SETING = 0x17
+        GYRO_HIGHRATE_X_SET = 0x18
+        GYRO_DURN_X_SET = 0x19
+        GYRO_HIGHRATE_Y_SET = 0x1A
+        GYRO_DURN_Y_SET = 0x1B
+        GYRO_HIGHRATE_Z_SET = 0x1C
+        GYRO_DURN_Z_SET = 0x1D
+        GYRO_ANY_MOTION_THRES = 0x1E
+        GYRO_ANY_MOTION_SET = 0x1F
+
     class OperationMode(enum.IntEnum):
         """Operation modes. Changes what sensors it uses and how it fuses them."""
 
@@ -170,9 +198,9 @@ class BNO055(IMU):
         ACCGYRO = 0x05
         MAGGYRO = 0x06
         AMG = 0x07
-        IMUPLUS = 0x08
+        IMU = 0x08  # Inertial Measurement Unit
         COMPASS = 0x09
-        M4G = 0x0A
+        M4G = 0x0A  # Magnet for Gyroscope
         NDOF_FMC_OFF = 0x0B
         NDOF = 0x0C
 
@@ -181,46 +209,47 @@ class BNO055(IMU):
         LOWPOWER = 0x01
         SUSPEND = 0x02
 
-    class AxisMapConfigMode(enum.IntEnum):
-        """Axis map configuration modes."""
+    class AxisMapConfig(enum.IntFlag):
+        """Axis remapping configuration flags."""
 
-        P0 = 0x21
-        P1 = 0x22
-        P2 = 0x23
-        P3 = 0x24
-        P4 = 0x25
-        P5 = 0x26
-        P6 = 0x27
-        P7 = 0x28
+        X_AXIS_IS_X = 0 << 0
+        X_AXIS_IS_Y = 1 << 0
+        X_AXIS_IS_Z = 2 << 0
 
-    class AxisMapSign(enum.IntEnum):
-        P0 = 0x04
-        P1 = 0x00
-        P2 = 0x06
-        P3 = 0x02
-        P4 = 0x03
-        P5 = 0x01
-        P6 = 0x07
-        P7 = 0x05
+        Y_AXIS_IS_X = 0 << 2
+        Y_AXIS_IS_Y = 1 << 2
+        Y_AXIS_IS_Z = 2 << 2
 
-    # the units that we want and the index in the unit select register that corresponds to it
-    UNIT_SEL_ACC_UNIT = 0  # m/s
-    UNIT_SEL_ACC_UNIT_INDEX = 0
-    UNIT_SEL_GYR_UNIT = 1  # rad/s
-    UNIT_SEL_GYR_UNIT_INDEX = 1
-    UNIT_SEL_EUL_UNIT = 1  # rad
-    UNIT_SEL_EUL_UNIT_INDEX = 2
-    UNIT_SEL_TEMP_UNIT = 0  # celcius
-    UNIT_SEL_TEMP_UNIT_INDEX = 4
-    UNIT_SEL_ORI_UNIT = 1  # android orientation mode, pitch turning clockwise decreases values
-    UNIT_SEL_ORI_UNIT_INDEX = 7
-    UNIT_SEL_LIST = [
-        (UNIT_SEL_ACC_UNIT, UNIT_SEL_ACC_UNIT_INDEX),
-        (UNIT_SEL_GYR_UNIT, UNIT_SEL_GYR_UNIT_INDEX),
-        (UNIT_SEL_EUL_UNIT, UNIT_SEL_EUL_UNIT_INDEX),
-        (UNIT_SEL_TEMP_UNIT, UNIT_SEL_TEMP_UNIT_INDEX),
-        (UNIT_SEL_ORI_UNIT, UNIT_SEL_ORI_UNIT_INDEX),
-    ]
+        Z_AXIS_IS_X = 0 << 4
+        Z_AXIS_IS_Y = 1 << 4
+        Z_AXIS_IS_Z = 2 << 4
+
+    class AxisMapSign(enum.IntFlag):
+        """Axis sign remapping configuration flags."""
+
+        ALL_POSITIVE = 0
+        Z_NEGATIVE = 1 << 0
+        Y_NEGATIVE = 1 << 1
+        X_NEGATIVE = 1 << 2
+
+    class UnitSel(enum.IntFlag):
+        """Flags for Register.UNIT_SEL to select units/data format for data outputs."""
+
+        # Acceleration
+        ACC_M_S = 0 << 0  # m/s^2
+        ACC_MG = 1 << 0  # mg
+        # Gyro angular rate
+        GYR_DPS = 0 << 1  # deg/s
+        GYR_RPS = 1 << 1  # rad/s
+        # Euler angles
+        EUL_DEGREES = 0 << 2
+        EUL_RADIANS = 1 << 2
+        # Temperature
+        TEMP_CELSIUS = 0 << 4
+        TEMP_FAHRENHEIT = 1 << 4
+        # Orientation output format
+        ORI_WINDOWS = 0 << 7  # pitch turning clockwise increases values
+        ORI_ANDROID = 1 << 7  # pitch turning clockwise decreases values
 
     def __init__(self, port: wpilib.I2C.Port = None, address: int = None) -> None:
         if address is None:
@@ -235,17 +264,15 @@ class BNO055(IMU):
 
         self.i2c = wpilib.I2C(port, address, sim_port)
 
-        # set the units that we want
         self.offset = 0.0
-        current_units = self.i2c.read(self.Register.UNIT_SEL, 1)[0]
-        for wanted, index in self.UNIT_SEL_LIST:
-            if wanted == 1:
-                current_units = current_units | (1 << index)
-            elif wanted == 0:
-                current_units = current_units & ~(1 << index)
-        self.i2c.write(self.Register.UNIT_SEL, current_units)
-        self.setOperationMode(self.OperationMode.IMUPLUS)  # accelerometer and gyro
+        self.select_units(
+            self.UnitSel.ACC_M_S
+            | self.UnitSel.GYR_RPS | self.UnitSel.EUL_RADIANS
+            | self.UnitSel.TEMP_CELSIUS
+            | self.UnitSel.ORI_ANDROID
+        )
         self.reverse_axis(False, False, False)
+        self.setOperationMode(self.OperationMode.IMU)  # accelerometer and gyro
         self.cache_heading()
 
     def cache_heading(self):
@@ -255,24 +282,21 @@ class BNO055(IMU):
 
     def reverse_axis(self, x: bool, y: bool, z: bool) -> None:
         """Reverse the specified axis directions."""
-        current_directions = self.i2c.read(self.Register.AXIS_MAP_SIGN, 1)[0]
+        current_directions = self.AxisMapSign.ALL_POSITIVE
         if x:
-            current_directions |= (1 << 2)
-        else:
-            current_directions &= ~(1 << 2)
+            current_directions |= self.AxisMapSign.X_NEGATIVE
         if y:
-            current_directions |= (1 << 1)
-        else:
-            current_directions &= ~(1 << 1)
+            current_directions |= self.AxisMapSign.Y_NEGATIVE
         if z:
-            current_directions |= (1 << 0)
-        else:
-            current_directions &= ~(1 << 0)
+            current_directions |= self.AxisMapSign.Z_NEGATIVE
         self.i2c.write(self.Register.AXIS_MAP_SIGN, current_directions)
 
     def setOperationMode(self, mode: OperationMode) -> None:
         mode = self.OperationMode(mode)
         self.i2c.write(self.Register.OPR_MODE, mode.value)
+
+    def select_units(self, units: UnitSel) -> None:
+        self.i2c.write(self.Register.UNIT_SEL, units)
 
     def getAngle(self) -> float:
         return self.getHeading()
@@ -292,13 +316,13 @@ class BNO055(IMU):
         return self.timestep_cached_heading_tm
 
     def getRawHeading(self) -> float:
-        return -self.getEuler(self.Register.EULER_H_LSB)
+        return -self.getEuler(self.Register.EULER_HEADING_LSB)
 
     def getPitch(self) -> float:
-        return self.getEuler(self.Register.EULER_P_LSB)
+        return self.getEuler(self.Register.EULER_PITCH_LSB)
 
     def getRoll(self) -> float:
-        return self.getEuler(self.Register.EULER_R_LSB)
+        return self.getEuler(self.Register.EULER_ROLL_LSB)
 
     def getEuler(self, start_register: int) -> float:
         euler_bytes = self.i2c.read(start_register, 2)
@@ -306,7 +330,7 @@ class BNO055(IMU):
         return euler_int / 900.0
 
     def getHeadingRate(self) -> float:
-        return -self.getEuler(self.Register.GYRO_DATA_Z_LSB)
+        return self.getEuler(self.Register.GYRO_DATA_Z_LSB)
 
     def resetHeading(self, heading: float = 0) -> None:
         self.offset = self.getRawHeading() - heading
