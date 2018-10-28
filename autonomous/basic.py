@@ -1,14 +1,14 @@
 import math
 from magicbot.state_machine import AutonomousStateMachine, state
 from automations.motion import ChassisMotion
-from pyswervedrive.swervechassis import SwerveChassis
+from pyswervedrive.chassis import Chassis
 
 
 class TestOdomAuto(AutonomousStateMachine):
 
     MODE_NAME = "Test Odometry Auto"
 
-    chassis: SwerveChassis
+    chassis: Chassis
     motion: ChassisMotion
 
     @state(first=True)

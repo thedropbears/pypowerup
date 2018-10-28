@@ -4,18 +4,18 @@ import math
 import ctre
 import magicbot
 import wpilib
+from robotpy_ext.misc.looptimer import LoopTimer
+
 from automations.cube import CubeManager
 from automations.motion import ChassisMotion
 from components.intake import Intake
 from components.lifter import Lifter
 from components.vision import Vision
 from components.range_finder import RangeFinder
-from pyswervedrive.swervechassis import SwerveChassis
-from pyswervedrive.swervemodule import SwerveModule
-from utilities.imu import IMU
+from pyswervedrive.chassis import Chassis
+from pyswervedrive.module import SwerveModule
+from utilities.navx import NavX
 from utilities.functions import rescale_js, constrain_angle
-from robotpy_ext.misc.looptimer import LoopTimer
-from networktables import NetworkTables
 
 
 class Robot(magicbot.MagicRobot):
@@ -31,7 +31,7 @@ class Robot(magicbot.MagicRobot):
     cubeman: CubeManager
 
     # Actuators
-    chassis: SwerveChassis
+    chassis: Chassis
     intake: Intake
     lifter: Lifter
 
@@ -72,15 +72,14 @@ class Robot(magicbot.MagicRobot):
         self.intake_cube_switch = wpilib.DigitalInput(3)
 
         # create the imu object
-        self.imu = IMU('navx')
+        self.imu = NavX()
+        wpilib.SmartDashboard.putData('IMU', self.imu.ahrs)
 
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)
         self.gamepad = wpilib.XboxController(1)
 
         self.spin_rate = 1.5
-
-        self.sd = NetworkTables.getTable("SmartDashboard")
 
         self.range_finder_counter = wpilib.Counter(4, mode=wpilib.Counter.Mode.kPulseLength)
 
@@ -103,32 +102,32 @@ class Robot(magicbot.MagicRobot):
             self.intake.push(not self.intake.push_on)
 
         if self.gamepad.getBumperPressed(wpilib.interfaces.GenericHID.Hand.kRight):
-            self.intake.extend(not self.intake.extension_on)
+            self.intake.toggle_arms()
 
         if self.gamepad.getBButtonPressed():
-            self.intake.clamp(not self.intake.clamp_on)
+            self.intake.toggle_clamp()
 
         if self.joystick.getTrigger():
-            self.cubeman.engage(initial_state="intaking_cube", force=True)
+            self.cubeman.start_intake(force=True)
 
         if self.joystick.getRawButtonPressed(4) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kRight) > 0.5:
-            self.cubeman.engage(initial_state="ejecting_cube", force=True)
+            self.cubeman.eject(force=True)
 
         # if self.joystick.getRawButtonPressed(2) or self.gamepad.getStartButtonPressed():
         if self.gamepad.getStartButtonPressed():
-            self.cubeman.engage(initial_state="panicking", force=True)
+            self.cubeman.panic()
 
         if self.joystick.getRawButtonPressed(3) or self.gamepad.getTriggerAxis(wpilib.interfaces.GenericHID.Hand.kLeft) > 0.5:
-            self.cubeman.engage(initial_state="ejecting_exchange", force=True)
+            self.cubeman.deposit_exchange(force=True)
 
         if self.gamepad.getAButtonPressed():
-            self.cubeman.engage(initial_state="lifting_scale", force=True)
+            self.cubeman.lift_to_scale(force=True)
 
         if self.gamepad.getXButtonPressed():
-            self.cubeman.engage(initial_state="lifting_switch", force=True)
+            self.cubeman.lift_to_switch(force=True)
 
         if self.gamepad.getBackButtonPressed():
-            self.cubeman.engage(initial_state="reset_cube", force=True)
+            self.cubeman.reset(force=True)
 
         if self.joystick.getRawButtonPressed(10):
             self.imu.resetHeading()
@@ -171,7 +170,7 @@ class Robot(magicbot.MagicRobot):
 
     def robotPeriodic(self):
         # super().robotPeriodic()
-        self.sd.putNumber("imu_heading", self.imu.getAngle())
+        wpilib.SmartDashboard.updateValues()
 
 
 if __name__ == '__main__':

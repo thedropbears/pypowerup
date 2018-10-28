@@ -1,13 +1,15 @@
 import math
+
 import numpy as np
 from magicbot import tunable
 from wpilib import PIDController
 from wpilib.interfaces import PIDOutput
+
 from utilities.imu import IMU
-from pyswervedrive.swervemodule import SwerveModule
+from .module import SwerveModule
 
 
-class SwerveChassis:
+class Chassis:
     WIDTH = 1
     LENGTH = 0.88
 
@@ -20,7 +22,6 @@ class SwerveChassis:
     # tunables here purely for debugging
     odometry_x = tunable(0)
     odometry_y = tunable(0)
-    # odometry_theta = tunable(0)
     # odometry_x_vel = tunable(0)
     # odometry_y_vel = tunable(0)
     # odometry_z_vel = tunable(0)
@@ -29,7 +30,6 @@ class SwerveChassis:
         self.vx = 0
         self.vy = 0
         self.vz = 0
-        self.last_vx, self.last_vy = self.vx, self.vy
         self.field_oriented = True
         self.hold_heading = True
         self.momentum = False
@@ -49,7 +49,6 @@ class SwerveChassis:
 
         self.odometry_x = 0
         self.odometry_y = 0
-        self.odometry_theta = 0
         self.odometry_x_vel = 0
         self.odometry_y_vel = 0
         self.odometry_z_vel = 0
@@ -81,7 +80,7 @@ class SwerveChassis:
             module.read_steer_pos()
 
         # TODO: re-enable if we end up not using callback method
-        self.imu.imu.ahrs.registerCallback(self.update_odometry)
+        self.imu.ahrs.registerCallback(self.update_odometry)
 
     def set_heading_sp_current(self):
         self.set_heading_sp(self.imu.getAngle())
@@ -207,7 +206,6 @@ class SwerveChassis:
                 desired [angular] velocity. In radians/s.
             field_oriented: Whether the inputs are field or robot oriented.
         """
-        self.last_vx, self.last_vy = self.vx, self.vy
         self.vx = vx
         self.vy = vy
         self.vz = vz
@@ -249,7 +247,7 @@ class SwerveChassis:
 
     @property
     def position(self):
-        return np.array([[self.odometry_x], [self.odometry_y]], dtype=float)
+        return np.array([self.odometry_x, self.odometry_y], dtype=float)
 
     @property
     def speed(self):
@@ -263,9 +261,3 @@ class SwerveChassis:
 class ChassisPIDOutput(PIDOutput):
     def pidWrite(self, output):
         self.output = output
-
-    def reset_odometry(self):
-        """Reset all 3 odometry variables to a value of 0."""
-        self.odometry_x = 0
-        self.odometry_y = 0
-        self.odometry_theta = 0

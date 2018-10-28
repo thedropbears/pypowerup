@@ -1,17 +1,19 @@
 import math
-import numpy as np
-from pyswervedrive.swervechassis import SwerveChassis
-from utilities.imu import IMU
-from utilities.vector_pursuit import VectorPursuit
-from utilities.profile_generator import generate_trapezoidal_function, smooth_waypoints
-from utilities.functions import constrain_angle
-from wpilib import SmartDashboard
 import time
+
+import numpy as np
+from wpilib import SmartDashboard
+
+from pyswervedrive.chassis import Chassis
+from utilities.functions import constrain_angle
+from utilities.imu import IMU
+from utilities.profile_generator import generate_trapezoidal_function, smooth_waypoints
+from utilities.vector_pursuit import VectorPursuit
 
 
 class ChassisMotion:
 
-    chassis: SwerveChassis
+    chassis: Chassis
     imu: IMU
 
     # heading motion feedforward/back gains
@@ -33,9 +35,6 @@ class ChassisMotion:
         self.enabled = False
         self.pursuit = VectorPursuit()
         self.last_heading_error = 0
-
-    def setup(self):
-        pass
 
     def set_trajectory(self, waypoints: np.ndarray, end_heading,
                        start_speed=0.0, end_speed=0.25, smooth=True,
@@ -79,15 +78,12 @@ class ChassisMotion:
         self.chassis.heading_hold_off()
 
     def update_linear_profile(self, motion_params, start_speed, end_speed):
+        v_max, a_pos, a_neg = motion_params
         self.speed_function, self.distance_traj_tm = generate_trapezoidal_function(
-                                                            0, start_speed,
-                                                            self.end_distance,
-                                                            end_speed,
-                                                            v_max=motion_params[0],
-                                                            a_pos=motion_params[1],
-                                                            a_neg=motion_params[2])
+            0, start_speed, self.end_distance, end_speed,
+            v_max=v_max, a_pos=a_pos, a_neg=a_neg)
         self.linear_position = 0
-        self.last_position = self.chassis.position.reshape(2)
+        self.last_position = self.chassis.position
         print(f'start_position {self.last_position}')
         self.last_linear_error = 0
         self.linear_error_i = 0
@@ -100,8 +96,8 @@ class ChassisMotion:
         delta = constrain_angle(self.end_heading - heading)
         end_heading = heading + delta
         self.heading_function, self.heading_traj_tm = generate_trapezoidal_function(
-                                                            heading, 0, end_heading, 0,
-                                                            v_max=3, a_pos=2, a_neg=2)
+            heading, 0, end_heading, 0,
+            v_max=3, a_pos=2, a_neg=2)
         self.last_heading_error = 0
         self.heading_error_i = 0
 
@@ -111,10 +107,7 @@ class ChassisMotion:
 
     @property
     def average_speed(self):
-        speed = 0
-        for module in self.chassis.modules:
-            speed += module.wheel_vel / 4
-        return speed
+        return sum(module.wheel_vel for module in self.chassis.modules) / 4
 
     def disable(self):
         self.enabled = False
@@ -130,7 +123,7 @@ class ChassisMotion:
             # TODO: re-enable if we end up not using callback method
             # self.chassis.update_odometry()
 
-            direction_of_motion, next_seg, over = self.pursuit.get_output(self.chassis.position.reshape(2),
+            direction_of_motion, next_seg, over = self.pursuit.get_output(self.chassis.position,
                                                                           self.chassis.speed)
 
             speed_sp = self.run_speed_controller()
@@ -152,17 +145,17 @@ class ChassisMotion:
 
             if over:
                 if not self.wait_for_rotate:
-                    print(f"Motion over at {self.chassis.position.reshape(2)}, heading {self.imu.getAngle()}")
+                    print(f"Motion over at {self.chassis.position}, heading {self.imu.getAngle()}")
                     self.enabled = False
                     self.chassis.set_inputs(0, 0, 0)
                 else:
                     if abs(heading_error) < 0.1:
-                        print(f"Motion over at {self.chassis.position.reshape(2)}, heading {self.imu.getAngle()}")
+                        print(f"Motion over at {self.chassis.position}, heading {self.imu.getAngle()}")
                         self.enabled = False
                         self.chassis.set_inputs(0, 0, 0)
 
     def run_speed_controller(self):
-        chassis_pos = self.chassis.position.reshape(2)
+        chassis_pos = self.chassis.position
         self.linear_position += np.linalg.norm(chassis_pos - self.last_position)
 
         profile_tm = time.monotonic() - self.start_segment_tm

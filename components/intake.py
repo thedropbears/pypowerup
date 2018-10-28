@@ -16,8 +16,6 @@ class Intake:
 
     cube_switch: wpilib.DigitalInput
 
-    arms_out = magicbot.tunable(False, doc='Whether the arms are outside of the starting configuration.')
-
     def __init__(self):
         self.motor_output = 0
         self.clamp_on = True
@@ -47,10 +45,6 @@ class Intake:
         self.last_extension_on = None
         self.last_motor_output = None
 
-    def on_disable(self):
-        """This is called whenever the robot transitions to disabled mode."""
-        pass
-
     def execute(self):
         """Run at the end of every control loop iteration."""
         if self.motor_output != self.last_motor_output:
@@ -75,21 +69,57 @@ class Intake:
         self.last_push_on = self.push_on
         self.last_extension_on = self.extension_on
 
-    def rotate(self, value: float):
-        """Set the output of the intake motors."""
-        self.motor_output = value
+    def intake(self):
+        """Spin the intake wheels inwards."""
+        self.motor_output = -1
 
-    def clamp(self, value: bool):
-        """Turn the intake clamp on or off."""
-        self.clamp_on = value
+    def outtake(self):
+        """Spin the intake wheels outwards."""
+        self.motor_output = 1
+
+    def clamp(self):
+        """Clamp the cube."""
+        self.clamp_on = True
+
+    def unclamp(self):
+        """Unclamp the cube."""
+        self.clamp_on = False
+
+    def toggle_clamp(self):
+        """Toggle whether the cube should be clamped.
+
+        This really shouldn't be necessary...
+        """
+        self.clamp_on = not self.clamp_on
 
     def push(self, value: bool):
         """Turn the pushing pneumatic on or off."""
         self.push_on = value
 
-    def extend(self, value: bool):
-        """Turn the extension pneumatics on or off."""
-        self.extension_on = value
+    def kick(self):
+        """
+        Kick the cube out of the containment.
+
+        This will automatically unclamp the cube.
+        """
+        self.clamp_on = False
+        self.push_on = True
+
+    def retract_kicker(self):
+        """Retract the cube kicker."""
+        self.push_on = False
+
+    def extend_arms(self):
+        """Extend the intake arms."""
+        self.extension_on = True
+
+    def retract_arms(self):
+        """Retract the intake arms."""
+        self.extension_on = False
+
+    def toggle_arms(self):
+        """Toggle whether the arms are extended."""
+        self.extension_on = not self.extension_on
 
     @magicbot.feedback
     def get_cube_distance(self) -> float:

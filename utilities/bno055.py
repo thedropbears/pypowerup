@@ -14,8 +14,10 @@ import time
 import hal
 import wpilib
 
+from .imu import IMU
 
-class BNO055(wpilib.GyroBase):
+
+class BNO055(IMU):
     """Class to read Euler values in radians from a BNO055 over I2C."""
 
     # i2c addresses
@@ -221,7 +223,6 @@ class BNO055(wpilib.GyroBase):
     ]
 
     def __init__(self, port: wpilib.I2C.Port = None, address: int = None) -> None:
-        super().__init__()
         if address is None:
             address = self.ADDRESS_A
         if port is None:
@@ -274,7 +275,6 @@ class BNO055(wpilib.GyroBase):
         self.i2c.write(self.Register.OPR_MODE, mode.value)
 
     def getAngle(self) -> float:
-        """Function called by the GyroBase's PID Source to get the current measurement."""
         return self.getHeading()
 
     def getAngles(self) -> tuple:
